@@ -155,6 +155,12 @@ def build_parser(
 
     misc = parser.add_argument_group("기타")
     misc.add_argument(
+        "--no-open",
+        dest="no_open",
+        action="store_true",
+        help="완료 후 파일 관리자를 열지 않음 (반복 실행·자동화용)",
+    )
+    misc.add_argument(
         "-v", "--verbose", action="store_true", help="DEBUG 레벨 로그 출력"
     )
 

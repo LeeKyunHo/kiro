@@ -67,14 +67,19 @@ class RenderStrategy(Protocol):
     """
     단일 코드를 처리하는 방식.
 
-    `produces_files` 는 호출부가 폴더 생성·탐색기 오픈 여부를 판단하는 데
-    쓴다. 전략이 자기 성질을 스스로 알려주므로 호출부에 `if mode == ...`
-    분기가 생기지 않는다.
+    `produces_files` 와 `opens_file_manager` 는 호출부가 폴더 생성·탐색기
+    오픈 여부를 판단하는 데 쓴다. 전략이 자기 성질을 스스로 알려주므로
+    호출부에 `if mode == ...` 분기가 생기지 않는다.
+
+    두 속성을 분리한 이유: mock 은 파일을 만들지만(`produces_files=True`)
+    탐색기를 열지는 않는다(`opens_file_manager=False`). 검증 모드라
+    반복 실행되므로 매번 창이 뜨면 소음이 된다.
     """
 
     name: str
     badge: str
     produces_files: bool
+    opens_file_manager: bool
     plan_only: bool
 
     def render(self, request: RenderRequest) -> None:
@@ -92,6 +97,7 @@ class ApiRenderStrategy:
     name = "api"
     badge = ""
     produces_files = True
+    opens_file_manager = True
     plan_only = False
 
     def __init__(self, client: WebUiClient, writer: AtomicImageWriter) -> None:
@@ -120,11 +126,17 @@ class MockRenderStrategy:
     잡아야 할 결함이므로 이 단계를 건너뛰면 검증 범위가 줄어든다.
 
     출력 경로는 `AssetPaths(is_mock=True)` 가 `mock_assets/` 로 격리한다.
+
+    탐색기를 열지 않는다. 검증 모드라 반복 실행되는데 매번 창이 뜨면
+    소음이고, 실행 직후 폴더를 정리하는 흐름에서는 탐색기가 비동기로
+    열리다가 이미 삭제된 경로를 찾아 OS 경고창이 뜬다.
+    산출물 경로는 로그에 남으므로 필요하면 직접 열면 된다.
     """
 
     name = "mock"
     badge = " [MOCK]"
     produces_files = True
+    opens_file_manager = False
     plan_only = False
 
     def __init__(self, writer: AtomicImageWriter) -> None:
@@ -163,6 +175,7 @@ class PlanOnlyStrategy:
     name = "plan"
     badge = " [DRY-RUN]"
     produces_files = False
+    opens_file_manager = False
     plan_only = True
 
     def render(self, request: RenderRequest) -> None:

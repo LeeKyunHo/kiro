@@ -334,6 +334,13 @@ B는 메모리 절약 없이 속도만 본 것이다.
   Remove-Item -Recurse -Force generated_assets\bench -ErrorAction SilentlyContinue
   ```
 
+  > **`--no-open` 을 붙이면 편하다.** 이 단계는 생성과 삭제를 반복하는데,
+  > 매번 탐색기가 열리고 그 직후 폴더를 지우면 "위치를 사용할 수 없습니다"
+  > 경고창이 뜬다. 무해하지만 방해가 된다.
+  >
+  > `refactor/modular` 브랜치에만 있는 플래그다. `main` 에서 작업하면
+  > 경고창을 그냥 닫거나, 탐색기 창을 먼저 닫고 삭제하면 된다.
+
 - [ ] **2A-2.** 버전 A 측정
 
   `webui-user.bat` 을 A 로 수정 → **콘솔 창을 완전히 닫고 재실행**

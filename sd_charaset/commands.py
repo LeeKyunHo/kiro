@@ -273,7 +273,7 @@ class GenerateCommand:
             _logger.info("생성된 파일이 없어 마크다운을 출력하지 않습니다.")
             return 1 if result.failures else 0
 
-        if strategy.produces_files:
+        if strategy.opens_file_manager and not getattr(args, "no_open", False):
             open_in_file_manager(paths.output_dir)
 
         output.emit_genit_block(
