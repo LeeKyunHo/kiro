@@ -22,23 +22,37 @@ JSON 항목을 늘리면 코드 수정 없이 생성 장수가 늘어난다.
 
 ```
 kiro/
-├── sd_batch_generator.py                    # 메인 실행 스크립트 (약 1,300줄)
+├── sd_batch_generator.py                    # 메인 실행 스크립트
 ├── pose_database.json                       # 프롬프트 데이터 (프로필 + 포즈)
 ├── PROJECT_GUIDE.md                         # 이 문서
-├── 사용법.txt                                # WebUI 설치·설정 메모
+├── 사용법.txt                                # 설치·사용 가이드 (사람용)
+├── .gitignore / .gitattributes
+│
+├── references/                              # IP-Adapter 참조 이미지 (git 추적)
+│   ├── README.md
+│   └── {prefix}.png                         # --prefix 와 같은 이름
 │
 ├── .kiro/
 │   ├── steering/
 │   │   └── sd_char_gen.md                   # Kiro 자동 실행 규칙
-│   └── specs/dynamic-pose-pipeline/
-│       ├── requirements.md                  # 요구사항 R1~R8
-│       ├── design.md                        # 설계·아키텍처 (10장)
-│       └── tasks.md                         # 구현 작업 이력 (13단계, 완료)
+│   └── specs/
+│       ├── dynamic-pose-pipeline/            # 동적 순회·프로필 (완료)
+│       │   ├── requirements.md               # R1~R8
+│       │   ├── design.md                     # 설계 (10장)
+│       │   └── tasks.md                      # 13단계
+│       └── image-reference-pipeline/          # 참조 이미지 (진행 중)
+│           ├── requirements.md               # R1~R7
+│           ├── design.md                     # 설계 (11장)
+│           └── tasks.md                      # 17단계
 │
-└── generated_assets/                        # 실행 시 자동 생성
+└── generated_assets/                        # 실행 시 자동 생성 (git 제외)
     └── {prefix}/
         └── {prefix}_{NN}.webp
 ```
+
+`references/` 는 git 으로 추적한다. `generated_assets/` 는 재생성 가능한
+파생물이지만 참조 이미지는 잃으면 같은 캐릭터를 재현할 수 없는 원본 입력이고,
+여러 PC 간 동기화에도 필요하다.
 
 ### 파일별 역할
 
@@ -209,7 +223,25 @@ python sd_batch_generator.py [옵션]
 | `--mock` | `False` | X | 더미 이미지를 실제 저장 |
 | `--test` | `False` | X | 자체 진단 후 종료 |
 
-\* `--test` 사용 시에는 `--prefix`, `--char_prompt`가 불필요하다.
+**참조 이미지 (IP-Adapter)**
+
+| 플래그 | 기본값 | 설명 |
+|---|---|---|
+| `--ref_image` | `None` | 참조 이미지 경로 직접 지정 (자동 탐색 무시) |
+| `--ref_weight` | `0.7` | 적용 강도 0.0~2.0 |
+| `--no_ref` | `False` | 참조 이미지 무시 (비교 실험용) |
+| `--cn_module` | `None` | ControlNet 전처리기 수동 지정 |
+| `--cn_model` | `None` | ControlNet 모델 수동 지정 |
+
+**태그 역추출**
+
+| 플래그 | 기본값 | 설명 |
+|---|---|---|
+| `--from_image` | `None` | 이미지에서 태그 추출 후 종료 (생성 안 함) |
+| `--interrogator` | `deepdanbooru` | `deepdanbooru` \| `clip` |
+
+\* `--test` 또는 `--from_image` 사용 시에는 `--prefix`, `--char_prompt`가
+불필요하다.
 
 ### 5.1 `--mode`가 받는 5가지 형태
 
@@ -246,6 +278,33 @@ python sd_batch_generator.py [옵션]
 | `--mock` | X | O (더미) | O | 실존 파일만 | `[MOCK]` |
 | `--dry-run` | X | X | X | **대상 전체** | `[DRY-RUN]` |
 | `--test` | X | X | X | 내부 검증만 | — |
+
+참조 이미지 관련 단계는 모드별로 다르게 동작한다.
+
+| 단계 | 기본 | `--mock` | `--dry-run` | `--test` |
+|---|---|---|---|---|
+| 참조 이미지 탐색 | O | **O** | O (경로만) | 임시 파일로 |
+| base64 인코딩 | O | **O** | X | O |
+| ControlNet 목록 조회 | O | X | X | X |
+| 페이로드 조립 | O | **O** | X | O |
+| API 전송 | O | X | X | X |
+
+`--mock` 에서 탐색·인코딩·조립을 모두 수행하는 이유는, 파일을 못 찾거나
+인코딩이 깨지거나 페이로드가 잘못 조립되는 것이 **mock 에서 잡아야 할 결함**
+이기 때문이다. 전송만 생략한다.
+
+`--dry-run` 은 파일 I/O 를 하지 않는 것이 계약이므로 존재 여부와 경로만
+출력하고 내용을 읽지 않는다.
+
+`--mock` 에서는 ControlNet 조회(HTTP)를 하지 않으므로 자동 탐지가 불가능하다.
+주입 경로를 검증하려면 `--cn_module` 과 `--cn_model` 을 둘 다 수동 지정한다.
+
+```powershell
+python sd_batch_generator.py --prefix mika --char_prompt "x" --mock `
+  --cn_module "ip-adapter_clip_sdxl" --cn_model "ip-adapter_xl [test]"
+```
+
+주입된 상태로 생성된 더미 이미지에는 `MOCK +REF` 가 그려진다.
 
 ### 6.1 `--dry-run`의 중요한 특성
 
@@ -317,6 +376,123 @@ neutral expression, standing, front view, looking at viewer, calm, mika_00
 ```
 
 `--custom_neg`는 **추가**된다. 프로필 네거티브를 대체하지 않는다.
+
+---
+
+## 7A. 참조 이미지 축 (IP-Adapter)
+
+프로필이 **태그 축**을 담당하듯, 참조 이미지는 **시각 특징 축**을 담당한다.
+두 축은 독립이며 서로에게 영향을 주지 않는다.
+
+### 7A.1 탐색 규칙
+
+```
+references/{prefix}.png → .jpg → .jpeg → .webp
+```
+
+우선순위 첫 번째를 쓰고, 여러 개가 공존하면 무시된 목록을 경고한다.
+`--ref_image` 로 경로를 직접 주면 자동 탐색을 건너뛴다.
+
+### 7A.2 부재는 정상 상태다
+
+참조 이미지가 없으면 **경고만 출력하고 텍스트 프롬프트만으로 생성한다.**
+에러가 아니다.
+
+```
+[WARN] 참조 이미지 없음 (references/mika.*) - 텍스트 프롬프트만 사용
+```
+
+00번을 먼저 생성해 참조로 쓰는 부트스트랩 워크플로우에서는 1단계에
+참조가 없는 것이 정상이므로, 여기서 중단하면 안 된다.
+
+단 `--ref_image` 로 **명시한** 경로가 없으면 `ConfigError` 로 중단한다.
+명시적 지정 실패는 사용자 실수이므로 조용히 무시하지 않는다.
+
+### 7A.3 페이로드 주입
+
+엔드포인트는 기존 `/sdapi/v1/txt2img` 를 그대로 쓰고, 페이로드에
+`alwayson_scripts` 를 추가한다.
+
+```json
+{
+  "prompt": "...",
+  "alwayson_scripts": {
+    "controlnet": {
+      "args": [{
+        "enabled": true,
+        "input_image": "<base64>",
+        "module": "ip-adapter_clip_sdxl",
+        "model": "ip-adapter_xl [4209e9f7]",
+        "weight": 0.7,
+        "resize_mode": "Crop and Resize",
+        "control_mode": "Balanced",
+        "pixel_perfect": true
+      }]
+    }
+  }
+}
+```
+
+**참조 이미지와 ControlNet 해석이 둘 다 성공했을 때만 주입한다.**
+참조는 있는데 ControlNet 이 없으면(미설치 등) `alwayson_scripts` 키 자체를
+넣지 않는다. 빈 딕셔너리를 넣으면 WebUI 가 "비활성" 이 아니라 "인자 부족" 으로
+해석할 수 있다.
+
+`inject_controlnet()` 은 원본 페이로드를 변경하지 않고 새 딕셔너리를 반환한다.
+루프에서 페이로드를 재사용할 때 상태가 누적되는 것을 막는 계약이다.
+
+### 7A.4 ControlNet 모델 자동 탐지
+
+모델명이 `ip-adapter_xl [4209e9f7]` 처럼 **해시를 포함**하며 환경마다 다르다.
+하드코딩하면 다른 PC 에서 반드시 깨진다.
+
+`/controlnet/module_list` 와 `/controlnet/model_list` 를 조회해
+`IP_ADAPTER_*_PATTERNS` 와 **부분 문자열 매칭**한다. `resolve_sampler()` 와
+같은 패턴이다.
+
+매칭에 실패하면 조회된 목록 **전체를 출력**한다. 그 출력만 보고 바로
+`--cn_module` / `--cn_model` 을 지정할 수 있게 하려는 의도다.
+
+조회는 배치당 1회이며, `--mock` / `--dry-run` / `--test` 에서는 수행하지 않는다.
+
+### 7A.5 weight 조정
+
+| 값 | 효과 |
+|---|---|
+| 0.0 | 참조 무시 (텍스트만) |
+| 0.5~0.8 | 실무 범위 |
+| 1.0 이상 | 참조 이미지의 **포즈까지 전이**되어 JSON 포즈 지시를 무시 |
+
+기본값 `0.7` 은 근거 있는 출발점이며 정확한 값은 GPU 환경 튜닝으로 확정한다.
+`REF_WEIGHT_DEFAULT` 상수에 있다.
+
+### 7A.6 태그 역추출 (`--from_image`)
+
+`/sdapi/v1/interrogate` 를 호출해 이미지에서 프롬프트를 역추출한다.
+생성 파이프라인을 타지 않고 결과를 출력한 뒤 종료한다.
+
+기본 모델은 `deepdanbooru` 다. `clip` 은 자연어 문장을 반환해 태그 기반
+프롬프트로 쓰기 어렵다.
+
+추출 결과에 성별·인원 태그(`1girl`, `solo` 등)가 있으면 경고하고 **제거한
+버전을 함께 제시**한다. 이 태그들은 `_profiles` 축에서 이미 다루므로
+`--char_prompt` 에 들어가면 프로필과 충돌한다. 경고만 하지 않고 필터링된
+버전을 주는 이유는 사용자가 출력을 그대로 복사할 가능성이 높기 때문이다.
+
+가중치 표기(`(1girl:1.2)`)도 정규화 후 비교하므로 감지된다.
+
+### 7A.7 부트스트랩 워크플로우
+
+외부에서 그림을 구하지 않고 자체 생성물로 일관성을 확보하는 방법이다.
+
+```powershell
+python sd_batch_generator.py --prefix mika --char_prompt "..." --mode 0
+Copy-Item generated_assets\mika\mika_00.webp references\mika.webp
+python sd_batch_generator.py --prefix mika --char_prompt "..." --mode 1-19
+```
+
+00번이 "정면·중립 표정" 이라 참조용으로 적합하다. 표정이나 포즈가 강한
+이미지를 참조로 쓰면 그 특성이 다른 번호에도 새어나온다.
 
 ---
 
@@ -672,8 +848,39 @@ python sd_batch_generator.py --prefix mika --char_prompt "silver hair" --custom_
 | T19 | 프로필별 태그 충돌 | WARN |
 | T20 | 기본 프로필 `female` 존재 | WARN |
 
+### 참조 이미지 검사
+
+| ID | 검사 |
+|---|---|
+| T21 / T21b | 확장자 우선순위 / `.png` 채택 |
+| T22 / T22b | 참조 부재 시 `None` / `references/` 폴더 자체 부재 |
+| T23 | base64 왕복 (디코딩 후 Pillow 로 크기 확인) |
+| T24 / T24b | 유닛 필수 키 8개 / base64 이미지 포함 |
+| T25 | 참조 없을 때 `alwayson_scripts` 미주입 |
+| T26 / T26b / T26c | 주입 위치 / **원본 불변성** / 기존 키 보존 |
+| T27 | `--ref_weight` 경계값 (거부 4종 / 허용 5종) |
+| T28 | interrogate 페이로드 구조 |
+| T29 / T29b | 성별 태그 필터 / `filtered` 프로퍼티 |
+| T30 / T30b | 해시 포함 모델명 부분 매칭 / 실패 시 `None` |
+
+현재 총 검사 수: **40항목** (데이터 8 + 로직 12 + 프로필 3 + 참조 17).
+
 검사는 **실제 구현 함수를 직접 호출**한다. 로직을 복제하지 않으므로
 구현이 바뀌면 검사도 함께 따라간다.
+
+참조 이미지 검사는 Pillow 로 임시 이미지를 만들어 쓰고 `contextmanager` 로
+정리한다. 저장소에 테스트용 바이너리를 커밋하지 않기 위함이다.
+
+### 검증 범위의 한계 (중요)
+
+`--test` 는 페이로드 **구조**만 검사한다. "WebUI 가 이 페이로드를 수락하는가"
+는 검증 범위 밖이다. 아래는 GPU 환경이 필요하다.
+
+- 실제 ControlNet 모델명 매칭 결과
+- WebUI 의 페이로드 스키마 수락 여부
+- weight 별 이미지 차이
+- DeepBooru 태그 추출 품질
+- 캐릭터 일관성 개선 정도
 
 ---
 
