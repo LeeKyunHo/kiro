@@ -1,0 +1,1391 @@
+"""
+sd_batch_generator.py
+캐릭터 챗봇용 이미지 에셋 배치 생성기 (SD WebUI API 연동)
+
+프롬프트는 pose_database.json 에서 불러오며, 항목 수에 맞춰 동적으로 순회한다.
+결과는 Pillow로 실제 WebP 로 인코딩 변환해 저장한다.
+
+실행 모드
+    (기본)      실제 생성. WebUI API 호출.
+    --mock      API 없이 더미 이미지를 생성해 전체 파이프라인 검증.
+    --dry-run   파일 쓰기 없이 대상·파일명·마크다운만 출력.
+    --test      데이터/로직 자체 진단 후 종료 코드 반환.
+
+Usage:
+    python sd_batch_generator.py --prefix mika --char_prompt "silver hair, blue eyes"
+    python sd_batch_generator.py --prefix mika --char_prompt "..." --mode emotions
+    python sd_batch_generator.py --prefix mika --char_prompt "..." --mode 0,5,12
+    python sd_batch_generator.py --prefix mika --char_prompt "..." --mode 10-14
+    python sd_batch_generator.py --prefix test --char_prompt "none" --mock
+    python sd_batch_generator.py --test
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import colorsys
+import io
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Iterable, Sequence
+
+import requests
+from PIL import Image, ImageDraw, ImageFont
+
+# ─────────────────────────────────────────────
+# 1. 상수
+# ─────────────────────────────────────────────
+API_HOST = "http://127.0.0.1:7860"
+API_URL = f"{API_HOST}/sdapi/v1/txt2img"
+SAMPLERS_URL = f"{API_HOST}/sdapi/v1/samplers"
+SAMPLER_CANDIDATES = ("DPM++ 2M Karras", "DPM++ 2M", "Euler a")
+
+SAMPLERS_TIMEOUT = 5
+TXT2IMG_TIMEOUT = 300
+
+# 챗봇 초상화용 공통 품질 태그
+POS_BASE = (
+    "masterpiece, best quality, highly detailed, "
+    "1girl, solo, clean background, soft lighting, character portrait"
+)
+
+# 공통 네거티브 (품질/해부학 관련)
+COMMON_NEG = (
+    "worst quality, low quality, blurry, bad anatomy, bad hands, "
+    "extra fingers, extra limbs, deformed, disfigured, watermark, "
+    "signature, text, jpeg artifacts, cropped"
+)
+
+POSE_DB_FILE = "pose_database.json"
+ASSETS_DIRNAME = "generated_assets"
+
+# _profiles 섹션. 프로필의 base_positive/base_negative 가 위 POS_BASE/COMMON_NEG 를
+# 완전히 대체한다. 품질 태그도 프로필 쪽에 포함되어야 한다.
+PROFILES_KEY = "_profiles"
+PROFILE_POSITIVE_KEY = "base_positive"
+PROFILE_NEGATIVE_KEY = "base_negative"
+
+# --profile 생략 시 이 프로필을 쓴다. 기존 명령어를 깨지 않기 위한 기본값이며,
+# 무엇이 적용됐는지 콘솔에 명시적으로 출력한다.
+DEFAULT_PROFILE = "female"
+
+# 프로필이 정의되지 않은 JSON 과의 하위 호환용 가상 프로필 이름
+FALLBACK_PROFILE = "(built-in)"
+
+# 태그 정규화용. "(tag:1.3)" -> "tag", "((tag))" -> "tag"
+BRACKET_CHARS = "()[]{}"
+_BRACKET_TABLE = str.maketrans("", "", BRACKET_CHARS)
+WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
+
+# 실제 생성 파라미터
+IMAGE_SIZE = (832, 1216)
+STEPS = 28
+CFG_SCALE = 7
+WEBP_QUALITY = 90
+WEBP_METHOD = 6
+
+# 모의 생성 (실제의 1/4, 종횡비 동일 — R7.5)
+MOCK_SIZE = (208, 304)
+MOCK_TEXT_X = 12
+MOCK_TEXT_TOP = 24
+MOCK_TEXT_COLOR = (30, 30, 30)
+MOCK_FONT_BIG_SIZE = 44
+MOCK_FONT_SMALL_SIZE = 13
+MOCK_GAP_BIG = 52
+MOCK_GAP_SMALL = 20
+MOCK_LABEL_MAXLEN = 26
+
+# 젠잇 규격: 치환되지 않는 리터럴 플레이스홀더 (R4.3)
+# 일반 문자열로 두면 f-string 4중 이스케이프가 불필요하다.
+URL_PLACEHOLDER = "{{url}}"
+
+GENIT_STATUS_TEMPLATE = (
+    "[@id=상태창|name={name}|title={title}|status={status}|desc={desc}]"
+)
+
+# --mode 값이 섹션명인지 코드 표현식인지 판별 (R2.7)
+# 숫자·콤마·하이픈·공백만으로 구성되면 코드 표현식.
+CODE_EXPR_PATTERN = re.compile(r"^[\s\d,\-]+$")
+
+# prefix 는 경로 세그먼트와 (구버전 호환용) 셸 인자로 쓰이므로 화이트리스트로 제한한다.
+# 이 검사가 경로 이탈(../)과 인용부호 주입을 입구에서 함께 차단한다.
+SAFE_PREFIX_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+# 코드 범위 상한. 없으면 "0-999999999" 같은 입력이 메모리를 폭주시킨다.
+MAX_CODE = 9_999
+
+MIN_CODE_WIDTH = 2
+SECTION_COMMENT_PREFIX = "_"
+PARTIAL_SUFFIX = ".part"
+SEPARATOR = "=" * 64
+
+FontLike = Any
+
+
+class ConfigError(Exception):
+    """
+    설정·입력 오류.
+
+    헬퍼가 직접 sys.exit() 하지 않고 이 예외를 올리면, 단위 검증에서
+    함수를 그대로 호출할 수 있고 종료 정책은 main 한 곳에만 남는다.
+    """
+
+    def __init__(self, message: str, hint: str = "") -> None:
+        super().__init__(message)
+        self.hint = hint
+
+
+def _configure_stdio() -> None:
+    """
+    표준 출력을 UTF-8 로 고정한다.
+
+    Windows에서 출력을 파이프/파일로 리다이렉트하면 Python이 콘솔 UTF-8 대신
+    로케일 인코딩(cp949)으로 폴백해 비-ASCII 기호에서 UnicodeEncodeError 가
+    발생한다. 직접 실행 시에는 재현되지 않아 놓치기 쉬운 경로다.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass  # 구버전 파이썬이나 비표준 스트림은 그대로 둔다
+
+
+# ─────────────────────────────────────────────
+# 2. 데이터 모델
+# ─────────────────────────────────────────────
+@dataclass(frozen=True, slots=True)
+class PoseEntry:
+    """포즈/표정 단일 항목."""
+
+    code: int
+    prompt: str
+    section: str
+
+    @property
+    def label(self) -> str:
+        """프롬프트 첫 태그를 사람이 읽을 라벨로 사용."""
+        return self.prompt.split(",")[0].strip()
+
+
+@dataclass(frozen=True, slots=True)
+class Profile:
+    """
+    성별 등 캐릭터 축 프리셋.
+
+    포즈·표정과 직교하는 축이므로 포즈 섹션에 섞지 않고 별도로 둔다.
+    섹션에 성별을 넣으면 emotions_female / emotions_male 처럼 조합이
+    곱셈으로 늘어나 같은 감정을 여러 곳에서 관리해야 한다.
+    """
+
+    name: str
+    base_positive: str
+    base_negative: str
+
+
+@dataclass(slots=True)
+class PoseDatabase:
+    entries: dict[int, PoseEntry] = field(default_factory=dict)
+    sections: dict[str, list[int]] = field(default_factory=dict)
+    profiles: dict[str, Profile] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+
+    @property
+    def all_codes(self) -> list[int]:
+        return sorted(self.entries)
+
+    @property
+    def section_names(self) -> list[str]:
+        return list(self.sections)
+
+    @property
+    def profile_names(self) -> list[str]:
+        return list(self.profiles)
+
+
+@dataclass(slots=True)
+class BatchResult:
+    success: list[int] = field(default_factory=list)
+    skipped: list[int] = field(default_factory=list)
+    failed: list[tuple[int, str]] = field(default_factory=list)
+    planned: list[int] = field(default_factory=list)
+    aborted: bool = False
+    dry_run: bool = False
+
+    @property
+    def existing(self) -> list[int]:
+        """
+        마크다운 대상 코드.
+
+        기본/mock: 디스크에 실제 파일이 있는 코드만 (R4.6)
+        dry-run:   시뮬레이션 대상 전체 (R4.8)
+
+        분기를 프로퍼티 내부에 두어 호출부가 실행 모드를 알 필요가 없게 한다.
+        """
+        if self.dry_run:
+            return sorted(self.planned)
+        return sorted(self.success + self.skipped)
+
+    @property
+    def failed_codes(self) -> list[int]:
+        return [code for code, _ in self.failed]
+
+
+@dataclass(slots=True)
+class TestReport:
+    """--test 결과 수집기."""
+
+    passed: int = 0
+    failed: int = 0
+    warned: int = 0
+
+    def check(self, name: str, ok: bool, detail: str = "") -> bool:
+        self.passed += ok
+        self.failed += not ok
+        self._emit("[PASS]" if ok else "[FAIL]", name, detail)
+        return ok
+
+    def warn(self, name: str, detail: str = "") -> None:
+        self.warned += 1
+        self._emit("[WARN]", name, detail)
+
+    def ok(self, name: str, detail: str = "") -> None:
+        self.passed += 1
+        self._emit("[PASS]", name, detail)
+
+    @staticmethod
+    def _emit(tag: str, name: str, detail: str) -> None:
+        print(f"  {tag} {name}" + (f" - {detail}" if detail else ""))
+
+    @property
+    def exit_code(self) -> int:
+        return 1 if self.failed else 0
+
+
+# ─────────────────────────────────────────────
+# 3. 태그 유틸리티
+# ─────────────────────────────────────────────
+def normalize_tag(raw: str) -> str:
+    """
+    비교 가능한 형태로 태그를 정규화한다.
+
+    괄호 강조와 가중치 표기를 제거하고 소문자·단일 공백으로 맞춘다.
+        "(huge:1.3)"      -> "huge"
+        "((tag))"         -> "tag"
+        " Bad   Hands "   -> "bad hands"
+    """
+    tag = raw.strip().lower().translate(_BRACKET_TABLE)
+    tag = WEIGHT_SUFFIX_PATTERN.sub("", tag)
+    return " ".join(tag.split())
+
+
+def split_tags(text: str) -> list[str]:
+    """쉼표로 분리해 정규화한 태그 목록. 빈 토큰은 버린다."""
+    return [tag for tag in map(normalize_tag, text.split(",")) if tag]
+
+
+def find_tag_conflicts(positive: str, negative: str) -> list[str]:
+    """
+    포지티브와 네거티브에 동시에 존재하는 태그를 찾는다.
+
+    같은 문자열만 잡는다. '1girl' 과 '1boy' 처럼 의미가 상충하지만
+    문자열이 다른 경우는 검출되지 않는다.
+    """
+    return sorted(set(split_tags(positive)) & set(split_tags(negative)))
+
+
+def join_tags(*parts: str) -> str:
+    """빈 조각을 건너뛰고 쉼표로 이어붙인다."""
+    return ", ".join(part.strip() for part in parts if part and part.strip())
+
+
+# ─────────────────────────────────────────────
+# 4. 입력 검증
+# ─────────────────────────────────────────────
+def validate_prefix(prefix: str) -> str:
+    """
+    prefix 를 안전한 단일 경로 세그먼트로 제한한다.
+
+    prefix 는 저장 경로와 파일명에 그대로 들어가므로, 검증하지 않으면
+    '../' 로 대상 폴더를 벗어나거나 인용부호로 셸 인자를 깨뜨릴 수 있다.
+    화이트리스트 방식이라 새 위험 문자가 생겨도 자동으로 막힌다.
+    """
+    candidate = prefix.strip()
+    if not SAFE_PREFIX_PATTERN.match(candidate):
+        raise ConfigError(
+            f"prefix '{prefix}' 를 사용할 수 없습니다.",
+            "영문·숫자·밑줄·하이픈 1~64자만 허용합니다. (예: mika, test_01)",
+        )
+    return candidate
+
+
+# ─────────────────────────────────────────────
+# 4. 프롬프트 DB 파싱
+# ─────────────────────────────────────────────
+def _iter_sections(raw: dict[str, Any]) -> Iterable[tuple[str, Any]]:
+    """주석 섹션(_ 시작)을 걸러 순회한다 (R2.6)."""
+    for name, body in raw.items():
+        if not name.startswith(SECTION_COMMENT_PREFIX):
+            yield name, body
+
+
+def _parse_profiles(raw: dict[str, Any], warnings: list[str]) -> dict[str, Profile]:
+    """_profiles 섹션을 Profile 매핑으로 변환한다. 문제 항목은 경고 후 건너뛴다."""
+    section = raw.get(PROFILES_KEY)
+    if section is None:
+        return {}
+    if not isinstance(section, dict):
+        warnings.append(f"'{PROFILES_KEY}' 가 딕셔너리가 아님 - 프로필 무시")
+        return {}
+
+    profiles: dict[str, Profile] = {}
+    for name, body in section.items():
+        if not isinstance(body, dict):
+            warnings.append(f"프로필 '{name}' 이 딕셔너리가 아님 - 무시")
+            continue
+
+        positive = body.get(PROFILE_POSITIVE_KEY)
+        negative = body.get(PROFILE_NEGATIVE_KEY, "")
+
+        if not isinstance(positive, str) or not positive.strip():
+            warnings.append(
+                f"프로필 '{name}' 에 {PROFILE_POSITIVE_KEY} 가 없거나 비어 있음 - 무시"
+            )
+            continue
+        if not isinstance(negative, str):
+            warnings.append(f"프로필 '{name}' 의 {PROFILE_NEGATIVE_KEY} 가 문자열이 아님 - 빈 값 사용")
+            negative = ""
+
+        profiles[name] = Profile(name, positive.strip(), negative.strip())
+
+    return profiles
+
+
+def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
+    """
+    최상위 섹션 딕셔너리를 PoseDatabase 로 정규화한다.
+
+    파일 I/O 도 프로세스 종료도 하지 않는 순수 함수. --test 에서 직접 호출한다.
+    """
+    db = PoseDatabase()
+    db.profiles = _parse_profiles(raw, db.warnings)
+
+    for section, body in _iter_sections(raw):
+        if not isinstance(body, dict):
+            db.warnings.append(f"섹션 '{section}' 이 딕셔너리가 아님 - 무시")
+            continue
+
+        section_codes: list[int] = []
+        for key, value in body.items():
+            try:
+                code = int(key)
+            except (TypeError, ValueError):
+                db.warnings.append(
+                    f"섹션 '{section}' 의 키 '{key}' 는 정수가 아님 - 무시"
+                )
+                continue
+
+            if not isinstance(value, str) or not value.strip():
+                db.warnings.append(f"코드 {key} 의 프롬프트가 비어 있음 - 무시")
+                continue
+
+            if code in db.entries:
+                previous = db.entries[code].section
+                db.warnings.append(
+                    f"코드 {code} 중복 정의 ('{previous}' -> '{section}') - 나중 값 사용"
+                )
+
+            db.entries[code] = PoseEntry(code, value.strip(), section)
+            section_codes.append(code)
+
+        db.sections[section] = sorted(section_codes)
+
+    return db
+
+
+def read_pose_json(base_dir: Path) -> dict[str, Any]:
+    """
+    pose_database.json 을 읽어 원본 딕셔너리를 반환한다.
+
+    Raises:
+        ConfigError: 파일 부재, 문법 오류, 최상위 타입 불일치.
+    """
+    db_path = base_dir / POSE_DB_FILE
+
+    try:
+        text = db_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise ConfigError(
+            f"프롬프트 DB 파일을 찾을 수 없습니다: {db_path}",
+            f"{POSE_DB_FILE} 을 스크립트와 같은 폴더에 두세요.",
+        ) from None
+    except OSError as e:
+        raise ConfigError(f"프롬프트 DB 파일을 읽을 수 없습니다: {e}") from None
+
+    try:
+        raw = json.loads(text)
+    except json.JSONDecodeError as e:
+        raise ConfigError(
+            f"JSON 문법 오류: {db_path}",
+            f"line {e.lineno}, column {e.colno}: {e.msg}",
+        ) from None
+
+    if not isinstance(raw, dict):
+        raise ConfigError(
+            "JSON 최상위는 섹션 딕셔너리여야 합니다.",
+            '예: {"emotions": {"00": "standing, smile"}}',
+        )
+
+    return raw
+
+
+def load_pose_db(base_dir: Path) -> PoseDatabase:
+    """JSON 을 읽고 검증까지 완료한 PoseDatabase 를 반환한다."""
+    db = parse_pose_db(read_pose_json(base_dir))
+
+    if not db.entries:
+        raise ConfigError(
+            "유효한 프롬프트 항목이 없습니다.",
+            '예: {"emotions": {"00": "standing, smile"}}',
+        )
+
+    return db
+
+
+def peek_choices(base_dir: Path) -> tuple[list[str], list[str]]:
+    """
+    --help 문구용 (섹션명, 프로필명) 목록.
+
+    argparse 의 choices 는 파서 생성 시점에 확정되므로 쓸 수 없지만,
+    help 문구는 JSON 을 먼저 읽어 동적으로 채울 수 있다. 읽기에 실패해도
+    --help 자체는 동작해야 하므로 예외를 내지 않는다.
+    """
+    try:
+        raw = read_pose_json(base_dir)
+    except ConfigError:
+        return [], []
+
+    sections = [name for name, body in _iter_sections(raw) if isinstance(body, dict)]
+    profiles = list(_parse_profiles(raw, []))
+    return sections, profiles
+
+
+def print_warnings(db: PoseDatabase) -> None:
+    """로드 경고를 생성 로그 시작 전에 한 번에 출력한다."""
+    if not db.warnings:
+        return
+    for message in db.warnings:
+        print(f"[WARN] {message}")
+    print()
+
+
+def resolve_profile(db: PoseDatabase, requested: str | None) -> Profile:
+    """
+    --profile 값을 Profile 로 해석한다.
+
+    _profiles 가 없는 JSON 에서는 스크립트 하드코딩값을 가상 프로필로 감싸
+    기존 동작을 그대로 유지한다.
+
+    Raises:
+        ConfigError: 요청한 프로필이 정의되지 않았을 때.
+    """
+    if not db.profiles:
+        if requested:
+            raise ConfigError(
+                f"프로필 '{requested}' 을 쓸 수 없습니다. "
+                f"{POSE_DB_FILE} 에 '{PROFILES_KEY}' 섹션이 없습니다.",
+                f"'{PROFILES_KEY}' 를 추가하거나 --profile 을 생략하세요.",
+            )
+        return Profile(FALLBACK_PROFILE, POS_BASE, COMMON_NEG)
+
+    if requested:
+        if requested not in db.profiles:
+            raise ConfigError(
+                f"알 수 없는 프로필 '{requested}'. 사용 가능: {db.profile_names}",
+                f"{POSE_DB_FILE} 의 '{PROFILES_KEY}' 섹션을 확인하세요.",
+            )
+        return db.profiles[requested]
+
+    if DEFAULT_PROFILE in db.profiles:
+        return db.profiles[DEFAULT_PROFILE]
+
+    # 기본 프로필명이 없으면 정의 순서상 첫 프로필로 폴백한다.
+    return next(iter(db.profiles.values()))
+
+
+# ─────────────────────────────────────────────
+# 5. 코드 표현식 파싱 및 대상 결정
+# ─────────────────────────────────────────────
+def _parse_code_token(token: str) -> Iterable[int]:
+    """단일 토큰('7' 또는 '10-14')을 코드로 확장한다."""
+    if "-" in token:
+        start_text, _, end_text = token.partition("-")
+        start, end = int(start_text.strip()), int(end_text.strip())
+        if start > end:
+            start, end = end, start  # 역순 입력 허용
+        if start < 0:
+            raise ValueError(f"음수 코드는 허용되지 않습니다: {token}")
+        if end > MAX_CODE:
+            raise ValueError(f"코드 상한({MAX_CODE})을 초과했습니다: {token}")
+        return range(start, end + 1)
+
+    code = int(token)
+    if not 0 <= code <= MAX_CODE:
+        raise ValueError(f"코드는 0~{MAX_CODE} 범위여야 합니다: {token}")
+    return (code,)
+
+
+def parse_codes_expr(expr: str) -> list[int]:
+    """
+    코드 표현식을 정수 리스트로 변환한다.
+
+    지원: "20-29"(범위), "0,3,7"(열거), "0-5,10,20-22"(혼합)
+    역순 범위는 교정하고, 중복은 정규화한다.
+
+    Raises:
+        ValueError: 정수로 해석할 수 없거나 0~MAX_CODE 범위를 벗어날 때.
+    """
+    codes: set[int] = set()
+    for raw_token in expr.split(","):
+        token = raw_token.strip()
+        if token:
+            codes.update(_parse_code_token(token))
+    return sorted(codes)
+
+
+def looks_like_code_expr(value: str) -> bool:
+    """숫자·콤마·하이픈·공백만으로 구성되면 코드 표현식으로 간주한다 (R2.7)."""
+    return bool(value) and CODE_EXPR_PATTERN.match(value) is not None
+
+
+def _pick_code_expr(mode: str, codes_expr: str | None) -> str | None:
+    """--codes 와 --mode 중 코드 표현식으로 쓸 값을 고른다 (R2.9)."""
+    if codes_expr:
+        if mode and mode != "all" and looks_like_code_expr(mode):
+            print(f"[WARN] --codes 가 우선합니다. --mode '{mode}' 무시됨")
+        return codes_expr
+    if mode and looks_like_code_expr(mode):
+        return mode  # R2.7 — 코드 리스트 직접 지정
+    return None
+
+
+def resolve_targets(
+    db: PoseDatabase, mode: str, codes_expr: str | None = None
+) -> list[int]:
+    """
+    --codes / --mode 를 해석해 순회 대상 코드를 반환한다.
+
+    Raises:
+        ConfigError: 표현식 구문 오류 또는 미등록 모드.
+    """
+    expr = _pick_code_expr(mode, codes_expr)
+
+    if expr is not None:
+        try:
+            requested = parse_codes_expr(expr)
+        except ValueError as e:
+            raise ConfigError(
+                f"코드 표현식을 해석할 수 없습니다: '{expr}' ({e})",
+                "예: 20-29 / 0,3,7 / 0-5,10,20-22",
+            ) from None
+
+        if missing := [code for code in requested if code not in db.entries]:
+            print(f"[WARN] DB에 없는 코드 무시: {missing}")
+        return [code for code in requested if code in db.entries]
+
+    if mode == "all":
+        return db.all_codes
+    if mode in db.sections:
+        return db.sections[mode]
+
+    raise ConfigError(
+        f"알 수 없는 모드 '{mode}'. 사용 가능: {['all'] + sorted(db.sections)}",
+        "코드 리스트 직접 지정도 가능합니다. 예: --mode 0,5,12 / --mode 10-14",
+    )
+
+
+# ─────────────────────────────────────────────
+# 6. 가변 폭 코드 포맷팅
+# ─────────────────────────────────────────────
+def code_width(codes: Sequence[int]) -> int:
+    """최대 코드 자릿수에 맞춘 패딩 폭. 최소 2자리로 하위 호환 유지 (R3.1)."""
+    if not codes:
+        return MIN_CODE_WIDTH
+    return max(MIN_CODE_WIDTH, len(str(max(codes))))
+
+
+def format_code(code: int, width: int) -> str:
+    """코드 제로 패딩 단일 진입점."""
+    return f"{code:0{width}d}"
+
+
+def asset_filename(prefix: str, code: int, width: int) -> str:
+    """파일명 조립 단일 진입점. 루프·스킵 판정·마크다운이 모두 이걸 쓴다 (R3.3)."""
+    return f"{prefix}_{format_code(code, width)}.webp"
+
+
+# ─────────────────────────────────────────────
+# 7. API 유틸리티
+# ─────────────────────────────────────────────
+@lru_cache(maxsize=1)
+def get_session() -> requests.Session:
+    """
+    HTTP 세션을 재사용한다.
+
+    배치당 수십 건을 순차 요청하므로 커넥션을 유지하면 매 요청의
+    TCP 핸드셰이크가 사라진다.
+    """
+    return requests.Session()
+
+
+def resolve_sampler() -> str:
+    """
+    WebUI가 지원하는 샘플러 목록과 대조해 사용 가능한 첫 후보를 반환한다.
+
+    후보 목록과 폴백 순서는 검증된 동작이므로 변경하지 않는다 (R5.2).
+    """
+    try:
+        response = get_session().get(SAMPLERS_URL, timeout=SAMPLERS_TIMEOUT)
+        response.raise_for_status()
+        available = {item["name"] for item in response.json()}
+    except Exception:  # noqa: BLE001 — 조회 실패는 기본값으로 진행한다
+        print("[SAMPLER] 목록 조회 실패 - 기본값 사용")
+        return SAMPLER_CANDIDATES[0]
+
+    for candidate in SAMPLER_CANDIDATES:
+        if candidate in available:
+            print(f"[SAMPLER] '{candidate}' 감지됨")
+            return candidate
+
+    print(f"[SAMPLER] 후보 미발견 - '{SAMPLER_CANDIDATES[0]}' 로 전달")
+    return SAMPLER_CANDIDATES[0]
+
+
+def save_as_webp(
+    png_bytes: bytes, save_path: Path, quality: int = WEBP_QUALITY
+) -> None:
+    """
+    PNG 바이트를 Pillow로 열어 실제 WebP로 인코딩 저장한다.
+
+    변환 파라미터(RGBA/P -> RGB, quality, method)는 검증된 값이라 그대로 둔다 (R5.1).
+    쓰기만 임시 파일 경유로 바꿨다. 중단 시 반쪽 파일이 남으면 재개 로직이
+    그것을 '완성된 파일'로 보고 건너뛰기 때문이다.
+    """
+    partial = save_path.with_name(save_path.name + PARTIAL_SUFFIX)
+
+    image = Image.open(io.BytesIO(png_bytes))
+    if image.mode in ("RGBA", "P"):
+        image = image.convert("RGB")
+
+    try:
+        image.save(partial, format="WEBP", quality=quality, method=WEBP_METHOD)
+        os.replace(partial, save_path)  # 같은 볼륨 내 원자적 교체
+    except Exception:
+        partial.unlink(missing_ok=True)
+        raise
+
+
+def generate_image(prompt: str, negative_prompt: str, sampler_name: str) -> bytes:
+    """WebUI txt2img 를 호출해 PNG 바이트를 반환한다."""
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "width": IMAGE_SIZE[0],
+        "height": IMAGE_SIZE[1],
+        "steps": STEPS,
+        "batch_size": 1,
+        "n_iter": 1,
+        "cfg_scale": CFG_SCALE,
+        "sampler_name": sampler_name,
+    }
+
+    response = get_session().post(API_URL, json=payload, timeout=TXT2IMG_TIMEOUT)
+    response.raise_for_status()
+
+    images = response.json().get("images") or []
+    if not images:
+        # 명시적으로 걸러야 KeyError/IndexError 대신 읽을 수 있는 메시지가 남는다.
+        raise RuntimeError("API 응답에 images 가 없습니다")
+
+    return base64.b64decode(images[0])
+
+
+# ─────────────────────────────────────────────
+# 8. 모의 이미지 생성 (--mock)
+# ─────────────────────────────────────────────
+def _hue_color(code: int) -> tuple[int, int, int]:
+    """코드값으로 배경색을 분산시켜 이미지 구분이 육안으로 가능하게 한다."""
+    red, green, blue = colorsys.hsv_to_rgb(((code * 37) % 360) / 360.0, 0.35, 0.90)
+    return int(red * 255), int(green * 255), int(blue * 255)
+
+
+@lru_cache(maxsize=1)
+def _mock_fonts() -> tuple[FontLike, FontLike]:
+    """
+    더미 이미지용 폰트를 한 번만 로드해 재사용한다.
+
+    캐시가 없으면 배치 장수만큼 truetype 파일을 반복해서 읽는다.
+    폰트가 없는 환경에서도 예외 없이 완주해야 한다 (R7.3).
+    """
+    try:
+        return (
+            ImageFont.truetype("arial.ttf", MOCK_FONT_BIG_SIZE),
+            ImageFont.truetype("arial.ttf", MOCK_FONT_SMALL_SIZE),
+        )
+    except OSError:
+        fallback = ImageFont.load_default()
+        return fallback, fallback
+
+
+def make_dummy_png(prefix: str, code: int, width: int, entry: PoseEntry) -> bytes:
+    """
+    API 반환값과 동일한 형태(PNG 바이트열)의 더미 이미지를 즉석 생성한다.
+
+    반환 형식을 PNG로 맞추는 것이 핵심이다. 이렇게 하면 save_as_webp() 를
+    우회하지 않으므로 Pillow 변환 로직까지 검증 범위에 들어온다 (R7.4).
+    """
+    font_big, font_small = _mock_fonts()
+
+    image = Image.new("RGB", MOCK_SIZE, _hue_color(code))
+    draw = ImageDraw.Draw(image)
+
+    # 줄 간격을 폰트 객체 동일성으로 판단하면, 폴백 시 두 폰트가 같은 객체가 되어
+    # 모든 줄이 큰 간격을 쓰게 된다. 간격을 데이터로 명시해 그 결합을 끊는다.
+    rows: tuple[tuple[str, FontLike, int], ...] = (
+        (format_code(code, width), font_big, MOCK_GAP_BIG),
+        (prefix, font_small, MOCK_GAP_SMALL),
+        (entry.section, font_small, MOCK_GAP_SMALL),
+        (entry.label[:MOCK_LABEL_MAXLEN], font_small, MOCK_GAP_SMALL),
+        ("MOCK", font_small, MOCK_GAP_SMALL),
+    )
+
+    y = MOCK_TEXT_TOP
+    for text, font, gap in rows:
+        draw.text((MOCK_TEXT_X, y), text, fill=MOCK_TEXT_COLOR, font=font)
+        y += gap
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+# ─────────────────────────────────────────────
+# 9. 배치 실행
+# ─────────────────────────────────────────────
+def run_batch(
+    *,
+    prefix: str,
+    base_positive: str,
+    char_prompt: str,
+    negative_prompt: str,
+    targets: Sequence[int],
+    db: PoseDatabase,
+    save_dir: Path,
+    width: int,
+    sampler_name: str,
+    dry_run: bool = False,
+    mock: bool = False,
+) -> BatchResult:
+    result = BatchResult(dry_run=dry_run)
+
+    for code in targets:
+        entry = db.entries[code]
+        tag = format_code(code, width)
+        filename = asset_filename(prefix, code, width)
+        save_path = save_dir / filename
+
+        # dry-run 검사를 존재 확인보다 먼저 둔다.
+        # 순서가 뒤바뀌면 이미 생성된 파일이 skipped 로 빠져 planned 가 불완전해진다.
+        if dry_run:
+            result.planned.append(code)
+            print(f"  [{tag}] (계획) {filename}  <- {entry.label}")
+            continue
+
+        if save_path.exists():
+            print(f"  [{tag}] 이미 존재 (건너뜀) -> {filename}")
+            result.skipped.append(code)
+            continue
+
+        print(f"  [{tag}] {'모의 생성' if mock else '생성'} 중... ", end="", flush=True)
+
+        try:
+            if mock:
+                png_bytes = make_dummy_png(prefix, code, width, entry)
+            else:
+                full_prompt = join_tags(
+                    base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
+                )
+                png_bytes = generate_image(full_prompt, negative_prompt, sampler_name)
+            save_as_webp(png_bytes, save_path)
+        except requests.exceptions.ConnectionError:
+            # WebUI 가 죽은 상태에서 남은 코드를 계속 시도하면 대기만 누적된다.
+            print("실패: WebUI 연결 불가 (--api 옵션 실행 여부 확인)")
+            result.failed.append((code, "connection"))
+            result.aborted = True
+            break
+        except Exception as e:  # noqa: BLE001 — 개별 실패는 배치를 막지 않는다
+            print(f"실패: {e}")
+            result.failed.append((code, str(e)))
+            continue
+
+        print(f"완료 -> {filename}")
+        result.success.append(code)
+
+    return result
+
+
+# ─────────────────────────────────────────────
+# 10. 젠잇 마크다운 조립
+# ─────────────────────────────────────────────
+def mode_badge(dry_run: bool, mock: bool) -> str:
+    if dry_run:
+        return " [DRY-RUN]"
+    if mock:
+        return " [MOCK]"
+    return ""
+
+
+def build_section_guide(
+    db: PoseDatabase, codes: Sequence[int], prefix: str, width: int
+) -> str:
+    """JSON 실제 구성에서 상태 매핑 가이드를 유도한다 (R4.7)."""
+    present = set(codes)
+    blocks: list[str] = []
+
+    for section, section_codes in db.sections.items():
+        available = [code for code in section_codes if code in present]
+        if not available:
+            continue
+        rows = "\n".join(
+            f"  {db.entries[code].label:<26} -> {asset_filename(prefix, code, width)}"
+            for code in available
+        )
+        blocks.append(f"[{section}]\n{rows}")
+
+    return "\n\n".join(blocks)
+
+
+def build_genit_block(
+    prefix: str,
+    codes: Sequence[int],
+    db: PoseDatabase,
+    width: int,
+    badge: str = "",
+) -> str:
+    """
+    젠잇 복사용 마크다운 블록을 조립해 문자열로 반환한다.
+
+    출력이 아니라 반환으로 둔 이유: --test 에서 stdout 캡처 없이
+    라인 수와 리터럴 포함 여부를 직접 검사할 수 있어야 한다 (R8.7).
+    """
+    urls = [f"{URL_PLACEHOLDER}{prefix}/{asset_filename(prefix, c, width)}" for c in codes]
+
+    calls = "\n".join(f"![image]({url})" for url in urls)
+    files = "\n".join(
+        f"- `{url}` ({db.entries[code].label})" for code, url in zip(codes, urls)
+    )
+    guide = build_section_guide(db, codes, prefix, width)
+    status = GENIT_STATUS_TEMPLATE.format(
+        name=prefix, title="직책입력", status="현재상태", desc="대사한줄"
+    )
+
+    return f"""
+{SEPARATOR}
+  젠잇(Genit) 복사용 에셋 블록 | {prefix}   (총 {len(codes)}개){badge}
+{SEPARATOR}
+
+### {prefix} 이미지 호출 코드
+{calls}
+
+### {prefix} 파일 목록
+{files}
+
+### {prefix} 상태 매핑 가이드
+{guide}
+
+### {prefix} 상태창 템플릿
+{status}
+{SEPARATOR}
+"""
+
+
+# ─────────────────────────────────────────────
+# 11. 자체 검증 (--test)
+# ─────────────────────────────────────────────
+PARSER_CASES: tuple[tuple[str, list[int]], ...] = (
+    ("20-29", list(range(20, 30))),
+    ("0,3,7", [0, 3, 7]),
+    ("0-5,10,20-22", [0, 1, 2, 3, 4, 5, 10, 20, 21, 22]),
+    ("29-20", list(range(20, 30))),  # 역순 교정
+    ("0-5,3", [0, 1, 2, 3, 4, 5]),  # 중복 정규화
+    (" 1 , 2 ", [1, 2]),  # 공백 허용
+)
+
+REJECT_EXPRS: tuple[str, ...] = (
+    "abc",
+    "1-",
+    f"0-{MAX_CODE + 1}",  # 상한 초과
+    "-5",
+)
+
+UNSAFE_PREFIXES: tuple[str, ...] = (
+    "..",
+    "../evil",
+    "a/b",
+    "a\\b",
+    'a" & calc & "',
+    "",
+    "x" * 65,
+)
+
+WIDTH_CASES: tuple[tuple[list[int], int], ...] = (
+    ([0, 19], 2),
+    ([0, 99], 2),
+    ([0, 100], 3),
+    ([7], 2),
+    ([], 2),
+)
+
+SYNTHETIC_RAW: dict[str, Any] = {
+    "_comment": "self-test fixture",
+    "alpha": {"5": "five, tag", "12": "twelve, tag", "03": "three, tag"},
+    "beta": {"7": "seven, tag"},
+}
+
+# 태그 정규화 케이스: (입력, 기대값)
+NORMALIZE_CASES: tuple[tuple[str, str], ...] = (
+    ("(huge:1.3)", "huge"),
+    ("((tag))", "tag"),
+    ("[soft]", "soft"),
+    (" Bad   Hands ", "bad hands"),
+    ("(masterpiece:1.2)", "masterpiece"),
+    ("plain", "plain"),
+    ("(weight:-0.5)", "weight"),
+)
+
+# 충돌 감지 케이스: (포지티브, 네거티브, 기대 충돌 목록)
+CONFLICT_CASES: tuple[tuple[str, str, list[str]], ...] = (
+    ("1girl, solo, smile", "1boy, male", []),
+    ("1girl, (breasts:1.2)", "breasts, muscular", ["breasts"]),
+    ("a, b, c", "C, B", ["b", "c"]),
+    ("", "anything", []),
+)
+
+
+def _audit_data_quality(report: TestReport, raw: dict[str, Any]) -> None:
+    """T4~T6: 데이터 품질. 런타임과 동일하게 경고로만 처리한다."""
+    bad_keys: list[str] = []
+    empty_values: list[str] = []
+    duplicates: list[str] = []
+    seen: dict[int, str] = {}
+
+    for section, body in _iter_sections(raw):
+        if not isinstance(body, dict):
+            continue
+        for key, value in body.items():
+            try:
+                code = int(key)
+            except (TypeError, ValueError):
+                bad_keys.append(f"{section}/{key}")
+                continue
+            if not isinstance(value, str) or not value.strip():
+                empty_values.append(f"{section}/{key}")
+                continue
+            if code in seen:
+                duplicates.append(f"{code}({seen[code]}->{section})")
+            seen[code] = section
+
+    for name, findings in (
+        ("T4 비정수 키", bad_keys),
+        ("T5 빈 프롬프트", empty_values),
+        ("T6 중복 코드", duplicates),
+    ):
+        if findings:
+            report.warn(name, str(findings))
+        else:
+            report.ok(f"{name} 없음")
+
+
+def _test_logic(report: TestReport, db: PoseDatabase) -> None:
+    """T8~T15: 순수 함수 검증. 실제 구현을 직접 호출한다 (R8.7)."""
+    print("\n[로직 검사]")
+    synthetic = parse_pose_db(SYNTHETIC_RAW)
+
+    # T8 — 문자열 사전순으로 정렬하면 "10" < "2" 가 되어 순서가 깨진다.
+    lexicographic = [int(k) for k in sorted(["5", "12", "03"])]
+    report.check(
+        "T8 정수 정렬 (사전순 아님)",
+        synthetic.all_codes == [3, 5, 7, 12] and lexicographic != [3, 5, 12],
+        f"{synthetic.all_codes}, 사전순={lexicographic}",
+    )
+    report.check(
+        "T8b 실제 DB 정렬", db.all_codes == sorted(db.all_codes), str(db.all_codes)
+    )
+
+    # T9
+    report.check(
+        "T9 code_width 산출",
+        all(code_width(codes) == expected for codes, expected in WIDTH_CASES),
+        str([(codes, code_width(codes)) for codes, _ in WIDTH_CASES]),
+    )
+
+    # T10
+    failures = []
+    for expr, expected in PARSER_CASES:
+        try:
+            actual = parse_codes_expr(expr)
+            if actual != expected:
+                failures.append(f"'{expr}'->{actual}!={expected}")
+        except Exception as e:  # noqa: BLE001
+            failures.append(f"'{expr}' raised {e}")
+    report.check(f"T10 parse_codes_expr {len(PARSER_CASES)}케이스", not failures,
+                 str(failures) if failures else "")
+
+    report.check(
+        "T10b looks_like_code_expr 판별",
+        all(map(looks_like_code_expr, ("0,5,12", "10-14")))
+        and not any(map(looks_like_code_expr, ("emotions", "all", ""))),
+    )
+
+    # T11
+    report.check(
+        "T11 asset_filename 조립",
+        asset_filename("x", 7, 2) == "x_07.webp"
+        and asset_filename("x", 7, 3) == "x_007.webp"
+        and asset_filename("x", 123, 3) == "x_123.webp",
+        asset_filename("x", 7, 2),
+    )
+
+    # T12 / T13
+    codes = synthetic.all_codes
+    block = build_genit_block("t", codes, synthetic, code_width(codes))
+    calls = block.count("![image](")
+    report.check("T12 마크다운 라인 수 == 대상 수", calls == len(codes),
+                 f"{calls}/{len(codes)}")
+    report.check("T13 {{url}} 리터럴 포함", URL_PLACEHOLDER in block)
+
+    # T14 — prefix 화이트리스트가 경로 이탈·인용부호 주입을 막는지
+    rejected = []
+    for unsafe in UNSAFE_PREFIXES:
+        try:
+            validate_prefix(unsafe)
+        except ConfigError:
+            continue
+        rejected.append(unsafe)
+    report.check("T14 위험 prefix 차단", not rejected,
+                 f"통과됨: {rejected}" if rejected else f"{len(UNSAFE_PREFIXES)}종 차단")
+    report.check(
+        "T14b 정상 prefix 허용",
+        validate_prefix(" mika ") == "mika" and validate_prefix("test_01") == "test_01",
+    )
+
+    # T15 — 상한/음수 표현식 거부
+    accepted = []
+    for expr in REJECT_EXPRS:
+        try:
+            parse_codes_expr(expr)
+        except ValueError:
+            continue
+        accepted.append(expr)
+    report.check("T15 잘못된 표현식 거부", not accepted,
+                 f"통과됨: {accepted}" if accepted else f"{len(REJECT_EXPRS)}종 거부")
+
+    # T16 — 태그 정규화 (괄호·가중치·대소문자·공백)
+    bad_norm = [
+        f"'{src}'->'{normalize_tag(src)}'!='{expected}'"
+        for src, expected in NORMALIZE_CASES
+        if normalize_tag(src) != expected
+    ]
+    report.check(f"T16 normalize_tag {len(NORMALIZE_CASES)}케이스", not bad_norm,
+                 str(bad_norm) if bad_norm else "")
+
+    # T17 — 충돌 감지 함수 동작
+    bad_conflict = [
+        f"({pos!r},{neg!r})->{find_tag_conflicts(pos, neg)}!={expected}"
+        for pos, neg, expected in CONFLICT_CASES
+        if find_tag_conflicts(pos, neg) != expected
+    ]
+    report.check(f"T17 find_tag_conflicts {len(CONFLICT_CASES)}케이스",
+                 not bad_conflict, str(bad_conflict) if bad_conflict else "")
+
+
+def _test_profiles(report: TestReport, db: PoseDatabase) -> None:
+    """T18~T20: 프로필 정의 및 실제 태그 충돌 검사."""
+    print("\n[프로필 검사]")
+
+    if not db.profiles:
+        report.warn(
+            f"T18 '{PROFILES_KEY}' 섹션 없음",
+            f"스크립트 하드코딩값으로 폴백합니다. 성별 전환이 필요하면 {PROFILES_KEY} 를 추가하세요",
+        )
+        conflicts = find_tag_conflicts(POS_BASE, COMMON_NEG)
+        if conflicts:
+            report.warn("T19 내장 기본값 태그 충돌", str(conflicts))
+        else:
+            report.ok("T19 내장 기본값 태그 충돌 없음")
+        return
+
+    report.ok(f"T18 프로필 {len(db.profiles)}종 로드", str(db.profile_names))
+
+    # T19 — 프로필별 포지티브/네거티브 동일 태그 충돌
+    found_any = False
+    for name, profile in db.profiles.items():
+        conflicts = find_tag_conflicts(profile.base_negative, profile.base_positive)
+        if conflicts:
+            found_any = True
+            report.warn(f"T19 프로필 '{name}' 태그 충돌", str(conflicts))
+    if not found_any:
+        report.ok("T19 프로필 태그 충돌 없음", f"{len(db.profiles)}종 검사")
+
+    # T20 — 기본 프로필 존재 여부 (--profile 생략 시 예측 가능성)
+    if DEFAULT_PROFILE in db.profiles:
+        report.ok(f"T20 기본 프로필 '{DEFAULT_PROFILE}' 존재")
+    else:
+        fallback = next(iter(db.profiles))
+        report.warn(
+            f"T20 기본 프로필 '{DEFAULT_PROFILE}' 없음",
+            f"--profile 생략 시 '{fallback}' 이 쓰입니다",
+        )
+
+
+def run_self_test(base_dir: Path) -> int:
+    """데이터·로직 자체 진단. 파일 쓰기와 네트워크 요청을 하지 않는다."""
+    report = TestReport()
+
+    print(f"\n{SEPARATOR}")
+    print("  자체 검증 (--test)")
+    print(SEPARATOR)
+    print("\n[데이터 검사]")
+
+    db_path = base_dir / POSE_DB_FILE
+    if not report.check("T1 JSON 파일 존재", db_path.exists(), str(db_path)):
+        return _finish_test(report)
+
+    try:
+        raw = read_pose_json(base_dir)
+        report.check("T2 JSON 문법", True)
+        report.check("T3 최상위 섹션 딕셔너리", True)
+    except ConfigError as e:
+        report.check("T2/T3 JSON 로드", False, f"{e} {e.hint}".strip())
+        return _finish_test(report)
+
+    if non_dict := [n for n, b in _iter_sections(raw) if not isinstance(b, dict)]:
+        report.warn("T3b 비-딕셔너리 섹션", str(non_dict))
+
+    _audit_data_quality(report, raw)
+
+    db = parse_pose_db(raw)
+    if not report.check("T7 유효 엔트리 1개 이상", bool(db.entries), f"{len(db.entries)}개"):
+        return _finish_test(report)
+
+    _test_logic(report, db)
+    _test_profiles(report, db)
+    return _finish_test(report)
+
+
+def _finish_test(report: TestReport) -> int:
+    print(f"\n{SEPARATOR}")
+    print(f"  결과: PASS {report.passed} / FAIL {report.failed} / WARN {report.warned}")
+    print(f"  종료 코드: {report.exit_code}")
+    print(f"{SEPARATOR}\n")
+    return report.exit_code
+
+
+# ─────────────────────────────────────────────
+# 12. CLI 파서
+# ─────────────────────────────────────────────
+def build_parser(
+    section_names: Sequence[str] | None = None,
+    profile_names: Sequence[str] | None = None,
+    add_help: bool = True,
+) -> argparse.ArgumentParser:
+    if section_names:
+        mode_help = (
+            f"all | 섹션명({', '.join(section_names)}) | 코드 리스트(0,5,12 / 10-14)"
+        )
+    else:
+        mode_help = "all | JSON 섹션명 | 코드 리스트 (0,5,12 / 10-14)"
+
+    if profile_names:
+        profile_help = (
+            f"캐릭터 프로필: {', '.join(profile_names)} "
+            f"(생략 시 '{DEFAULT_PROFILE}')"
+        )
+    else:
+        profile_help = f"캐릭터 프로필 (_profiles 섹션에서 선택, 생략 시 '{DEFAULT_PROFILE}')"
+
+    parser = argparse.ArgumentParser(
+        prog=Path(__file__).name,
+        description="캐릭터 챗봇용 이미지 에셋 배치 생성기 (SD WebUI)",
+        add_help=add_help,
+    )
+    parser.add_argument("--prefix", help="에셋 식별자 (영문·숫자·_·- 1~64자)")
+    parser.add_argument("--char_prompt", help="캐릭터 외형 태그")
+    parser.add_argument("--custom_neg", default="", help="추가 네거티브 태그 (선택)")
+    parser.add_argument("--profile", default=None, help=profile_help)
+    parser.add_argument("--mode", default="all", help=mode_help)
+    parser.add_argument("--codes", default=None, help="코드 직접 지정 (20-29 / 0,3,7)")
+    parser.add_argument(
+        "--dry-run", dest="dry_run", action="store_true",
+        help="파일 쓰기 없이 대상·파일명·마크다운만 출력",
+    )
+    parser.add_argument(
+        "--mock", action="store_true",
+        help="WebUI 없이 더미 이미지를 생성해 전체 파이프라인 검증",
+    )
+    parser.add_argument(
+        "--test", action="store_true", help="데이터·로직 자체 진단 후 종료"
+    )
+    return parser
+
+
+# ─────────────────────────────────────────────
+# 13. 실행 흐름
+# ─────────────────────────────────────────────
+def open_in_explorer(path: Path) -> None:
+    """
+    결과 폴더를 파일 탐색기로 연다.
+
+    os.system() 대신 os.startfile() 을 쓴다. 셸을 거치지 않으므로
+    경로에 특수문자가 있어도 명령이 조립되지 않는다.
+    """
+    if os.name != "nt":
+        return
+    try:
+        os.startfile(path)  # type: ignore[attr-defined]  # Windows 전용
+    except OSError as e:
+        print(f"[WARN] 탐색기를 열지 못했습니다: {e}")
+
+
+def print_summary(result: BatchResult, save_dir: Path, badge: str) -> None:
+    """실행 요약 리포트 (R6)."""
+    print(
+        f"\n[작업 완료]{badge} 성공 {len(result.success)} / "
+        f"건너뜀 {len(result.skipped)} / 실패 {len(result.failed)}"
+    )
+    if result.planned:
+        print(f"           계획 {len(result.planned)}건 (파일 미생성)")
+    if result.failed:
+        print(f"           실패 코드: {result.failed_codes}")
+    if result.aborted:
+        print("           WebUI 연결이 끊겨 중단되었습니다.")
+    print(f"           폴더: {save_dir}")
+
+
+def execute(args: argparse.Namespace, base_dir: Path) -> int:
+    """생성 파이프라인 본체. ConfigError 는 호출자가 처리한다."""
+    # 모드 우선순위: dry-run > mock (부작용이 적은 쪽 우선, R7.8)
+    dry_run: bool = args.dry_run
+    mock: bool = args.mock and not dry_run
+    if args.mock and dry_run:
+        print("[WARN] --dry-run 이 우선합니다. --mock 무시됨")
+
+    prefix = validate_prefix(args.prefix)
+    char_prompt = args.char_prompt.strip()
+
+    db = load_pose_db(base_dir)
+    print_warnings(db)
+
+    # 프로필이 스크립트 하드코딩값(POS_BASE / COMMON_NEG)을 완전히 대체한다.
+    profile = resolve_profile(db, args.profile)
+    if args.profile:
+        print(f"[PROFILE] '{profile.name}' 적용")
+    else:
+        print(f"[PROFILE] 미지정 - 기본값 '{profile.name}' 적용")
+
+    negative_prompt = join_tags(profile.base_negative, args.custom_neg)
+
+    # 같은 태그가 양쪽에 있으면 모델이 모순된 지시를 받는다.
+    positive_preview = join_tags(profile.base_positive, char_prompt)
+    if conflicts := find_tag_conflicts(positive_preview, negative_prompt):
+        print(f"[WARN] 태그 충돌: {conflicts} 가 포지티브와 네거티브에 동시 존재")
+
+    targets = resolve_targets(db, args.mode, args.codes)
+    if not targets:
+        raise ConfigError(
+            "생성 대상 코드가 없습니다.", "--mode / --codes 값을 확인하세요."
+        )
+
+    width = code_width(db.all_codes)
+    save_dir = base_dir / ASSETS_DIRNAME / prefix
+    if not dry_run:
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+    # mock/dry-run 에서는 HTTP 요청을 일절 발생시키지 않는다 (R7.1)
+    sampler_name = "(mock)" if (mock or dry_run) else resolve_sampler()
+    badge = mode_badge(dry_run, mock)
+
+    print(
+        f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile.name} | "
+        f"모드: {args.mode} ({len(targets)}장) | 폭: {width}"
+    )
+    print(f"[저장] {save_dir}")
+    print(f"[POS]  {profile.base_positive}")
+    print(f"[NEG]  {negative_prompt}\n")
+
+    result = run_batch(
+        prefix=prefix,
+        base_positive=profile.base_positive,
+        char_prompt=char_prompt,
+        negative_prompt=negative_prompt,
+        targets=targets,
+        db=db,
+        save_dir=save_dir,
+        width=width,
+        sampler_name=sampler_name,
+        dry_run=dry_run,
+        mock=mock,
+    )
+
+    print_summary(result, save_dir, badge)
+
+    existing = result.existing  # 프로퍼티가 매번 정렬하므로 한 번만 계산한다
+    if not existing:
+        print("\n[INFO] 생성된 파일이 없어 마크다운을 출력하지 않습니다.")
+        return 1 if result.failed else 0
+
+    if not dry_run:
+        open_in_explorer(save_dir)
+
+    print(build_genit_block(prefix, existing, db, width, badge))
+    return 1 if result.aborted else 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    _configure_stdio()
+    base_dir = Path(__file__).resolve().parent
+
+    # 1차 파싱: help 를 끄고 --test 만 먼저 판별한다.
+    # --help 는 여기서 소비되지 않고 2차 파서로 넘어가므로,
+    # 도움말 출력 시점에는 이미 JSON 섹션명이 로드되어 있다 (R2.8).
+    pre_args, _ = build_parser(add_help=False).parse_known_args(argv)
+    if pre_args.test:
+        return run_self_test(base_dir)
+
+    sections, profiles = peek_choices(base_dir)
+    parser = build_parser(sections, profiles)
+    args = parser.parse_args(argv)
+
+    # --test 가 아닐 때만 필수 인자를 강제한다 (R8.4)
+    if missing := [n for n in ("prefix", "char_prompt") if not getattr(args, n)]:
+        parser.error("다음 인자가 필요합니다: " + ", ".join(f"--{m}" for m in missing))
+
+    try:
+        return execute(args, base_dir)
+    except ConfigError as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
+        if e.hint:
+            print(f"        {e.hint}", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        print("\n[중단] 사용자에 의해 취소되었습니다.", file=sys.stderr)
+        return 130
+
+
+if __name__ == "__main__":
+    sys.exit(main())

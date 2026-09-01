@@ -1,0 +1,14 @@
+# 저장소 내부는 LF로 정규화하고, 체크아웃 시 OS 기본값으로 변환한다.
+# 여러 PC를 오갈 때 줄바꿈 차이로 전체 파일이 변경된 것처럼 보이는 것을 방지한다.
+* text=auto
+
+# 명시적 지정 (자동 판별 실패 대비)
+*.py    text diff=python
+*.md    text
+*.json  text
+*.txt   text
+
+# 바이너리 — 변환 금지
+*.webp  binary
+*.png   binary
+*.jpg   binary

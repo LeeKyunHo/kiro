@@ -1,0 +1,53 @@
+{
+  "_schema": {
+    "purpose": "캐릭터 챗봇용 이미지 에셋 프롬프트 DB",
+    "structure": "최상위 키 = 섹션명, 값 = { 코드: 프롬프트 }. _ 로 시작하는 키는 주석/메타로 파싱에서 제외된다",
+    "section_name": "섹션명은 --mode 값으로 그대로 쓰인다. 숫자만으로 짓지 말 것 (코드 표현식으로 오인됨)",
+    "code_key": "문자열로 적되 정수로 해석된다. 정렬은 숫자 크기 기준. 결번 허용. 범위 0~9999",
+    "first_tag_is_label": "프롬프트의 첫 태그가 콘솔 출력과 상태 매핑 가이드의 라벨이 된다. 항목을 구별하는 서술어를 맨 앞에 둘 것",
+    "pose_prompts_are_genderless": "포즈/표정 프롬프트에는 성별 태그를 넣지 말 것. 성별은 _profiles 축에서 결정된다",
+    "profiles": "_profiles 는 --profile 값으로 선택하며, base_positive / base_negative 가 스크립트 하드코딩값을 완전히 대체한다. 품질 태그도 프로필에 포함해야 한다",
+    "editing": "이 파일만 수정하면 스크립트 변경 없이 반영된다. 수정 후 `python sd_batch_generator.py --test` 로 검증 권장"
+  },
+
+  "_profiles": {
+    "female": {
+      "base_positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo",
+      "base_negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, facial hair, muscular"
+    },
+    "male": {
+      "base_positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1boy, solo, masculine",
+      "base_negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1girl, female, breasts, feminine"
+    },
+    "male_otokonoko": {
+      "base_positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1boy, solo, androgynous, feminine face, slender build, delicate features",
+      "base_negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1girl, breasts, muscular, beard, mustache, facial hair"
+    }
+  },
+
+  "emotions": {
+    "00": "neutral expression, standing, front view, looking at viewer, calm",
+    "01": "gentle smile, standing, soft eyes, looking at viewer, warm atmosphere",
+    "02": "shy blush, standing, looking away slightly, hands together",
+    "03": "angry pout, standing, furrowed brows, arms crossed",
+    "04": "sad expression, standing, downcast eyes, slightly teary, gloomy mood",
+    "05": "crying, standing, tears in eyes, wiping face with hand, emotional",
+    "06": "surprised expression, standing, wide eyes, open mouth, hands raised",
+    "07": "happy laugh, standing, closed eyes, big smile, cheerful",
+    "08": "thoughtful look, standing, hand on chin, looking upward, curious",
+    "09": "sleepy expression, standing, half-closed eyes, yawning, relaxed"
+  },
+
+  "poses": {
+    "10": "relaxed stance, standing, full body, hands at sides, looking at viewer",
+    "11": "sitting on chair, legs together, hands on lap, gentle posture",
+    "12": "waving hand, standing, friendly greeting, warm smile",
+    "13": "arms crossed, standing, confident posture, slight smile",
+    "14": "pointing forward, standing, energetic pose, determined look",
+    "15": "reading a book, sitting, holding an open book, focused expression",
+    "16": "holding a teacup, standing, gentle smile, cozy mood",
+    "17": "hands on hips, standing, cheerful confident pose",
+    "18": "leaning against wall, casual relaxed pose, calm expression",
+    "19": "stretching arms up, sitting, relaxed and content"
+  }
+}
