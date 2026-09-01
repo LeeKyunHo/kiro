@@ -29,11 +29,14 @@ import io
 import json
 import os
 import re
+import shutil
 import sys
+import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Iterator, Sequence
 
 import requests
 from PIL import Image, ImageDraw, ImageFont
@@ -44,10 +47,19 @@ from PIL import Image, ImageDraw, ImageFont
 API_HOST = "http://127.0.0.1:7860"
 API_URL = f"{API_HOST}/sdapi/v1/txt2img"
 SAMPLERS_URL = f"{API_HOST}/sdapi/v1/samplers"
+INTERROGATE_URL = f"{API_HOST}/sdapi/v1/interrogate"
+
+# ControlNet 확장이 제공하는 조회 엔드포인트.
+# 모델명에 해시가 붙어 환경마다 다르므로 조회가 필수다.
+CN_MODULES_URL = f"{API_HOST}/controlnet/module_list"
+CN_MODELS_URL = f"{API_HOST}/controlnet/model_list"
+
 SAMPLER_CANDIDATES = ("DPM++ 2M Karras", "DPM++ 2M", "Euler a")
 
 SAMPLERS_TIMEOUT = 5
 TXT2IMG_TIMEOUT = 300
+CONTROLNET_LIST_TIMEOUT = 10
+INTERROGATE_TIMEOUT = 120
 
 # 챗봇 초상화용 공통 품질 태그
 POS_BASE = (
@@ -64,6 +76,37 @@ COMMON_NEG = (
 
 POSE_DB_FILE = "pose_database.json"
 ASSETS_DIRNAME = "generated_assets"
+
+# ── 참조 이미지 (IP-Adapter) ─────────────────
+REFERENCES_DIRNAME = "references"
+# 탐색 우선순위. 여러 확장자가 공존하면 앞의 것을 쓴다.
+REFERENCE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
+
+# IP-Adapter 적용 강도.
+# 1.0 이상은 참조 이미지의 포즈까지 전이되어 JSON 포즈 지시를 무시한다.
+# 0.7 은 실무 관행에 기반한 출발점이며 실제 최적값은 GPU 환경에서 튜닝한다.
+REF_WEIGHT_DEFAULT = 0.7
+REF_WEIGHT_MIN = 0.0
+REF_WEIGHT_MAX = 2.0
+
+# ControlNet 모듈·모델 탐색 패턴. 부분 문자열로 매칭한다.
+# 모델명이 "ip-adapter_xl [4209e9f7]" 형태라 완전 일치가 불가능하다.
+IP_ADAPTER_MODULE_PATTERNS = ("ip-adapter", "ipadapter")
+IP_ADAPTER_MODEL_PATTERNS = ("ip-adapter", "ipadapter")
+
+# ── 태그 역추출 (--from_image) ───────────────
+INTERROGATORS = ("deepdanbooru", "clip")
+INTERROGATE_DEFAULT = "deepdanbooru"
+
+# --char_prompt 에 들어가면 프로필(_profiles)과 충돌하는 태그.
+# DeepBooru 는 거의 항상 성별 태그를 반환하므로 실질적으로 매번 걸린다.
+# 'solo' 는 프로필 base_positive 에 이미 있어 중복이다.
+GENDER_TAGS = frozenset({
+    "1girl", "2girls", "3girls", "multiple girls", "girl",
+    "1boy", "2boys", "3boys", "multiple boys", "boy",
+    "male", "female", "male focus", "female focus",
+    "solo", "solo focus",
+})
 
 # _profiles 섹션. 프로필의 base_positive/base_negative 가 위 POS_BASE/COMMON_NEG 를
 # 완전히 대체한다. 품질 태그도 프로필 쪽에 포함되어야 한다.
@@ -208,6 +251,56 @@ class PoseDatabase:
         return list(self.profiles)
 
 
+@dataclass(frozen=True, slots=True)
+class ReferenceImage:
+    """
+    IP-Adapter 참조 이미지.
+
+    b64 를 프로퍼티가 아닌 필드로 갖는다. 20~50장을 생성하는 배치에서
+    프로퍼티로 두면 호출마다 재인코딩되므로 생성 시점에 한 번만 계산한다.
+
+    "참조 없음" 은 이 클래스의 특수 인스턴스가 아니라 None 으로 표현한다.
+    """
+
+    path: Path
+    b64: str
+    width: int
+    height: int
+
+    @property
+    def label(self) -> str:
+        return f"{self.path.name} ({self.width}x{self.height})"
+
+
+@dataclass(frozen=True, slots=True)
+class ControlNetSpec:
+    """
+    ControlNet 전처리기와 모델 조합.
+
+    source 는 자동 탐지("auto")인지 사용자 지정("manual")인지 구분한다.
+    GPU 환경에서 어느 경로가 동작했는지 로그로 판단하기 위한 것이다.
+    """
+
+    module: str
+    model: str
+    source: str = "auto"
+
+
+@dataclass(frozen=True, slots=True)
+class InterrogateResult:
+    """태그 역추출 결과."""
+
+    raw: str
+    tags: list[str]
+    gender_tags: list[str]
+
+    @property
+    def filtered(self) -> str:
+        """성별·인원 태그를 제거한 프롬프트 문자열."""
+        excluded = set(self.gender_tags)
+        return ", ".join(tag for tag in self.tags if tag not in excluded)
+
+
 @dataclass(slots=True)
 class BatchResult:
     success: list[int] = field(default_factory=list)
@@ -307,6 +400,16 @@ def join_tags(*parts: str) -> str:
 # ─────────────────────────────────────────────
 # 4. 입력 검증
 # ─────────────────────────────────────────────
+def validate_ref_weight(value: float) -> float:
+    """IP-Adapter 적용 강도를 검증한다."""
+    if not REF_WEIGHT_MIN <= value <= REF_WEIGHT_MAX:
+        raise ConfigError(
+            f"--ref_weight 는 {REF_WEIGHT_MIN}~{REF_WEIGHT_MAX} 범위여야 합니다: {value}",
+            "0.5~0.8 이 실무 범위입니다. 1.0 이상은 참조 이미지의 포즈까지 전이됩니다.",
+        )
+    return value
+
+
 def validate_prefix(prefix: str) -> str:
     """
     prefix 를 안전한 단일 경로 세그먼트로 제한한다.
@@ -630,6 +733,105 @@ def asset_filename(prefix: str, code: int, width: int) -> str:
 
 
 # ─────────────────────────────────────────────
+# 6A. 참조 이미지 해석
+# ─────────────────────────────────────────────
+def load_reference(path: Path) -> ReferenceImage:
+    """
+    참조 이미지를 읽어 검증하고 base64 인코딩한다.
+
+    원본 바이트를 그대로 인코딩한다. Pillow 로 재인코딩하지 않는 이유는
+    불필요한 손실과 시간이 발생하고, WebUI 가 PNG/JPEG/WebP 를 모두 받기 때문이다.
+
+    Raises:
+        ConfigError: 읽을 수 없거나 유효한 이미지가 아닐 때.
+    """
+    try:
+        data = path.read_bytes()
+    except OSError as e:
+        raise ConfigError(f"참조 이미지를 읽을 수 없습니다: {path}", str(e)) from None
+
+    try:
+        # verify() 이후에는 이미지 객체를 재사용할 수 없고 크기도 얻을 수 없어
+        # 두 번 열어야 한다. Pillow 의 알려진 특성이다.
+        with Image.open(io.BytesIO(data)) as probe:
+            probe.verify()
+        with Image.open(io.BytesIO(data)) as img:
+            width, height = img.size
+    except Exception as e:  # noqa: BLE001 — Pillow 가 다양한 예외를 던진다
+        raise ConfigError(
+            f"유효한 이미지 파일이 아닙니다: {path}", str(e)
+        ) from None
+
+    return ReferenceImage(
+        path=path,
+        b64=base64.b64encode(data).decode("ascii"),
+        width=width,
+        height=height,
+    )
+
+
+def find_reference_candidates(base_dir: Path, prefix: str) -> list[Path]:
+    """references/{prefix}.{ext} 를 우선순위 순서로 찾아 존재하는 것만 반환한다."""
+    ref_dir = base_dir / REFERENCES_DIRNAME
+    if not ref_dir.is_dir():
+        return []
+    return [
+        candidate
+        for ext in REFERENCE_EXTENSIONS
+        if (candidate := ref_dir / f"{prefix}{ext}").is_file()
+    ]
+
+
+def resolve_reference_image(
+    base_dir: Path,
+    prefix: str,
+    explicit_path: str | None = None,
+    disabled: bool = False,
+) -> ReferenceImage | None:
+    """
+    참조 이미지를 해석한다. 없으면 None 을 반환한다.
+
+    명시 지정과 자동 탐색의 실패 처리를 다르게 한다.
+    --ref_image 를 적었다면 그 파일을 쓰겠다는 명확한 의사표시이므로 조용히
+    무시하지 않는다. 자동 탐색은 "있으면 쓰고 없으면 넘어가는" 편의 기능이며,
+    00번을 먼저 생성해 참조로 쓰는 워크플로우에서는 부재가 정상 상태다.
+
+    Raises:
+        ConfigError: --ref_image 로 명시한 경로가 없거나 유효하지 않을 때.
+    """
+    if disabled:
+        return None
+
+    if explicit_path:
+        path = Path(explicit_path).expanduser()
+        if not path.is_absolute():
+            path = (base_dir / path).resolve()
+        if path.is_dir():
+            raise ConfigError(
+                f"--ref_image 에 디렉터리가 지정되었습니다: {path}",
+                "이미지 파일 경로를 지정하세요.",
+            )
+        if not path.is_file():
+            raise ConfigError(
+                f"--ref_image 경로를 찾을 수 없습니다: {path}",
+                f"자동 탐색을 쓰려면 {REFERENCES_DIRNAME}/{prefix}.png 로 두고 "
+                "--ref_image 를 생략하세요.",
+            )
+        return load_reference(path)
+
+    candidates = find_reference_candidates(base_dir, prefix)
+    if not candidates:
+        return None
+
+    if len(candidates) > 1:
+        ignored = [p.name for p in candidates[1:]]
+        print(f"[WARN] 참조 이미지가 여러 개입니다. '{candidates[0].name}' 사용, "
+              f"무시됨: {ignored}")
+
+    return load_reference(candidates[0])
+
+
+# ─────────────────────────────────────────────
 # 7. API 유틸리티
 # ─────────────────────────────────────────────
 @lru_cache(maxsize=1)
@@ -690,9 +892,16 @@ def save_as_webp(
         raise
 
 
-def generate_image(prompt: str, negative_prompt: str, sampler_name: str) -> bytes:
-    """WebUI txt2img 를 호출해 PNG 바이트를 반환한다."""
-    payload = {
+def build_txt2img_payload(
+    *, prompt: str, negative_prompt: str, sampler_name: str
+) -> dict[str, Any]:
+    """
+    txt2img 페이로드를 조립한다 (순수 함수).
+
+    조립과 전송을 분리한 이유: 전송이 섞여 있으면 페이로드 구조를 검증하려고
+    HTTP 를 가로채야 한다. 분리하면 --test 에서 딕셔너리를 직접 검사할 수 있다.
+    """
+    return {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
         "width": IMAGE_SIZE[0],
@@ -704,6 +913,114 @@ def generate_image(prompt: str, negative_prompt: str, sampler_name: str) -> byte
         "sampler_name": sampler_name,
     }
 
+
+def build_controlnet_unit(
+    reference: ReferenceImage, spec: ControlNetSpec, weight: float
+) -> dict[str, Any]:
+    """
+    ControlNet 단일 유닛을 조립한다 (순수 함수).
+
+    resize_mode / control_mode / pixel_perfect 는 WebUI 기본값과 같지만
+    명시한다. 버전에 따라 기본값이 바뀌어도 동작이 흔들리지 않게 하려는 의도다.
+    """
+    return {
+        "enabled": True,
+        "input_image": reference.b64,
+        "module": spec.module,
+        "model": spec.model,
+        "weight": weight,
+        "resize_mode": "Crop and Resize",
+        "control_mode": "Balanced",
+        "pixel_perfect": True,
+    }
+
+
+def inject_controlnet(
+    payload: dict[str, Any], unit: dict[str, Any]
+) -> dict[str, Any]:
+    """
+    페이로드에 ControlNet 유닛을 주입한 새 딕셔너리를 반환한다 (순수 함수).
+
+    원본을 변경하지 않는다. 루프에서 페이로드를 재사용할 때 상태가 누적되는
+    것을 막기 위한 계약이다.
+
+    참조 이미지나 spec 이 없을 때는 이 함수를 호출하지 않는다. 빈
+    alwayson_scripts 를 넣으면 WebUI 가 "ControlNet 비활성" 이 아니라
+    "인자 부족" 으로 해석할 수 있다.
+    """
+    merged = dict(payload)
+    merged["alwayson_scripts"] = {"controlnet": {"args": [unit]}}
+    return merged
+
+
+def match_model_name(
+    available: Sequence[str], patterns: Sequence[str]
+) -> str | None:
+    """
+    사용 가능 목록에서 패턴을 부분 문자열로 찾는다 (순수 함수).
+
+    모델명이 "ip-adapter_xl [4209e9f7]" 처럼 해시를 포함해 완전 일치가
+    불가능하므로 부분 매칭을 쓴다. 패턴 순서가 우선순위다.
+    """
+    lowered = [(name, name.lower()) for name in available]
+    for pattern in patterns:
+        needle = pattern.lower()
+        for original, low in lowered:
+            if needle in low:
+                return original
+    return None
+
+
+def _fetch_controlnet_list(url: str, key: str) -> list[str]:
+    """ControlNet 목록 엔드포인트를 조회한다."""
+    response = get_session().get(url, timeout=CONTROLNET_LIST_TIMEOUT)
+    response.raise_for_status()
+    data = response.json()
+    return list(data.get(key) or [])
+
+
+def resolve_controlnet_spec(
+    manual_module: str | None = None, manual_model: str | None = None
+) -> ControlNetSpec | None:
+    """
+    ControlNet 전처리기와 모델을 해석한다. 실패하면 None 을 반환한다.
+
+    둘 다 수동 지정되면 조회를 생략한다. GPU 가 없는 환경에서 주입 경로를
+    검증할 때의 우회로이기도 하다.
+
+    조회나 매칭이 실패해도 예외를 올리지 않는다. ControlNet 미설치 환경에서도
+    텍스트 프롬프트만으로 생성이 계속되어야 한다.
+    """
+    if manual_module and manual_model:
+        return ControlNetSpec(manual_module, manual_model, "manual")
+
+    try:
+        modules = _fetch_controlnet_list(CN_MODULES_URL, "module_list")
+        models = _fetch_controlnet_list(CN_MODELS_URL, "model_list")
+    except Exception:  # noqa: BLE001 — 미설치/미실행 모두 동일하게 처리
+        print("[WARN] ControlNet 목록 조회 실패 - 참조 이미지 없이 생성합니다")
+        print("       ControlNet 확장이 설치되어 있는지 확인하세요.")
+        return None
+
+    module = manual_module or match_model_name(modules, IP_ADAPTER_MODULE_PATTERNS)
+    model = manual_model or match_model_name(models, IP_ADAPTER_MODEL_PATTERNS)
+
+    if not module or not model:
+        # 목록 전체를 출력한다. GPU 환경에서 이 출력만 보고 바로
+        # --cn_module / --cn_model 을 지정할 수 있게 하려는 것이다.
+        print("[WARN] IP-Adapter 모듈/모델을 찾지 못했습니다.")
+        print(f"       모듈 후보: {IP_ADAPTER_MODULE_PATTERNS} -> {module or '없음'}")
+        print(f"       모델 후보: {IP_ADAPTER_MODEL_PATTERNS} -> {model or '없음'}")
+        print(f"       사용 가능 모듈 ({len(modules)}): {modules}")
+        print(f"       사용 가능 모델 ({len(models)}): {models}")
+        print("       --cn_module / --cn_model 로 직접 지정하세요.")
+        return None
+
+    return ControlNetSpec(module, model, "auto")
+
+
+def generate_image(payload: dict[str, Any]) -> bytes:
+    """조립된 페이로드를 전송해 PNG 바이트를 받는다."""
     response = get_session().post(API_URL, json=payload, timeout=TXT2IMG_TIMEOUT)
     response.raise_for_status()
 
@@ -713,6 +1030,92 @@ def generate_image(prompt: str, negative_prompt: str, sampler_name: str) -> byte
         raise RuntimeError("API 응답에 images 가 없습니다")
 
     return base64.b64decode(images[0])
+
+
+# ─────────────────────────────────────────────
+# 7A. 태그 역추출 (--from_image)
+# ─────────────────────────────────────────────
+def build_interrogate_payload(b64: str, model: str) -> dict[str, str]:
+    """interrogate 페이로드를 조립한다 (순수 함수)."""
+    return {"image": b64, "model": model}
+
+
+def filter_gender_tags(tags: Sequence[str]) -> tuple[list[str], list[str]]:
+    """
+    성별·인원 태그를 분리한다 (순수 함수).
+
+    Returns:
+        (유지할 태그, 제거된 태그)
+
+    성별은 _profiles 축에서 결정되므로 --char_prompt 에 들어가면 프로필과
+    충돌한다. 경고만 하지 않고 필터링된 버전을 함께 제시하는 이유는,
+    사용자가 출력을 그대로 복사해 쓸 가능성이 높기 때문이다.
+    """
+    kept: list[str] = []
+    removed: list[str] = []
+    for tag in tags:
+        (removed if normalize_tag(tag) in GENDER_TAGS else kept).append(tag)
+    return kept, removed
+
+
+def run_interrogate(base_dir: Path, image_path: str, model: str) -> int:
+    """
+    참조 이미지에서 태그를 역추출해 출력한다. 생성은 하지 않는다.
+
+    Returns:
+        종료 코드.
+    """
+    reference = resolve_reference_image(base_dir, "_", explicit_path=image_path)
+    if reference is None:  # explicit_path 가 있으면 도달하지 않는 경로
+        raise ConfigError(f"이미지를 찾을 수 없습니다: {image_path}")
+
+    payload = build_interrogate_payload(reference.b64, model)
+
+    print(f"\n{SEPARATOR}")
+    print(f"  태그 추출 | {reference.label} | 모델: {model}")
+    print(SEPARATOR)
+
+    try:
+        response = get_session().post(
+            INTERROGATE_URL, json=payload, timeout=INTERROGATE_TIMEOUT
+        )
+        response.raise_for_status()
+    except requests.exceptions.ConnectionError:
+        print("\n[ERROR] WebUI 에 연결할 수 없습니다.", file=sys.stderr)
+        print("        webui-user.bat 에 --api 를 넣고 실행했는지 확인하세요.",
+              file=sys.stderr)
+        return 1
+    except Exception as e:  # noqa: BLE001
+        print(f"\n[ERROR] interrogate 실패: {e}", file=sys.stderr)
+        if model == "deepdanbooru":
+            print("        DeepBooru 모델이 없으면 --interrogator clip 을 시도하세요.",
+                  file=sys.stderr)
+        return 1
+
+    raw = (response.json().get("caption") or "").strip()
+    if not raw:
+        print("\n[ERROR] 추출된 태그가 없습니다.", file=sys.stderr)
+        return 1
+
+    tags = [t.strip() for t in raw.split(",") if t.strip()]
+    kept, removed = filter_gender_tags(tags)
+    result = InterrogateResult(raw=raw, tags=tags, gender_tags=removed)
+
+    print(f"\n[원본] ({len(tags)}개 태그)")
+    print(f"{result.raw}")
+
+    if removed:
+        print(f"\n[WARN] 성별·인원 태그가 감지되었습니다: {removed}")
+        print("       프로필(_profiles)에서 이미 다루므로 --char_prompt 에는 넣지 마세요.")
+
+    print(f"\n[권장] ({len(kept)}개 태그)")
+    print(f"{result.filtered}")
+
+    print("\n[그대로 실행하려면]")
+    print(f'python {Path(__file__).name} --prefix PREFIX '
+          f'--char_prompt "{result.filtered}"')
+    print(f"{SEPARATOR}\n")
+    return 0
 
 
 # ─────────────────────────────────────────────
@@ -742,7 +1145,13 @@ def _mock_fonts() -> tuple[FontLike, FontLike]:
         return fallback, fallback
 
 
-def make_dummy_png(prefix: str, code: int, width: int, entry: PoseEntry) -> bytes:
+def make_dummy_png(
+    prefix: str,
+    code: int,
+    width: int,
+    entry: PoseEntry,
+    reference: ReferenceImage | None = None,
+) -> bytes:
     """
     API 반환값과 동일한 형태(PNG 바이트열)의 더미 이미지를 즉석 생성한다.
 
@@ -761,7 +1170,8 @@ def make_dummy_png(prefix: str, code: int, width: int, entry: PoseEntry) -> byte
         (prefix, font_small, MOCK_GAP_SMALL),
         (entry.section, font_small, MOCK_GAP_SMALL),
         (entry.label[:MOCK_LABEL_MAXLEN], font_small, MOCK_GAP_SMALL),
-        ("MOCK", font_small, MOCK_GAP_SMALL),
+        # 참조가 적용된 mock 산출물을 육안으로 구분할 수 있게 한다.
+        ("MOCK +REF" if reference else "MOCK", font_small, MOCK_GAP_SMALL),
     )
 
     y = MOCK_TEXT_TOP
@@ -788,10 +1198,21 @@ def run_batch(
     save_dir: Path,
     width: int,
     sampler_name: str,
+    reference: ReferenceImage | None = None,
+    cn_spec: ControlNetSpec | None = None,
+    ref_weight: float = REF_WEIGHT_DEFAULT,
     dry_run: bool = False,
     mock: bool = False,
 ) -> BatchResult:
     result = BatchResult(dry_run=dry_run)
+
+    # 참조 이미지와 ControlNet 해석이 둘 다 성공했을 때만 주입한다.
+    # 참조는 있는데 ControlNet 이 없으면(미설치 등) 텍스트만으로 생성한다.
+    controlnet_unit = (
+        build_controlnet_unit(reference, cn_spec, ref_weight)
+        if reference and cn_spec
+        else None
+    )
 
     for code in targets:
         entry = db.entries[code]
@@ -814,13 +1235,23 @@ def run_batch(
         print(f"  [{tag}] {'모의 생성' if mock else '생성'} 중... ", end="", flush=True)
 
         try:
+            full_prompt = join_tags(
+                base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
+            )
+            # 페이로드는 mock 에서도 조립한다. 조립 오류는 mock 에서 잡아야
+            # 할 결함이므로 전송만 생략한다.
+            payload = build_txt2img_payload(
+                prompt=full_prompt,
+                negative_prompt=negative_prompt,
+                sampler_name=sampler_name,
+            )
+            if controlnet_unit is not None:
+                payload = inject_controlnet(payload, controlnet_unit)
+
             if mock:
-                png_bytes = make_dummy_png(prefix, code, width, entry)
+                png_bytes = make_dummy_png(prefix, code, width, entry, reference)
             else:
-                full_prompt = join_tags(
-                    base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
-                )
-                png_bytes = generate_image(full_prompt, negative_prompt, sampler_name)
+                png_bytes = generate_image(payload)
             save_as_webp(png_bytes, save_path)
         except requests.exceptions.ConnectionError:
             # WebUI 가 죽은 상태에서 남은 코드를 계속 시도하면 대기만 누적된다.
@@ -950,6 +1381,23 @@ WIDTH_CASES: tuple[tuple[list[int], int], ...] = (
     ([7], 2),
     ([], 2),
 )
+
+REF_WEIGHT_REJECT: tuple[float, ...] = (-0.1, 2.1, -1.0, 99.0)
+REF_WEIGHT_ACCEPT: tuple[float, ...] = (0.0, 0.5, 0.7, 1.0, 2.0)
+
+# ControlNet 유닛에 반드시 있어야 하는 키
+CN_UNIT_REQUIRED_KEYS = frozenset({
+    "enabled", "input_image", "module", "model",
+    "weight", "resize_mode", "control_mode", "pixel_perfect",
+})
+
+# 해시가 붙은 실제 모델명 형태를 모사한 픽스처
+CN_MODEL_FIXTURE = (
+    "control_v11p_sd15_openpose [cab727d4]",
+    "ip-adapter_xl [4209e9f7]",
+    "t2iadapter_style_sd14v1 [202e85cc]",
+)
+CN_MODULE_FIXTURE = ("none", "canny", "openpose_full", "ip-adapter_clip_sdxl")
 
 SYNTHETIC_RAW: dict[str, Any] = {
     "_comment": "self-test fixture",
@@ -1114,6 +1562,179 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
                  not bad_conflict, str(bad_conflict) if bad_conflict else "")
 
 
+@contextmanager
+def _temp_reference(extensions: Sequence[str] = (".png",)) -> Iterator[Path]:
+    """
+    임시 참조 이미지를 만들고 정리한다.
+
+    저장소에 테스트용 바이너리를 커밋하지 않기 위해 Pillow 로 즉석 생성한다.
+    contextmanager 를 쓰면 검사 실패로 예외가 나도 임시 폴더가 정리된다.
+    """
+    tmp = Path(tempfile.mkdtemp(prefix="sdref_"))
+    try:
+        refs = tmp / REFERENCES_DIRNAME
+        refs.mkdir()
+        for ext in extensions:
+            Image.new("RGB", (64, 96), (128, 128, 200)).save(refs / f"t{ext}")
+        yield tmp
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _test_reference(report: TestReport) -> None:
+    """T21~T30: 참조 이미지 및 페이로드 조립 검증. 네트워크 접근 없음."""
+    print("\n[참조 이미지 검사]")
+
+    # ── T21: 확장자 우선순위 ──
+    with _temp_reference(REFERENCE_EXTENSIONS) as tmp:
+        found = find_reference_candidates(tmp, "t")
+        report.check(
+            "T21 확장자 우선순위",
+            len(found) == 4 and found[0].suffix == ".png",
+            f"{[p.suffix for p in found]}",
+        )
+        picked = resolve_reference_image(tmp, "t")
+        report.check(
+            "T21b .png 채택",
+            picked is not None and picked.path.suffix == ".png",
+            picked.path.name if picked else "None",
+        )
+
+    # ── T22: 참조 부재 ──
+    with _temp_reference(()) as tmp:
+        try:
+            missing = resolve_reference_image(tmp, "nosuch")
+            report.check("T22 참조 부재 시 None", missing is None, repr(missing))
+        except Exception as e:  # noqa: BLE001
+            report.check("T22 참조 부재 시 None", False, f"예외 발생: {e}")
+
+    empty_dir = Path(tempfile.mkdtemp(prefix="sdref_empty_"))
+    try:
+        report.check(
+            "T22b references/ 폴더 자체 부재",
+            resolve_reference_image(empty_dir, "t") is None,
+        )
+    finally:
+        shutil.rmtree(empty_dir, ignore_errors=True)
+
+    # ── T23: base64 왕복 ──
+    with _temp_reference((".png",)) as tmp:
+        ref = resolve_reference_image(tmp, "t")
+        ok = False
+        detail = "참조 로드 실패"
+        if ref is not None:
+            decoded = base64.b64decode(ref.b64)
+            with Image.open(io.BytesIO(decoded)) as img:
+                ok = img.size == (ref.width, ref.height) == (64, 96)
+                detail = f"{img.size} == ({ref.width}, {ref.height})"
+        report.check("T23 base64 왕복", ok, detail)
+
+        # ── T24~T26: 페이로드 조립 ──
+        print("\n[페이로드 조립 검사]")
+        spec = ControlNetSpec("ip-adapter_clip_sdxl", "ip-adapter_xl [test]", "manual")
+        base_payload = build_txt2img_payload(
+            prompt="p", negative_prompt="n", sampler_name="s"
+        )
+
+        assert ref is not None
+        unit = build_controlnet_unit(ref, spec, 0.7)
+        missing_keys = CN_UNIT_REQUIRED_KEYS - unit.keys()
+        report.check(
+            "T24 유닛 필수 키",
+            not missing_keys and unit["enabled"] is True and unit["weight"] == 0.7,
+            f"누락: {sorted(missing_keys)}" if missing_keys else f"{len(unit)}개 키",
+        )
+        report.check(
+            "T24b 유닛에 base64 이미지 포함",
+            unit["input_image"] == ref.b64 and len(unit["input_image"]) > 0,
+        )
+
+        report.check(
+            "T25 참조 없을 때 alwayson_scripts 미주입",
+            "alwayson_scripts" not in base_payload,
+            f"키 {len(base_payload)}개",
+        )
+
+        injected = inject_controlnet(base_payload, unit)
+        try:
+            args_list = injected["alwayson_scripts"]["controlnet"]["args"]
+            placed = len(args_list) == 1 and args_list[0] is unit
+        except (KeyError, TypeError):
+            placed = False
+        report.check("T26 주입 위치", placed)
+        report.check(
+            "T26b 원본 페이로드 불변",
+            "alwayson_scripts" not in base_payload,
+            "inject_controlnet 이 원본을 변경하지 않음",
+        )
+        report.check(
+            "T26c 기존 키 보존",
+            all(injected[k] == v for k, v in base_payload.items()),
+        )
+
+    # ── T27: weight 범위 ──
+    print("\n[검증 로직 검사]")
+    wrongly_accepted = []
+    for value in REF_WEIGHT_REJECT:
+        try:
+            validate_ref_weight(value)
+            wrongly_accepted.append(value)
+        except ConfigError:
+            pass
+    wrongly_rejected = []
+    for value in REF_WEIGHT_ACCEPT:
+        try:
+            validate_ref_weight(value)
+        except ConfigError:
+            wrongly_rejected.append(value)
+    report.check(
+        "T27 ref_weight 범위",
+        not wrongly_accepted and not wrongly_rejected,
+        f"오통과 {wrongly_accepted} / 오거부 {wrongly_rejected}"
+        if (wrongly_accepted or wrongly_rejected)
+        else f"거부 {len(REF_WEIGHT_REJECT)}종 / 허용 {len(REF_WEIGHT_ACCEPT)}종",
+    )
+
+    # ── T28: interrogate 페이로드 ──
+    payload = build_interrogate_payload("BASE64", INTERROGATE_DEFAULT)
+    report.check(
+        "T28 interrogate 페이로드",
+        set(payload) == {"image", "model"}
+        and payload["model"] == "deepdanbooru"
+        and payload["image"] == "BASE64",
+        str(payload | {"image": "..."}),
+    )
+
+    # ── T29: 성별 태그 필터 ──
+    sample = ["1girl", "solo", "silver hair", "blue eyes", "1boy", "MALE"]
+    kept, removed = filter_gender_tags(sample)
+    report.check(
+        "T29 성별 태그 필터",
+        kept == ["silver hair", "blue eyes"] and len(removed) == 4,
+        f"유지 {kept} / 제거 {removed}",
+    )
+    result = InterrogateResult(raw=", ".join(sample), tags=sample, gender_tags=removed)
+    report.check(
+        "T29b filtered 프로퍼티",
+        result.filtered == "silver hair, blue eyes",
+        result.filtered,
+    )
+
+    # ── T30: 모델명 부분 매칭 ──
+    matched_model = match_model_name(CN_MODEL_FIXTURE, IP_ADAPTER_MODEL_PATTERNS)
+    matched_module = match_model_name(CN_MODULE_FIXTURE, IP_ADAPTER_MODULE_PATTERNS)
+    report.check(
+        "T30 해시 포함 모델명 매칭",
+        matched_model == "ip-adapter_xl [4209e9f7]"
+        and matched_module == "ip-adapter_clip_sdxl",
+        f"{matched_model} / {matched_module}",
+    )
+    report.check(
+        "T30b 매칭 실패 시 None",
+        match_model_name(("canny", "openpose"), IP_ADAPTER_MODEL_PATTERNS) is None,
+    )
+
+
 def _test_profiles(report: TestReport, db: PoseDatabase) -> None:
     """T18~T20: 프로필 정의 및 실제 태그 충돌 검사."""
     print("\n[프로필 검사]")
@@ -1185,6 +1806,7 @@ def run_self_test(base_dir: Path) -> int:
 
     _test_logic(report, db)
     _test_profiles(report, db)
+    _test_reference(report)
     return _finish_test(report)
 
 
@@ -1230,6 +1852,38 @@ def build_parser(
     parser.add_argument("--profile", default=None, help=profile_help)
     parser.add_argument("--mode", default="all", help=mode_help)
     parser.add_argument("--codes", default=None, help="코드 직접 지정 (20-29 / 0,3,7)")
+
+    ref = parser.add_argument_group("참조 이미지 (IP-Adapter)")
+    ref.add_argument(
+        "--ref_image", default=None,
+        help=f"참조 이미지 경로 직접 지정 (생략 시 {REFERENCES_DIRNAME}/{{prefix}}.png 자동 탐색)",
+    )
+    ref.add_argument(
+        "--ref_weight", type=float, default=REF_WEIGHT_DEFAULT,
+        help=f"적용 강도 {REF_WEIGHT_MIN}~{REF_WEIGHT_MAX} (기본 {REF_WEIGHT_DEFAULT})",
+    )
+    ref.add_argument(
+        "--no_ref", action="store_true",
+        help="참조 이미지를 무시하고 텍스트 프롬프트만 사용",
+    )
+    ref.add_argument(
+        "--cn_module", default=None,
+        help="ControlNet 전처리기 수동 지정 (자동 탐지 실패 시)",
+    )
+    ref.add_argument(
+        "--cn_model", default=None,
+        help="ControlNet 모델 수동 지정 (자동 탐지 실패 시)",
+    )
+
+    interrogate = parser.add_argument_group("태그 역추출")
+    interrogate.add_argument(
+        "--from_image", default=None,
+        help="이미지에서 태그를 추출해 출력하고 종료 (생성하지 않음)",
+    )
+    interrogate.add_argument(
+        "--interrogator", default=INTERROGATE_DEFAULT, choices=INTERROGATORS,
+        help=f"추출 모델 (기본 {INTERROGATE_DEFAULT})",
+    )
     parser.add_argument(
         "--dry-run", dest="dry_run", action="store_true",
         help="파일 쓰기 없이 대상·파일명·마크다운만 출력",
@@ -1316,7 +1970,49 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
     if not dry_run:
         save_dir.mkdir(parents=True, exist_ok=True)
 
-    # mock/dry-run 에서는 HTTP 요청을 일절 발생시키지 않는다 (R7.1)
+    # ── 참조 이미지 해석 ──────────────────────────────
+    # dry-run 은 "무엇을 할 계획인가" 만 보여주는 모드라 파일 내용을 읽지 않는다.
+    # 존재 여부와 경로만 확인한다.
+    ref_weight = validate_ref_weight(args.ref_weight)
+    reference: ReferenceImage | None = None
+    cn_spec: ControlNetSpec | None = None
+
+    if dry_run:
+        if args.no_ref:
+            print("[REF]  --no_ref 지정 - 참조 이미지 사용 안 함")
+        elif args.ref_image:
+            print(f"[REF]  {args.ref_image} (지정) weight {ref_weight}")
+        elif found := find_reference_candidates(base_dir, prefix):
+            print(f"[REF]  {found[0].name} 발견 weight {ref_weight}")
+        else:
+            print(f"[REF]  없음 ({REFERENCES_DIRNAME}/{prefix}.*) - 텍스트만 사용")
+    else:
+        reference = resolve_reference_image(
+            base_dir, prefix, args.ref_image, disabled=args.no_ref
+        )
+        if reference is None:
+            if not args.no_ref:
+                print(f"[WARN] 참조 이미지 없음 ({REFERENCES_DIRNAME}/{prefix}.*) "
+                      "- 텍스트 프롬프트만 사용")
+        else:
+            # mock 에서도 ControlNet 조회는 하지 않는다 (HTTP 금지).
+            # 대신 수동 지정이 있으면 그것으로 주입 경로를 검증할 수 있다.
+            if mock:
+                cn_spec = (
+                    ControlNetSpec(args.cn_module, args.cn_model, "manual")
+                    if args.cn_module and args.cn_model
+                    else None
+                )
+            else:
+                cn_spec = resolve_controlnet_spec(args.cn_module, args.cn_model)
+
+            if cn_spec:
+                print(f"[REF]  {reference.label} weight {ref_weight}")
+                print(f"[CN]   {cn_spec.module} / {cn_spec.model} ({cn_spec.source})")
+            else:
+                print(f"[REF]  {reference.label} - ControlNet 미해석, 텍스트만 사용")
+
+    # mock/dry-run 에서는 HTTP 요청을 일절 발생시키지 않는다
     sampler_name = "(mock)" if (mock or dry_run) else resolve_sampler()
     badge = mode_badge(dry_run, mock)
 
@@ -1338,6 +2034,9 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
         save_dir=save_dir,
         width=width,
         sampler_name=sampler_name,
+        reference=reference,
+        cn_spec=cn_spec,
+        ref_weight=ref_weight,
         dry_run=dry_run,
         mock=mock,
     )
@@ -1371,7 +2070,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser(sections, profiles)
     args = parser.parse_args(argv)
 
-    # --test 가 아닐 때만 필수 인자를 강제한다 (R8.4)
+    # --from_image 는 생성과 무관한 독립 작업이므로 다른 생성 플래그보다
+    # 먼저 분기해 즉시 종료한다. prefix/char_prompt 도 요구하지 않는다.
+    if args.from_image:
+        try:
+            return run_interrogate(base_dir, args.from_image, args.interrogator)
+        except ConfigError as e:
+            print(f"[ERROR] {e}", file=sys.stderr)
+            if e.hint:
+                print(f"        {e.hint}", file=sys.stderr)
+            return 1
+
+    # --test / --from_image 가 아닐 때만 필수 인자를 강제한다
     if missing := [n for n in ("prefix", "char_prompt") if not getattr(args, n)]:
         parser.error("다음 인자가 필요합니다: " + ", ".join(f"--{m}" for m in missing))
 
