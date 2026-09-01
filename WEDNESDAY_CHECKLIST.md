@@ -11,7 +11,9 @@
 
 | 항목 | 결과 |
 |---|---|
-| `--test` 자체 진단 | 40항목 PASS |
+| `--test` 자체 진단 | 45항목 PASS |
+| 시간 측정·집계 로직 | 검증됨 |
+| VRAM 응답 파싱 (7케이스) | 검증됨 |
 | 참조 이미지 탐색·우선순위 | 검증됨 |
 | base64 인코딩 왕복 | 검증됨 |
 | 페이로드 조립 구조 | 검증됨 |
@@ -29,6 +31,8 @@
 - weight 별 결과 차이
 - DeepBooru 태그 추출 품질
 - 캐릭터 일관성 개선 정도
+- **VRAM 설정별 속도·메모리 실측** (2A단계)
+- `/sdapi/v1/memory` 응답 구조가 실제로 파싱되는지
 
 ---
 
@@ -73,13 +77,17 @@
   python sd_batch_generator.py --test
   ```
 
-  **통과 기준**: `PASS 40 / FAIL 0`, 종료 코드 0
+  **통과 기준**: `PASS 45 / FAIL 0`, 종료 코드 0
 
   실패 시: JSON 문법 오류 또는 패키지 누락. 메시지에 line 번호가 나온다.
 
 - [ ] **0-5.** WebUI 실행
 
   `webui-user.bat` 에 `--api` 확인 후 실행.
+
+  > 2A단계에서 이 파일의 `COMMANDLINE_ARGS` 를 두 번 바꿔가며 비교한다.
+  > 지금은 `--api` 만 있어도 되고, 기존에 다른 옵션이 있으면 그대로 두고
+  > 2A단계에서 정리한다.
   콘솔에 `Running on local URL: http://127.0.0.1:7860` 확인.
   **이 창은 끝까지 닫지 않는다.**
 
@@ -262,6 +270,139 @@
 
 ---
 
+# 2A단계. VRAM 설정 A/B 비교 (4060 Ti 8GB)
+
+에파는 한 배치에 20~50장을 순차 생성한다. 장당 손실이 누적되므로
+"OOM 없이 돌아간다" 만으로는 부족하고 **속도까지 함께 봐야** 한다.
+
+실행 후 요약에 아래 두 줄이 찍힌다. 이 숫자를 비교한다.
+
+```
+[측정] 20장 / 총 412.3초 / 장당 평균 20.6초 (최속 19.8 ~ 최저 24.1)
+[VRAM] 피크 7.21 / 8.00 GiB (90%)
+```
+
+> `[VRAM]` 줄은 WebUI 버전에 따라 안 나올 수 있다. `/sdapi/v1/memory` 응답
+> 구조가 다르면 조용히 생략된다. 그때는 `[측정]` 만 보고 판단한다.
+
+## 비교 대상
+
+| 버전 | `COMMANDLINE_ARGS` |
+|---|---|
+| **A** | `--api --medvram-sdxl --xformers` |
+| **B** | `--api --xformers` |
+
+A는 [A1111 공식 위키가 8GB Nvidia 에 권장하는 조합](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Optimum-SDXL-Usage)이다.
+B는 메모리 절약 없이 속도만 본 것이다.
+
+> **중요:** `--xformers` 와 `--opt-sdp-attention` 을 **같이 쓰지 않는다.**
+> 둘 다 어텐션 최적화라 하나만 적용된다. 기존 문서에 둘이 함께 적혀 있었는데
+> 그건 잘못이다.
+
+## 절차
+
+- [ ] **2A-1.** 조건 통일
+
+  같은 캐릭터, 같은 코드 범위, 같은 참조 설정으로 돌린다.
+  체크포인트도 바꾸지 않는다.
+
+  ```powershell
+  # 비교 전 기존 결과 삭제 (건너뛰기 방지)
+  Remove-Item -Recurse -Force generated_assets\bench -ErrorAction SilentlyContinue
+  ```
+
+- [ ] **2A-2.** 버전 A 측정
+
+  `webui-user.bat` 을 A 로 수정 → **콘솔 창을 완전히 닫고 재실행**
+  (`COMMANDLINE_ARGS` 는 실행 시점에 읽히므로 재시작이 필수다)
+
+  ```powershell
+  python sd_batch_generator.py --prefix bench --char_prompt "silver hair, blue eyes" --mode 0-9
+  ```
+
+  기록:
+  ```
+  A: 장당 평균 ______ 초 / VRAM 피크 ______ GiB / OOM 발생 여부 ______
+  ```
+
+- [ ] **2A-3.** 결과 삭제 후 버전 B 측정
+
+  ```powershell
+  Remove-Item -Recurse -Force generated_assets\bench
+  ```
+
+  `webui-user.bat` 을 B 로 수정 → 콘솔 닫고 재실행
+
+  ```powershell
+  python sd_batch_generator.py --prefix bench --char_prompt "silver hair, blue eyes" --mode 0-9
+  ```
+
+  기록:
+  ```
+  B: 장당 평균 ______ 초 / VRAM 피크 ______ GiB / OOM 발생 여부 ______
+  ```
+
+- [ ] **2A-4.** 참조 이미지 켠 상태로 재측정 (중요)
+
+  **IP-Adapter 는 CLIP 비전 인코더를 추가로 올린다.** 8GB 에서는 이것이
+  OOM 임계점을 넘길 수 있다. 참조 없이 되던 설정이 참조를 켜면 안 될 수 있다.
+
+  ```powershell
+  Remove-Item -Recurse -Force generated_assets\bench
+  python sd_batch_generator.py --prefix bench --char_prompt "silver hair, blue eyes" --mode 0-9 --ref_image references\mika.webp
+  ```
+
+  기록:
+  ```
+  참조 ON: 장당 평균 ______ 초 / VRAM 피크 ______ GiB / OOM ______
+  참조 OFF 대비 증가분: ______ GiB
+  ```
+
+- [ ] **2A-5.** 판정
+
+  | 상황 | 선택 |
+  |---|---|
+  | B 가 빠르고 OOM 없음 | **B** 채택 (메모리 여유 있음) |
+  | B 에서 OOM 발생 | **A** 채택 |
+  | 참조 ON 에서만 OOM | A 채택. 그래도 나면 `--medvram` (더 강함) |
+  | A/B 속도 차이 5% 미만 | **A** 채택 (안전 마진) |
+
+  20장 이상 연속 생성 시 후반부에 OOM 이 나는지도 함께 본다.
+  누적 파편화는 초반 몇 장만 돌려서는 드러나지 않는다.
+
+- [ ] **2A-6.** 확정 설정 기록 및 문서 반영
+
+  ```
+  확정: set COMMANDLINE_ARGS=________________________________
+  근거: 장당 ______초, VRAM 피크 ______GiB
+  ```
+
+  `사용법.txt` 3-1 절의 권장 설정을 이 값으로 갱신한다.
+  현재는 `--api --xformers --medvram --opt-sdp-attention` 으로 적혀 있고,
+  이건 xformers/sdp 중복 문제가 있으므로 반드시 고쳐야 한다.
+
+- [ ] **2A-7.** 정리
+
+  ```powershell
+  Remove-Item -Recurse -Force generated_assets\bench
+  ```
+
+## OOM 이 계속 날 때
+
+우선순위대로 시도한다. 아래로 갈수록 느려진다.
+
+1. `--medvram-sdxl` (SDXL 일 때만 적용. 속도 손실 적음)
+2. `--medvram` (항상 적용)
+3. WebUI Settings 에서 생성 후 VRAM 비우기 켜기
+4. `IMAGE_SIZE` 를 `(768, 1152)` 로 낮추기
+5. `--lowvram` — **최후 수단.** 속도에 치명적이라 배치 작업에는 부적합하다
+
+**참고: 에파의 재개 기능이 안전망이다.** 25장에서 OOM 이 나도 같은 명령을
+다시 실행하면 26장부터 이어간다. 설정을 완벽히 맞추지 않아도 작업은 진행되므로,
+여기에 과도한 시간을 쓰지 않는다.
+
+---
+
 # 3단계. 태그 추출 확인 (R7.3)
 
 2단계와 독립이다. ControlNet 없이도 가능하다.
@@ -352,7 +493,7 @@
   python sd_batch_generator.py --test
   ```
 
-  `PASS 40 / FAIL 0` 유지 확인.
+  `PASS 45 / FAIL 0` 유지 확인.
 
 - [ ] **5-3.** 참조 이미지 커밋 여부 결정
 
@@ -395,6 +536,10 @@
 | 표정이 전부 같음 | weight 과다. 낮추기 |
 | 인물 중복/뒤틀림 | SD1.5 에 832×1216 은 과대. `IMAGE_SIZE` 낮추기 |
 | `--from_image` 에러 | DeepBooru 미설치. `--interrogator clip` |
+| CUDA out of memory | 2A단계 "OOM 이 계속 날 때" 참고. 재실행하면 이어서 생성됨 |
+| 후반부에서만 OOM | 누적 파편화. VRAM 비우기 옵션 켜기 |
+| `[VRAM]` 줄이 안 나옴 | `/sdapi/v1/memory` 응답 구조 차이. 기능 문제 아님 |
+| 참조 켜면 OOM | IP-Adapter 가 CLIP 인코더를 추가로 올림. `--medvram-sdxl` 필요 |
 
 # 시간이 부족하면
 
@@ -402,7 +547,13 @@
 
 1. **0단계 + 1단계** — 모델명 확정. 이것만 해도 다음에 이어가기 쉽다.
 2. **2단계** — weight 확정. 핵심 산출물.
-3. **3단계** — 태그 추출. 독립 기능이라 나중에 해도 무관.
-4. **4단계** — 일관성 비교. 확인 성격이라 생략 가능.
+3. **2A단계** — VRAM 설정. OOM 이 나고 있다면 2단계보다 먼저.
+4. **3단계** — 태그 추출. 독립 기능이라 나중에 해도 무관.
+5. **4단계** — 일관성 비교. 확인 성격이라 생략 가능.
 
 1단계에서 ControlNet 이 없어 막히면 3단계로 건너뛴다. 두 기능은 독립이다.
+
+2A단계는 WebUI 재시작이 두 번 필요해 시간이 걸린다. OOM 이 발생하지 않고
+속도도 견딜 만하면 **현재 설정 그대로 두고 나중에 해도 된다.** 단
+`--xformers` 와 `--opt-sdp-attention` 이 함께 적혀 있으면 그것만은 지금
+하나로 정리한다.

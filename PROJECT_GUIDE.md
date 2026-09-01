@@ -524,6 +524,72 @@ python sd_batch_generator.py --prefix mika --char_prompt "..." --mode 1-19
 
 ---
 
+## 8A. 측정 기능
+
+배치가 끝나면 요약에 두 줄이 추가된다.
+
+```
+[측정] 20장 / 총 412.3초 / 장당 평균 20.6초 (최속 19.8 ~ 최저 24.1)
+[VRAM] 피크 7.21 / 8.00 GiB (90%)
+```
+
+### 8A.1 왜 필요한가
+
+VRAM 설정(`--medvram-sdxl`, xFormers 등)을 비교할 때 판단 근거가 된다.
+
+에파는 한 배치에 수십 장을 **순차** 생성하므로 장당 손실이 누적된다.
+장당 5초 차이는 30장이면 2분 30초다. "OOM 없이 돌아간다" 만으로는 부족하고
+속도까지 함께 봐야 한다.
+
+`--medvram` 계열은 메모리를 절약하는 대신 속도를 떨어뜨린다.
+`--lowvram` 은 [성능에 치명적](https://github.com/AUTOMATIC1111/stable-diffusion-webui/discussions/2532)이라
+배치 작업에는 부적합하다.
+
+### 8A.2 시간 측정
+
+`time.perf_counter()` 로 생성 직전부터 저장 완료까지를 측정한다.
+
+**실제로 생성한 것만 기록한다.** 건너뛴 파일은 제외되므로 재개 실행에서도
+숫자가 왜곡되지 않는다. 집계는 `summarize_durations()` 순수 함수가 담당해
+`--test` 에서 직접 검증한다.
+
+### 8A.3 VRAM 조회
+
+`/sdapi/v1/memory` 를 배치 종료 후 1회 조회한다.
+
+응답 구조가 WebUI 버전과 Forge 여부에 따라 다르므로 여러 키를 순차 탐색한다.
+
+1. 최상위 스칼라: `reserved_peak` → `active_peak`
+2. 중첩 딕셔너리: `reserved.peak` → `active.peak` → `allocated.peak`
+
+어느 것도 찾지 못하면 **조용히 생략한다.** 부가 정보이므로 이것 때문에
+배치가 실패해서는 안 된다. 파싱은 `extract_vram_peak()` 순수 함수로 분리해
+7가지 응답 형태를 `--test` 에서 검증한다.
+
+`--dry-run` 과 `--mock` 에서는 조회하지 않는다. GPU 를 쓰지 않으므로 무의미하다.
+
+### 8A.4 8GB 환경 권장 설정
+
+[A1111 공식 위키의 8GB Nvidia 권장 조합](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Optimum-SDXL-Usage)이다.
+
+```bat
+set COMMANDLINE_ARGS=--api --medvram-sdxl --xformers
+```
+
+주의할 점 두 가지가 있다.
+
+**`--xformers` 와 `--opt-sdp-attention` 을 같이 쓰지 않는다.** 둘 다 어텐션
+최적화라 하나만 적용된다. 함께 적으면 어느 쪽이 쓰이는지 알 수 없어 비교가
+불가능해진다.
+
+**참조 이미지(IP-Adapter)는 VRAM 을 추가로 쓴다.** CLIP 비전 인코더가 함께
+올라가므로, 참조 없이 되던 설정이 참조를 켜면 OOM 이 날 수 있다.
+
+에파의 재개 기능이 안전망 역할을 한다. 25장에서 OOM 이 나도 같은 명령을
+다시 실행하면 26장부터 이어간다. 설정을 완벽히 맞추지 않아도 작업은 진행된다.
+
+---
+
 ## 9. 저장 규칙
 
 ```
@@ -810,7 +876,7 @@ python sd_batch_generator.py --prefix mika --char_prompt "silver hair" --custom_
 
 ---
 
-## 14. `--test` 검사 항목 (23개)
+## 14. `--test` 검사 항목 (45개)
 
 ### 데이터 검사
 
@@ -862,8 +928,10 @@ python sd_batch_generator.py --prefix mika --char_prompt "silver hair" --custom_
 | T28 | interrogate 페이로드 구조 |
 | T29 / T29b | 성별 태그 필터 / `filtered` 프로퍼티 |
 | T30 / T30b | 해시 포함 모델명 부분 매칭 / 실패 시 `None` |
+| T31 / T31b / T31c | 시간 집계 / 빈 측정값 / `BatchResult.timing` |
+| T32 / T32b | VRAM 응답 파싱 7케이스 / GiB 환산 |
 
-현재 총 검사 수: **40항목** (데이터 8 + 로직 12 + 프로필 3 + 참조 17).
+현재 총 검사 수: **45항목** (데이터 8 + 로직 12 + 프로필 3 + 참조·측정 22).
 
 검사는 **실제 구현 함수를 직접 호출**한다. 로직을 복제하지 않으므로
 구현이 바뀌면 검사도 함께 따라간다.
