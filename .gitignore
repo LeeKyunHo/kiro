@@ -6,6 +6,9 @@ generated_assets/
 # --mock 산출물. 실제 에셋과 경로를 분리해 스킵 로직 오염을 막는다.
 mock_assets/
 
+# --benchmark 산출물. 가중치 비교용 임시 자료이며 HTML 뷰어까지 재생성된다.
+benchmark_assets/
+
 # save_as_webp() 의 원자적 쓰기 임시 파일.
 # 정상 종료 시 남지 않지만 중단되면 잔존할 수 있다.
 *.part

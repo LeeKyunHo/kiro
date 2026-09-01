@@ -8,7 +8,8 @@
 from __future__ import annotations
 
 import re
-from typing import Final, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Final
 
 from . import config
 

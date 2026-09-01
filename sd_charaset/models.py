@@ -12,9 +12,9 @@ frozen 을 걸 수 없다. 대신 컨테이너 필드를 `field(default_factory=
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Sequence
 
 from . import config
 

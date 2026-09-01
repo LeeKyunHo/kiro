@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import base64
 from types import TracebackType
-from typing import Any, Sequence
+from typing import Any
 
 import requests
 
@@ -75,7 +75,10 @@ class WebUiClient:
         try:
             response = self._session.post(url, json=body, timeout=timeout)
             response.raise_for_status()
-            return response.json()
+            data: object = response.json()
+            if not isinstance(data, dict):
+                raise ApiError(f"응답 최상위가 객체가 아닙니다 ({path})")
+            return data
         except requests.exceptions.ConnectionError as exc:
             raise ApiUnavailableError(
                 "WebUI 에 연결할 수 없습니다.",
@@ -98,8 +101,10 @@ class WebUiClient:
         try:
             response = self._session.get(self._url(path), timeout=timeout)
             response.raise_for_status()
-            data = response.json()
-            return data if isinstance(data, dict) else {"_list": data}
+            data: object = response.json()
+            if isinstance(data, dict):
+                return data
+            return {"_list": data}
         except Exception as exc:  # noqa: BLE001 — 부가 정보이므로 전부 흡수
             _logger.debug("조회 실패 (%s): %s", path, exc)
             return None

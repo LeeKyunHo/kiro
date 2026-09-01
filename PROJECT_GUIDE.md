@@ -30,7 +30,9 @@ kiro/
 ├── WEDNESDAY_CHECKLIST.md                   # GPU 환경 검증 절차
 ├── .gitignore / .gitattributes
 │
-├── sd_charaset/                             # ★ 실제 구현 (20개 모듈)
+├── .github/workflows/ci.yml                 # CI (ruff + mypy + 자체 진단)
+│
+├── sd_charaset/                             # ★ 실제 구현 (23개 모듈)
 │   ├── __init__.py                          # 버전, 공개 API
 │   ├── __main__.py                          # python -m sd_charaset
 │   ├── config.py                            # 상수 단일 출처
@@ -51,7 +53,10 @@ kiro/
 │   │
 │   ├── render.py                            # Strategy + BatchRunner
 │   ├── output.py                            # 마크다운 + 리포트
-│   ├── diagnostics.py                       # --test 65항목
+│   ├── benchmark.py                         # 가중치 순회 + HTML 뷰어
+│   ├── tui.py                               # 화살표 선택 UI (stdlib 전용)
+│   ├── wizard.py                            # 대화형 마법사 → argv 조립
+│   ├── diagnostics.py                       # --test 67항목
 │   ├── commands.py                          # Command 디스패치
 │   └── cli.py                               # argparse
 │
@@ -75,10 +80,18 @@ kiro/
 ├── generated_assets/                        # 실제 렌더링 산출물 (git 제외)
 │   └── {prefix}/{prefix}_{NN}.webp
 │
-└── mock_assets/                             # --mock 산출물 (git 제외)
+├── mock_assets/                             # --mock 산출물 (git 제외)
+│   └── {prefix}/
+│       ├── {prefix}_{NN}.webp
+│       └── _mock_manifest.json
+│
+└── benchmark_assets/                        # --benchmark 산출물 (git 제외)
     └── {prefix}/
-        ├── {prefix}_{NN}.webp
-        └── _mock_manifest.json
+        ├── benchmark_viewer.html            # 비교 매트릭스
+        ├── _benchmark.json                  # 실행 메타데이터
+        ├── w0.30/{prefix}_{NN}.webp
+        ├── w0.50/{prefix}_{NN}.webp
+        └── ...
 ```
 
 `references/` 는 git 으로 추적한다. 생성 결과물은 재생성 가능한 파생물이지만
@@ -715,6 +728,117 @@ python sd_batch_generator.py --prefix mika --char_prompt "..." --mode 1-19
 최신 WebUI/Forge는 샘플러와 스케줄러가 분리되어 `DPM++ 2M Karras`가 없을 수 있고,
 그러면 `DPM++ 2M`으로 폴백하며 스케줄러는 WebUI 기본값을 쓴다.
 선택 결과는 `[SAMPLER]` 로그로 출력된다.
+
+---
+
+## 7B. 가중치 벤치마크 (`--benchmark`)
+
+가중치를 순회 생성하고 비교 매트릭스 HTML을 만든다. 참조 이미지가 필수다.
+
+```powershell
+python -m sd_charaset --prefix mika --char_prompt "silver hair" `
+  --benchmark --bench_weights 0.3,0.5,0.7,0.9 --mode 3,5,12
+```
+
+산출물은 `benchmark_assets/{prefix}/benchmark_viewer.html`. 행이 코드,
+열이 가중치인 매트릭스라 같은 표정을 가중치별로 나란히 볼 수 있다.
+
+### 7B.1 접두어를 바꾸지 않는 것이 핵심
+
+가중치별 구분을 접두어(`bench_w05` 등)로 하면 **트리거 태그가 달라져
+프롬프트 자체가 변한다.** 비교의 전제가 깨진다.
+
+`AssetPaths.variant`로 하위 폴더만 나눈다.
+
+```
+benchmark_assets/mika/w0.30/mika_03.webp   ← 접두어 동일
+benchmark_assets/mika/w0.70/mika_03.webp   ← 접두어 동일
+```
+
+### 7B.2 `OutputKind` 열거형
+
+이전에는 `AssetPaths(is_mock: bool)`이었다. 벤치마크가 추가되어 상태가
+3개가 된 시점부터 불리언 플래그는 코드 냄새다. 조건이 `if is_mock`에서
+`if is_mock else if is_benchmark`로 번져 호출부마다 분기가 늘어난다.
+
+```python
+class OutputKind(str, Enum):
+    REAL = "real"          # generated_assets/
+    MOCK = "mock"          # mock_assets/
+    BENCHMARK = "benchmark"  # benchmark_assets/
+```
+
+`str`을 함께 상속해 JSON 직렬화와 로그 출력이 그대로 된다.
+
+### 7B.3 서브프로세스를 쓰지 않는다
+
+CLI를 셸로 호출하면 인자 파싱이 중복되고 예외가 문자열로 뭉개진다.
+`BatchRunner`와 전략을 직접 재사용한다. 모듈형 리팩터링이 이걸 가능하게
+만들었다.
+
+### 7B.4 `--mock`을 지원한다
+
+GPU 없는 환경에서 HTML 조립과 매트릭스 구성을 검증할 수 있다. 더미
+이미지라 화질 비교는 무의미하지만 파이프라인은 완전히 동일하다.
+뷰어 상단에 모의 생성 경고가 표시된다.
+
+### 7B.5 HTML은 상대 경로를 쓴다
+
+base64로 내장하면 자기완결적이 되지만 수십 장이면 수 MB가 되고 브라우저
+로딩이 느려진다. 뷰어를 이미지 옆에 두는 것이 이 용도에는 맞다.
+
+Windows 역슬래시는 HTML에서 경로 구분자로 동작하지 않으므로
+`Path.as_posix()`로 변환한다. 사용자 입력(접두어, 프롬프트)은
+`html.escape()`로 이스케이프한다.
+
+`build_viewer_html()`은 문자열을 반환하고 쓰기는 호출부가 한다. 진단에서
+파일 없이 내용을 검사할 수 있다.
+
+---
+
+## 7C. 대화형 모드 (`--interactive` / `-i`)
+
+방향키로 실행 모드·프로필·범위를 선택한다. 긴 명령을 타이핑할 필요가 없다.
+
+```powershell
+python -m sd_charaset --interactive
+```
+
+### 7C.1 표준 라이브러리만 쓴다
+
+의존성을 `requests`, `Pillow`로 한정한 원칙이 있다. `inquirer` / `rich` /
+`questionary`는 편리하지만 편의 기능 하나로 그 원칙을 깨는 것은 비용 대비
+이득이 없다. 화살표 키는 `msvcrt`(Windows)와 `termios`+`tty`(POSIX)로
+충분하다.
+
+### 7C.2 비대화형 폴백이 필수다
+
+`stdin`이 tty가 아니면(파이프, CI, 일부 IDE 터미널) raw 모드 전환이
+실패하거나 키 입력이 오지 않아 **무한 대기한다.** 그런 환경에서는 번호
+입력으로 자동 전환한다.
+
+```python
+def supports_interactive() -> bool:
+    return bool(sys.stdin.isatty() and sys.stdout.isatty())
+```
+
+EOF(파이프 종료)는 기본값으로 처리해 자동화에서 멈추지 않게 한다.
+
+### 7C.3 결과를 argv로 조립한다
+
+`Namespace`를 직접 만들면 기본값 채우기·타입 변환·상호 배타 검사를
+마법사에서 다시 구현해야 한다. 규칙이 두 곳에 있으면 반드시 어긋난다.
+
+argv를 만들어 **기존 파서에 다시 넣는다.** 검증 경로가 수동 CLI와 완전히
+동일해진다.
+
+```
+[실행할 명령]
+  python -m sd_charaset --prefix mika --char_prompt "silver hair" --mode all
+```
+
+부수 효과로 조립된 명령을 보여줄 수 있어 사용자가 CLI 사용법을 자연히
+익힌다. 같은 작업을 반복할 때 이 줄을 복사해 쓰면 된다.
 
 ---
 

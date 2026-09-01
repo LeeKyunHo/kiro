@@ -21,13 +21,13 @@ from __future__ import annotations
 
 import base64
 import io
-import json
 import shutil
 import tempfile
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator, Sequence
+from typing import Any
 
 from PIL import Image
 
@@ -51,7 +51,6 @@ from .models import (
     ControlNetSpec,
     InterrogateResult,
     PoseDatabase,
-    PoseEntry,
     Profile,
     ReferenceContext,
     summarize_durations,
@@ -59,13 +58,11 @@ from .models import (
 from .output import build_genit_block
 from .storage import (
     find_reference_candidates,
-    load_reference,
     resolve_reference_image,
 )
 from .tags import (
     find_duplicate_tags,
     find_exclusive_conflicts,
-    join_tags,
     normalize_tag,
     parse_exclusive_groups,
     partition_gender_tags,
@@ -921,15 +918,41 @@ def _check_integration(report: Report, database: PoseDatabase) -> None:
     from .storage import AssetPaths
 
     with temp_workspace() as root:
-        real_paths = AssetPaths(root, "mika", is_mock=False)
-        mock_paths = AssetPaths(root, "mika", is_mock=True)
+        from .storage import OutputKind
+
+        real_paths = AssetPaths(root, "mika", kind=OutputKind.REAL)
+        mock_paths = AssetPaths(root, "mika", kind=OutputKind.MOCK)
+        bench_paths = AssetPaths(
+            root, "mika", kind=OutputKind.BENCHMARK, variant="w0.70"
+        )
         report.check(
             "T35",
-            "mock 출력 경로 격리",
-            real_paths.output_dir != mock_paths.output_dir
+            "출력 경로 3종 격리",
+            len({
+                real_paths.output_dir,
+                mock_paths.output_dir,
+                bench_paths.output_dir,
+            }) == 3
             and config.MOCK_ASSETS_DIRNAME in str(mock_paths.output_dir)
-            and config.ASSETS_DIRNAME in str(real_paths.output_dir),
-            f"{real_paths.output_dir.parent.name} vs {mock_paths.output_dir.parent.name}",
+            and config.ASSETS_DIRNAME in str(real_paths.output_dir)
+            and config.BENCHMARK_ASSETS_DIRNAME in str(bench_paths.output_dir),
+            f"real/{real_paths.output_dir.parent.name} "
+            f"mock/{mock_paths.output_dir.parent.name} "
+            f"bench/{bench_paths.output_dir.name}",
+        )
+        report.check(
+            "T35c",
+            "variant 가 접두어를 바꾸지 않음",
+            bench_paths.prefix == real_paths.prefix == "mika"
+            and bench_paths.output_dir.parent.name == "mika",
+            "트리거 태그가 동일하게 유지됨",
+        )
+        report.check(
+            "T35d",
+            "with_variant 사본",
+            bench_paths.with_variant("w0.30").output_dir.name == "w0.30"
+            and bench_paths.output_dir.name == "w0.70",
+            "원본 불변",
         )
 
         # T35b — 실제 폴더에 mock 매니페스트가 있으면 중단해야 한다

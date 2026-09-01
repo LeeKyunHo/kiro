@@ -7,25 +7,51 @@
 
 ## 어느 브랜치에서 할지 (먼저 결정)
 
-`refactor/modular` 브랜치에 모듈형 리팩터링이 올라가 있다. GPU 세션은
-**`main`에서 하는 것을 권한다.**
+`refactor/modular` 브랜치에 모듈형 리팩터링과 추가 기능이 올라가 있다.
+**이 판단은 아래 트레이드오프를 보고 직접 정한다.**
+
+| | `main` | `refactor/modular` |
+|---|---|---|
+| 구조 | 단일 파일 1,842줄 | 패키지 23모듈 + 33줄 shim |
+| `--test` | 45항목 | 67항목 |
+| 2단계 weight 비교 | 수동. `Copy-Item` 20여 줄 반복 | `--benchmark` 한 줄 + HTML 비교표 |
+| `--no-open` | 없음 | 있음 (삭제 반복 시 경고창 방지) |
+| `--interactive` | 없음 | 있음 |
+| 기본 JSON | 20종 (2섹션) | 40종 (4섹션) |
+| 검증 상태 | 실전 검증됨 | 회귀 69건 통과, GPU 미검증 |
+
+### 판단 기준
+
+**`main` 을 고르는 이유**는 목적 분리다. 오늘 세션의 목적은 weight 확정이다.
+여기에 새 구조 검증이 겹치면 문제가 생겼을 때 원인이 weight 인지 리팩터링
+인지 가려내기 어려워진다.
+
+**`refactor/modular` 을 고르는 이유**는 2단계가 훨씬 짧아진다는 것이다.
+수동 절차(2-3)는 `Remove-Item` / `Copy-Item` 을 가중치마다 반복해야 하고,
+결과를 파일 이름으로만 구분하므로 비교할 때 파일 탐색기에서 눈으로 짝을
+맞춰야 한다. `--benchmark`(2-3A)는 이걸 한 줄로 줄이고 비교표를 만들어 준다.
+
+**권장**: 시간이 넉넉하면 `main` 으로 0~1단계까지 진행해 ControlNet 모델명을
+확정한 뒤, 2단계부터 `refactor/modular` 로 넘어간다. 모델명 확정이 끝나면
+변수가 하나 줄어들어 원인 판별 문제가 없어진다.
 
 ```powershell
-git checkout main       # 검증된 상태
+git checkout main                 # 0~1단계
+git checkout refactor/modular     # 2단계부터
 ```
 
-이유는 목적 분리다. 오늘 세션의 목적은 weight 확정이다. 여기에 새 구조
-검증이 겹치면 문제가 생겼을 때 원인이 weight 인지 리팩터링인지 가려내기
-어려워진다.
+시간이 부족하면 처음부터 `refactor/modular` 로 간다. 두 브랜치의 렌더링
+동작은 동일하며 명령어도 `sd_batch_generator.py` 로 같다.
 
-리팩터링 병합은 이 검증이 끝난 뒤에 한다. 두 브랜치의 동작은 동일하며
-(회귀 74건 검증 완료), 명령어도 `sd_batch_generator.py` 로 같다.
+`refactor/modular` 에서 알아둘 차이점:
 
-`refactor/modular` 에서 진행할 경우 차이점 두 가지만 알아두면 된다.
-
-- `--test` 항목 수가 45 → 65
+- `--test` 항목 수가 45 → 67
 - `--mock` 산출물이 `generated_assets/` 가 아니라 `mock_assets/` 에 저장됨
   (이 문서의 2단계 이후는 실제 렌더링이므로 영향 없음)
+- `--benchmark` 산출물은 `benchmark_assets/` 에 저장됨. 실제 결과물 폴더를
+  오염시키지 않는다
+- 기본 JSON 이 40종이므로 `--mode all` 이 40장이다. 비교용으로는
+  `--mode 3,5,12` 처럼 좁히는 편이 낫다
 
 ---
 
@@ -33,7 +59,7 @@ git checkout main       # 검증된 상태
 
 | 항목 | 결과 |
 |---|---|
-| `--test` 자체 진단 | 45항목 (main) / 65항목 (refactor) PASS |
+| `--test` 자체 진단 | 45항목 (main) / 67항목 (refactor) PASS |
 | 시간 측정·집계 로직 | 검증됨 |
 | VRAM 응답 파싱 (7케이스) | 검증됨 |
 | 참조 이미지 탐색·우선순위 | 검증됨 |
@@ -45,6 +71,12 @@ git checkout main       # 검증된 상태
 | 성별 태그 필터 | 검증됨 |
 | 모델명 부분 매칭 로직 | 검증됨 (픽스처 기준) |
 | 회귀 (참조 없는 기존 동작) | 46건 검증 |
+| 벤치마크 가중치 파싱·중복 제거 | 검증됨 |
+| 벤치마크 HTML 조립·이스케이프 | 검증됨 (`--mock` 종단) |
+| 벤치마크 variant 폴더 분리 | 검증됨 |
+| 대화형 모드 argv 조립 | 검증됨 |
+| 비대화형 폴백 (tty 없음) | 검증됨 |
+| ruff / mypy | 통과 (23모듈) |
 
 ## 여기서만 확인 가능한 것
 
@@ -55,6 +87,8 @@ git checkout main       # 검증된 상태
 - 캐릭터 일관성 개선 정도
 - **VRAM 설정별 속도·메모리 실측** (2A단계)
 - `/sdapi/v1/memory` 응답 구조가 실제로 파싱되는지
+- 벤치마크 뷰어가 **실제 이미지로** 판단에 쓸 만한지
+  (노트북에서는 더미 이미지로 구조만 확인했다)
 
 ---
 
@@ -100,7 +134,7 @@ git checkout main       # 검증된 상태
   ```
 
   **통과 기준**: `FAIL 0`, 종료 코드 0
-  (항목 수는 `main` 45개, `refactor/modular` 65개)
+  (항목 수는 `main` 45개, `refactor/modular` 67개)
 
   실패 시: JSON 문법 오류 또는 패키지 누락. 메시지에 line 번호가 나온다.
 
@@ -223,7 +257,71 @@ git checkout main       # 검증된 상태
   표정 변화가 큰 코드 2~3개를 고른다. 예: `03`(angry pout), `05`(crying),
   `12`(waving hand). 포즈 전이가 일어나면 이런 코드에서 먼저 드러난다.
 
+### 2-3A. `--benchmark` 로 자동 비교 (`refactor/modular` 전용) ← 권장
+
+- [ ] **2-3A-1.** 한 줄로 전 가중치 생성
+
+  `refactor/modular` 브랜치라면 2-3(수동)을 건너뛰고 이것만 하면 된다.
+
+  ```powershell
+  python sd_batch_generator.py --prefix mika `
+    --char_prompt "silver hair, blue eyes, school uniform" `
+    --benchmark --mode 3,5,12
+  ```
+
+  기본 비교 가중치는 `0.3 / 0.5 / 0.7 / 0.9` 네 가지다. 총 12장이 생성된다.
+  좁은 구간을 보려면 `--bench_weights 0.5,0.6,0.7,0.8` 처럼 지정한다.
+
+  **산출물은 `benchmark_assets/mika/` 에 들어간다.** `generated_assets/`
+  를 건드리지 않으므로 실제 세트와 섞이지 않는다. 접두어도 바뀌지 않아
+  프롬프트가 동일하다 — 이게 비교의 전제다.
+
+  ```
+  benchmark_assets\mika\
+   ├─ benchmark_viewer.html    ← 이걸 브라우저로 연다
+   ├─ _benchmark.json
+   └─ w0.30\ w0.50\ w0.70\ w0.90\
+  ```
+
+- [ ] **2-3A-2.** `[CN]` 줄 확인 (중요)
+
+  화면에 아래가 떴다면 **결과가 전부 같게 나온다.** 가중치가 반영되지
+  않은 상태이므로 비교가 무의미하다. 1-3 으로 돌아가 모델을 수동 지정한다.
+
+  ```
+  [WARN] ControlNet 미해석 - 가중치가 결과에 반영되지 않습니다.
+  ```
+
+  정상이면 `[CN] <모듈명> / <모델명>` 이 한 번 출력되고, 가중치별로
+  `[가중치 w0.30] ...` 진행 로그가 이어진다.
+
+- [ ] **2-3A-3.** 뷰어로 비교
+
+  ```powershell
+  Start-Process benchmark_assets\mika\benchmark_viewer.html
+  ```
+
+  행이 코드, 열이 가중치인 표가 열린다. 가로 한 줄을 훑으면 같은 표정이
+  가중치에 따라 어떻게 변하는지 보인다. 이미지를 클릭하면 확대된다.
+
+  표 아래에 가중치별 장당 평균 시간과 VRAM 피크도 함께 나온다.
+  2A단계 판단에도 쓸 수 있다.
+
+- [ ] **2-3A-4.** 정리
+
+  판단이 끝나면 지운다. git 추적 대상이 아니므로 남겨둬도 무해하다.
+
+  ```powershell
+  Remove-Item -Recurse -Force benchmark_assets\mika
+  ```
+
+  → 2-4 로 진행한다.
+
+### 2-3. weight 별 생성 (수동, `main` 용)
+
 - [ ] **2-3.** weight 별 생성
+
+  `refactor/modular` 라면 2-3A 를 쓰고 이 절은 건너뛴다.
 
   같은 코드를 세 가지 weight 로 뽑아 비교한다.
   **매번 파일을 지워야** 재생성된다.
@@ -276,7 +374,12 @@ git checkout main       # 검증된 상태
 
 - [ ] **2-6.** 기본값 반영
 
-  `sd_batch_generator.py` 에서 아래 상수를 확정값으로 바꾼다.
+  아래 상수를 확정값으로 바꾼다. 브랜치에 따라 파일이 다르다.
+
+  | 브랜치 | 파일 |
+  |---|---|
+  | `main` | `sd_batch_generator.py` |
+  | `refactor/modular` | `sd_charaset/config.py` |
 
   ```python
   REF_WEIGHT_DEFAULT = 0.7        # ← 확정값으로 수정
@@ -285,11 +388,18 @@ git checkout main       # 검증된 상태
   주석에도 근거를 남긴다. 현재 주석은 "실무 관행에 기반한 출발점" 이라고
   적혀 있으니, 실측값으로 갱신한다.
 
+  최적 구간이 기본 4종(0.3/0.5/0.7/0.9)의 바깥이나 사이에 있었다면
+  `BENCHMARK_WEIGHTS_DEFAULT` 도 함께 조정해 둔다. (`config.py`)
+
 - [ ] **2-7.** 비교 파일 정리
+
+  2-3(수동)을 썼다면:
 
   ```powershell
   Remove-Item w05_*.webp, w07_*.webp, w09_*.webp
   ```
+
+  2-3A(벤치마크)를 썼다면 2-3A-4 에서 이미 정리했다.
 
 ---
 
@@ -340,6 +450,11 @@ B는 메모리 절약 없이 속도만 본 것이다.
   >
   > `refactor/modular` 브랜치에만 있는 플래그다. `main` 에서 작업하면
   > 경고창을 그냥 닫거나, 탐색기 창을 먼저 닫고 삭제하면 된다.
+
+  > **2-3A 를 이미 했다면 이 단계가 짧아진다.** 벤치마크 뷰어의 실행 통계
+  > 표에 가중치별 장당 평균 시간과 VRAM 피크가 이미 들어 있다. 같은
+  > `COMMANDLINE_ARGS` 안에서의 비교라 A/B 비교에 바로 쓸 수는 없지만,
+  > 기준선(baseline)으로는 쓸 수 있다.
 
 - [ ] **2A-2.** 버전 A 측정
 
@@ -523,7 +638,7 @@ B는 메모리 절약 없이 속도만 본 것이다.
   python sd_batch_generator.py --test
   ```
 
-  `PASS 65 / FAIL 0` 유지 확인.
+  `FAIL 0` 유지 확인. (항목 수는 `main` 45개, `refactor/modular` 67개)
 
 - [ ] **5-3.** 참조 이미지 커밋 여부 결정
 
@@ -535,15 +650,22 @@ B는 메모리 절약 없이 속도만 본 것이다.
 - [ ] **5-4.** 커밋 및 푸시
 
   ```powershell
+  # main 이면
   git add sd_batch_generator.py
+  # refactor/modular 이면
+  git add sd_charaset/config.py
+
   git add references/mika.webp        # 커밋하기로 했다면
   git commit -m "tune: IP-Adapter weight 기본값을 실측값으로 확정
 
-  weight 0.5/0.7/0.9 비교 생성 결과 기준.
+  weight 0.3/0.5/0.7/0.9 비교 생성 결과 기준.
   포즈 전이 시작 임계값: <값>
   최적값: <값>"
   git push
   ```
+
+  > `benchmark_assets/` 는 `.gitignore` 에 있으므로 커밋되지 않는다.
+  > 비교표를 남기고 싶으면 폴더째로 따로 백업한다.
 
 - [ ] **5-5.** spec 갱신
 
@@ -570,6 +692,11 @@ B는 메모리 절약 없이 속도만 본 것이다.
 | 후반부에서만 OOM | 누적 파편화. VRAM 비우기 옵션 켜기 |
 | `[VRAM]` 줄이 안 나옴 | `/sdapi/v1/memory` 응답 구조 차이. 기능 문제 아님 |
 | 참조 켜면 OOM | IP-Adapter 가 CLIP 인코더를 추가로 올림. `--medvram-sdxl` 필요 |
+| `--benchmark` 가 즉시 거부됨 | 참조 이미지 없음. 2-1 을 먼저 한다 |
+| 벤치마크 결과가 전부 동일 | `[WARN] ControlNet 미해석`. 1-3 으로 |
+| 벤치마크 뷰어 이미지 깨짐 | HTML 만 옮겼음. `benchmark_assets/{약칭}/` 폴더째로 |
+| 벤치마크 중간에 멈춤 | 연결 끊김. 남은 가중치를 건너뛰고 여기까지의 뷰어를 만든다. 재실행하면 이미 만든 장은 건너뛴다 |
+| `--benchmark` 없다고 나옴 | `main` 브랜치다. `git checkout refactor/modular` |
 
 # 시간이 부족하면
 
@@ -577,9 +704,13 @@ B는 메모리 절약 없이 속도만 본 것이다.
 
 1. **0단계 + 1단계** — 모델명 확정. 이것만 해도 다음에 이어가기 쉽다.
 2. **2단계** — weight 확정. 핵심 산출물.
+   `refactor/modular` 에서 2-3A(`--benchmark`)를 쓰면 이 단계가 크게 짧아진다.
+   명령 한 줄과 뷰어 확인으로 끝난다.
 3. **2A단계** — VRAM 설정. OOM 이 나고 있다면 2단계보다 먼저.
 4. **3단계** — 태그 추출. 독립 기능이라 나중에 해도 무관.
 5. **4단계** — 일관성 비교. 확인 성격이라 생략 가능.
+   2단계를 `--benchmark` 로 했다면 뷰어에 이미 나란히 비교된 결과가 있어
+   이 단계의 가치가 줄어든다. 생략해도 무방하다.
 
 1단계에서 ControlNet 이 없어 막히면 3단계로 건너뛴다. 두 기능은 독립이다.
 

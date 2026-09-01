@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from contextlib import suppress
 from typing import Final, TextIO
 
 LOGGER_NAME: Final = "sd_charaset"
@@ -61,11 +62,9 @@ def configure_stdio() -> None:
         reconfigure = getattr(stream, "reconfigure", None)
         if reconfigure is None:
             continue
-        try:
+        # 비표준 스트림이나 이미 닫힌 스트림은 그대로 둔다.
+        with suppress(OSError, ValueError):
             reconfigure(encoding="utf-8", errors="replace")
-        except (OSError, ValueError):
-            # 비표준 스트림이나 이미 닫힌 스트림은 그대로 둔다.
-            pass
 
 
 def configure_logging(verbose: bool = False, stream: TextIO | None = None) -> logging.Logger:

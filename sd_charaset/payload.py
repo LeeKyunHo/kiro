@@ -11,7 +11,8 @@ API 페이로드 조립 — 순수 계층.
 
 from __future__ import annotations
 
-from typing import Any, Final, Sequence
+from collections.abc import Sequence
+from typing import Any, Final
 
 from . import config
 from .models import ControlNetSpec, ReferenceContext, ReferenceImage

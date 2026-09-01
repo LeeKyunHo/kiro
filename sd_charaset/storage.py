@@ -24,6 +24,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 
 from PIL import Image
@@ -39,31 +40,65 @@ _logger = get_logger("storage")
 # ─────────────────────────────────────────────
 # 경로 정책
 # ─────────────────────────────────────────────
+class OutputKind(str, Enum):
+    """
+    산출물 종류.
+
+    이전에는 `is_mock: bool` 이었다. 벤치마크가 추가되어 상태가 3개가 된
+    시점부터 불리언 플래그는 코드 냄새다. 조건이 `if is_mock` 에서
+    `if is_mock else if is_benchmark` 로 번져 호출부마다 분기가 늘어난다.
+
+    `str` 을 함께 상속해 JSON 직렬화와 로그 출력이 그대로 된다.
+    """
+
+    REAL = "real"
+    MOCK = "mock"
+    BENCHMARK = "benchmark"
+
+    @property
+    def dirname(self) -> str:
+        return {
+            OutputKind.REAL: config.ASSETS_DIRNAME,
+            OutputKind.MOCK: config.MOCK_ASSETS_DIRNAME,
+            OutputKind.BENCHMARK: config.BENCHMARK_ASSETS_DIRNAME,
+        }[self]
+
+
 @dataclass(frozen=True, slots=True)
 class AssetPaths:
     """
     출력 경로를 한 곳에서 결정한다.
 
-    mock 과 실제 렌더링의 루트를 분리하는 것이 핵심이다. 같은 폴더를 쓰면
+    종류별로 루트를 분리하는 것이 핵심이다. 같은 폴더를 쓰면
     `--mock --prefix mika` 로 검증한 뒤 실제 렌더링을 돌렸을 때 재개
     로직이 더미 파일을 완성품으로 보고 전부 건너뛴다. 최종 에셋이 더미
     이미지가 되는 사고가 난다.
+
+    `variant` 는 같은 종류 안에서 다시 구획을 나눈다. 벤치마크가 가중치별
+    결과를 분리할 때 쓴다. **접두어를 바꾸지 않는 것이 중요하다.**
+    접두어는 트리거 태그로 프롬프트에 들어가므로, 접두어를 바꿔 구분하면
+    프롬프트 자체가 달라져 비교가 무의미해진다.
     """
 
     base_dir: Path
     prefix: str
-    is_mock: bool = False
+    kind: OutputKind = OutputKind.REAL
+    variant: str | None = None
 
     @property
     def root(self) -> Path:
-        dirname = (
-            config.MOCK_ASSETS_DIRNAME if self.is_mock else config.ASSETS_DIRNAME
-        )
-        return self.base_dir / dirname
+        return self.base_dir / self.kind.dirname
+
+    @property
+    def prefix_dir(self) -> Path:
+        """variant 를 제외한 접두어 단위 폴더. 벤치마크 뷰어가 여기 놓인다."""
+        return self.root / self.prefix
 
     @property
     def output_dir(self) -> Path:
-        return self.root / self.prefix
+        if self.variant:
+            return self.prefix_dir / self.variant
+        return self.prefix_dir
 
     @property
     def manifest_path(self) -> Path:
@@ -71,14 +106,22 @@ class AssetPaths:
 
     @property
     def real_output_dir(self) -> Path:
-        """mock 여부와 무관한 실제 출력 경로. 오염 검사용."""
+        """종류와 무관한 실제 출력 경로. 오염 검사용."""
         return self.base_dir / config.ASSETS_DIRNAME / self.prefix
+
+    @property
+    def is_mock(self) -> bool:
+        return self.kind is OutputKind.MOCK
 
     def file(self, filename: str) -> Path:
         return self.output_dir / filename
 
     def ensure(self) -> None:
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def with_variant(self, variant: str | None) -> AssetPaths:
+        """같은 설정에 구획만 바꾼 사본을 만든다."""
+        return AssetPaths(self.base_dir, self.prefix, self.kind, variant)
 
 
 def guard_real_output(paths: AssetPaths) -> None:
@@ -166,7 +209,10 @@ class AtomicImageWriter:
             image.save(
                 partial, format="WEBP", quality=self.quality, method=self.method
             )
-            os.replace(partial, destination)
+            # Path.replace() 는 os.replace() 와 동일하게 같은 볼륨 내에서
+            # 원자적이다. 중간에 프로세스가 죽어도 최종 경로에는 완전한
+            # 파일 또는 아무것도 없다.
+            partial.replace(destination)
         except Exception as exc:  # noqa: BLE001
             partial.unlink(missing_ok=True)
             raise StorageError(f"저장 실패 ({destination.name}): {exc}") from None

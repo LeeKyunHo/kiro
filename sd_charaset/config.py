@@ -74,6 +74,18 @@ ASSETS_DIRNAME: Final = "generated_assets"
 MOCK_ASSETS_DIRNAME: Final = "mock_assets"
 MOCK_MANIFEST_FILENAME: Final = "_mock_manifest.json"
 
+# 가중치 벤치마크 산출물. 가중치별로 하위 구획을 나눈다.
+BENCHMARK_ASSETS_DIRNAME: Final = "benchmark_assets"
+BENCHMARK_MANIFEST_FILENAME: Final = "_benchmark.json"
+BENCHMARK_VIEWER_FILENAME: Final = "benchmark_viewer.html"
+
+# 비교할 기본 가중치. 0.3 은 참조 약함, 0.9 는 포즈 전이가 시작되는 영역.
+BENCHMARK_WEIGHTS_DEFAULT: Final = (0.3, 0.5, 0.7, 0.9)
+
+# 가중치를 폴더명으로 쓸 때의 포맷. 소수점을 그대로 쓰면 OS 별 처리가
+# 갈릴 수 있어 소수 둘째 자리까지 고정하고 점을 밑줄로 바꾼다.
+BENCHMARK_VARIANT_TEMPLATE: Final = "w{weight:.2f}"
+
 REFERENCES_DIRNAME: Final = "references"
 REFERENCE_EXTENSIONS: Final = (".png", ".jpg", ".jpeg", ".webp")
 

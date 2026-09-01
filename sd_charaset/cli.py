@@ -20,11 +20,12 @@ argparse 의 `choices` 는 파서 생성 시점에 확정되지만, 섹션명과
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from . import config
 from .commands import (
+    BenchmarkCommand,
     Command,
     DiagnoseCommand,
     GenerateCommand,
@@ -32,7 +33,7 @@ from .commands import (
 )
 from .database import peek_choices
 from .errors import CharasetError, UserAbort
-from .logging_setup import configure_logging, configure_stdio, get_logger
+from .logging_setup import configure_logging, configure_stdio
 
 PROGRAM_NAME = "sd_charaset"
 DESCRIPTION = "캐릭터 챗봇용 이미지 에셋 배치 생성기 (SD WebUI)"
@@ -77,7 +78,9 @@ def build_parser(
             f"  {prog} --prefix ryu --char_prompt \"short black hair\" --profile male\n"
             f"  {prog} --prefix mika --char_prompt \"...\" --mode 0,5,12\n"
             f"  {prog} --prefix test --char_prompt none --mock\n"
+            f"  {prog} --prefix mika --char_prompt \"...\" --benchmark\n"
             f"  {prog} --from_image references/mika.png\n"
+            f"  {prog} --interactive\n"
             f"  {prog} --test\n"
         ),
     )
@@ -126,6 +129,21 @@ def build_parser(
         "--cn_model", default=None, help="ControlNet 모델 수동 지정"
     )
 
+    bench = parser.add_argument_group("가중치 벤치마크")
+    bench.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="가중치를 순회 비교하고 HTML 뷰어를 생성 (참조 이미지 필수)",
+    )
+    bench.add_argument(
+        "--bench_weights",
+        default=None,
+        help=(
+            "비교할 가중치 목록 (기본 "
+            f"{','.join(f'{w:g}' for w in config.BENCHMARK_WEIGHTS_DEFAULT)})"
+        ),
+    )
+
     modes = parser.add_argument_group("실행 모드")
     modes.add_argument(
         "--dry-run",
@@ -140,6 +158,12 @@ def build_parser(
     )
     modes.add_argument(
         "--test", action="store_true", help="데이터·로직 자체 진단 후 종료"
+    )
+    modes.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help="방향키로 선택하는 대화형 모드 (긴 명령 타이핑 불필요)",
     )
     modes.add_argument(
         "--from_image",
@@ -173,10 +197,11 @@ def _select_command(
     """
     실행할 Command 를 고른다.
 
-    우선순위: --test > --from_image > 생성(기본/mock/dry-run)
+    우선순위: --test > --from_image > --benchmark > 생성(기본/mock/dry-run)
 
-    태그 추출은 생성과 무관한 독립 작업이므로 다른 생성 관련 플래그보다
-    먼저 분기해 즉시 종료한다.
+    진단과 태그 추출은 생성과 무관한 독립 작업이므로 먼저 분기해 즉시
+    종료한다. 벤치마크는 생성 작업이지만 여러 배치를 묶고 산출물이
+    비교 리포트라 별도 Command 다.
     """
     if args.test:
         return DiagnoseCommand(base_dir)
@@ -187,6 +212,8 @@ def _select_command(
             model=args.interrogator,
             program=prog,
         )
+    if args.benchmark:
+        return BenchmarkCommand(base_dir=base_dir, args=args)
     return GenerateCommand(base_dir=base_dir, args=args)
 
 
@@ -226,9 +253,28 @@ def main(argv: Sequence[str] | None = None, prog: str = PROGRAM_NAME) -> int:
 
     sections, profiles = peek_choices(base_dir)
     parser = build_parser(sections, profiles, add_help=True, prog=prog)
+
+    # 대화형 모드는 선택 결과를 argv 로 조립해 **같은 파서에 다시 넣는다.**
+    # Namespace 를 직접 만들면 기본값·타입 변환·상호 배타 검사를 마법사
+    # 쪽에서 다시 구현해야 하고, 규칙이 두 곳에 있으면 반드시 어긋난다.
+    if pre_args.interactive:
+        from .wizard import run_wizard
+
+        try:
+            wizard = run_wizard(base_dir, prog)
+        except CharasetError as exc:
+            for line in exc.render():
+                logger.error("%s", line.removeprefix("[ERROR] "))
+            return exc.exit_code
+        except KeyboardInterrupt:
+            abort = UserAbort("사용자에 의해 취소되었습니다.")
+            logger.error("%s", abort.message)
+            return abort.exit_code
+        argv = wizard.argv
+
     args = parser.parse_args(argv)
 
-    # --test / --from_image 가 아닐 때만 필수 인자를 강제한다.
+    # 생성 계열이 아닐 때는 필수 인자를 강제하지 않는다.
     # argparse 의 required=True 는 무조건 강제하므로 쓸 수 없다.
     if not args.test and not args.from_image:
         missing = [

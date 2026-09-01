@@ -13,8 +13,8 @@ stderr 로 나간다. 그래서 `> assets.md` 리다이렉트로 순수 마크�
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from . import config
 from .codes import CodeFormatter
@@ -89,9 +89,11 @@ def build_genit_block(
     urls = build_asset_urls(prefix, codes, formatter)
 
     calls = "\n".join(f"![image]({url})" for url in urls)
+    # strict=True 로 길이 불일치를 조용히 넘기지 않는다.
+    # urls 는 codes 에서 만들었으므로 길이가 다르면 조립 버그다.
     files = "\n".join(
         f"- `{url}` ({database.entry(code).label})"
-        for code, url in zip(codes, urls)
+        for code, url in zip(codes, urls, strict=True)
     )
     guide = build_section_guide(database, codes, prefix, formatter)
     status = config.GENIT_STATUS_TEMPLATE.format(

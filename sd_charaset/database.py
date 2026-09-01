@@ -8,8 +8,9 @@ I/O(`read_pose_json`)와 순수 파싱(`parse_pose_database`)을 분리한다.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from . import config
 from .errors import DatabaseError, ValidationError

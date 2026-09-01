@@ -44,6 +44,7 @@ from .render import (
 from .storage import (
     AssetPaths,
     AtomicImageWriter,
+    OutputKind,
     find_reference_candidates,
     guard_real_output,
     load_reference,
@@ -85,6 +86,54 @@ class DiagnoseCommand:
 # ─────────────────────────────────────────────
 # 태그 역추출
 # ─────────────────────────────────────────────
+@dataclass(frozen=True, slots=True)
+class BenchmarkCommand:
+    """
+    `--benchmark`. IP-Adapter 가중치를 순회 비교하고 HTML 뷰어를 만든다.
+
+    생성 작업이지만 `GenerateCommand` 와 분리한 이유: 한 번의 실행이
+    여러 배치를 포함하고, 산출물이 이미지가 아니라 **비교 리포트**다.
+    출력 대상과 성공 기준이 다르므로 별도 Command 가 맞다.
+    """
+
+    base_dir: Path
+    args: argparse.Namespace
+
+    def run(self) -> int:
+        from . import benchmark
+
+        args = self.args
+        weights = benchmark.parse_weights(args.bench_weights)
+
+        report = benchmark.run_benchmark(
+            base_dir=self.base_dir,
+            prefix=args.prefix,
+            char_prompt=args.char_prompt or "",
+            profile_name=args.profile,
+            custom_negative=args.custom_neg or "",
+            mode=args.mode,
+            codes_expression=args.codes,
+            weights=weights,
+            reference_path=args.ref_image,
+            cn_module=args.cn_module,
+            cn_model=args.cn_model,
+            mock=bool(args.mock),
+        )
+
+        database = load_pose_database(self.base_dir)
+        viewer_path, _manifest = benchmark.write_report(
+            report, database, self.base_dir
+        )
+        benchmark.log_conclusion(report, viewer_path)
+
+        if not getattr(args, "no_open", False):
+            open_in_file_manager(viewer_path.parent)
+
+        # 가중치 하나라도 결과가 없으면 실패로 본다. 비교표가 비면 목적을
+        # 달성하지 못한 것이다.
+        return 0 if any(run.available for run in report.runs) else 1
+
+
 @dataclass(frozen=True, slots=True)
 class InterrogateCommand:
     """
@@ -219,7 +268,11 @@ class GenerateCommand:
         # 스킵 판정이 깨진다.
         formatter = CodeFormatter.for_codes(database.all_codes)
 
-        paths = AssetPaths(self.base_dir, prefix, is_mock=self.use_mock)
+        paths = AssetPaths(
+            self.base_dir,
+            prefix,
+            kind=OutputKind.MOCK if self.use_mock else OutputKind.REAL,
+        )
         if not self.plan_only:
             if not self.use_mock:
                 guard_real_output(paths)

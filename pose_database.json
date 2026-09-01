@@ -5,9 +5,23 @@
     "section_name": "섹션명은 --mode 값으로 그대로 쓰인다. 숫자만으로 짓지 말 것 (코드 표현식으로 오인됨)",
     "code_key": "문자열로 적되 정수로 해석된다. 정렬은 숫자 크기 기준. 결번 허용. 범위 0~9999",
     "first_tag_is_label": "프롬프트의 첫 태그가 콘솔 출력과 상태 매핑 가이드의 라벨이 된다. 항목을 구별하는 서술어를 맨 앞에 둘 것",
-    "pose_prompts_are_genderless": "포즈/표정 프롬프트에는 성별 태그를 넣지 말 것. 성별은 _profiles 축에서 결정된다",
+    "pose_prompts_are_genderless": "포즈/표정 프롬프트에는 성별 태그(1girl, 1boy 등)를 넣지 말 것. 성별은 _profiles 축에서 결정된다",
     "profiles": "_profiles 는 --profile 값으로 선택하며, base_positive / base_negative 가 스크립트 하드코딩값을 완전히 대체한다. 품질 태그도 프로필에 포함해야 한다",
-    "editing": "이 파일만 수정하면 스크립트 변경 없이 반영된다. 수정 후 `python sd_batch_generator.py --test` 로 검증 권장"
+    "rules": "_rules.mutually_exclusive 로 의미적 상충 태그 그룹을 추가할 수 있다. 경고만 출력하며 생성을 막지 않는다",
+    "code_ranges": "00~09 감정/표정 · 10~19 포즈/동작 · 20~29 의상 · 30~39 배경/상황",
+    "editing": "이 파일만 수정하면 스크립트 변경 없이 반영된다. 수정 후 `python -m sd_charaset --test` 로 검증 권장"
+  },
+
+  "_rules": {
+    "mutually_exclusive": [
+      ["1girl", "1boy"],
+      ["solo", "2girls"],
+      ["solo", "multiple girls"],
+      ["male focus", "female focus"],
+      ["smile", "angry"],
+      ["day", "night"],
+      ["indoors", "outdoors"]
+    ]
   },
 
   "_profiles": {
@@ -26,28 +40,54 @@
   },
 
   "emotions": {
-    "00": "neutral expression, standing, front view, looking at viewer, calm",
-    "01": "gentle smile, standing, soft eyes, looking at viewer, warm atmosphere",
-    "02": "shy blush, standing, looking away slightly, hands together",
-    "03": "angry pout, standing, furrowed brows, arms crossed",
-    "04": "sad expression, standing, downcast eyes, slightly teary, gloomy mood",
-    "05": "crying, standing, tears in eyes, wiping face with hand, emotional",
-    "06": "surprised expression, standing, wide eyes, open mouth, hands raised",
-    "07": "happy laugh, standing, closed eyes, big smile, cheerful",
-    "08": "thoughtful look, standing, hand on chin, looking upward, curious",
-    "09": "sleepy expression, standing, half-closed eyes, yawning, relaxed"
+    "00": "neutral expression, standing, front view, looking at viewer, calm eyes, relaxed shoulders, even lighting",
+    "01": "gentle smile, standing, soft eyes, looking at viewer, slight head tilt, warm rim light, kind atmosphere",
+    "02": "shy blush, standing, looking away slightly, hands clasped in front, flustered eyes, soft pink cheeks",
+    "03": "angry pout, standing, furrowed brows, arms crossed, puffed cheeks, sharp glare, tense posture",
+    "04": "sad expression, standing, downcast eyes, slightly teary, drooping shoulders, muted colors, gloomy mood",
+    "05": "crying, standing, tears streaming, wiping eyes with sleeve, trembling lips, red rimmed eyes, emotional",
+    "06": "surprised expression, standing, wide eyes, open mouth, hands raised near chest, leaning back slightly",
+    "07": "happy laugh, standing, closed eyes, wide open smile, head thrown back slightly, bright cheerful lighting",
+    "08": "thoughtful look, standing, hand on chin, eyes glancing upward, slight frown, contemplative mood",
+    "09": "sleepy expression, standing, half-closed eyes, small yawn, hand covering mouth, drowsy posture, dim light"
   },
 
   "poses": {
-    "10": "relaxed stance, standing, full body, hands at sides, looking at viewer",
-    "11": "sitting on chair, legs together, hands on lap, gentle posture",
-    "12": "waving hand, standing, friendly greeting, warm smile",
-    "13": "arms crossed, standing, confident posture, slight smile",
-    "14": "pointing forward, standing, energetic pose, determined look",
-    "15": "reading a book, sitting, holding an open book, focused expression",
-    "16": "holding a teacup, standing, gentle smile, cozy mood",
-    "17": "hands on hips, standing, cheerful confident pose",
-    "18": "leaning against wall, casual relaxed pose, calm expression",
-    "19": "stretching arms up, sitting, relaxed and content"
+    "10": "relaxed stance, standing, full body, hands at sides, weight on one leg, looking at viewer, neutral face",
+    "11": "sitting on chair, knees together, hands resting on lap, upright back, three quarter view, soft shadow",
+    "12": "waving hand, standing, raised arm, open palm, friendly greeting, warm smile, welcoming body language",
+    "13": "arms crossed, standing, confident posture, chin slightly raised, direct gaze, firm stance",
+    "14": "pointing forward, standing, extended arm, index finger out, determined eyes, energetic lean",
+    "15": "reading a book, sitting, holding an open book, eyes on page, focused expression, quiet atmosphere",
+    "16": "holding a teacup, standing, both hands around cup, steam rising, gentle smile, cozy warm tone",
+    "17": "hands on hips, standing, elbows out, cheerful confident grin, wide stance, upbeat mood",
+    "18": "leaning against wall, standing, one shoulder on wall, ankles crossed, casual relaxed gaze",
+    "19": "stretching arms up, standing, both arms overhead, arched back, eyes closed, refreshed expression"
+  },
+
+  "outfits": {
+    "20": "school uniform, standing, full body, blazer and pleated skirt, ribbon tie, neat presentation",
+    "21": "casual hoodie, standing, oversized pullover, jeans, hands in pockets, laid back mood",
+    "22": "elegant dress, standing, flowing evening gown, subtle jewelry, formal posture, refined lighting",
+    "23": "winter coat, standing, thick wool coat, knitted scarf, gloved hands, cold breath visible",
+    "24": "sportswear, standing, athletic top and shorts, running shoes, towel over shoulder, energetic stance",
+    "25": "pajamas, sitting, loose sleepwear, messy hair, hugging a pillow, drowsy relaxed mood",
+    "26": "maid outfit, standing, frilled apron dress, headdress, hands folded in front, polite posture",
+    "27": "traditional kimono, standing, patterned silk fabric, wide obi belt, folded hands, graceful stillness",
+    "28": "business suit, standing, tailored jacket, dress shirt, holding a document folder, professional look",
+    "29": "raincoat, standing, translucent poncho, rubber boots, holding a closed umbrella, damp reflections"
+  },
+
+  "situations": {
+    "30": "classroom, sitting at desk, afternoon sunlight through windows, chalkboard behind, indoors, day",
+    "31": "cafe interior, sitting at small table, coffee cup and saucer, warm pendant lights, indoors, cozy",
+    "32": "city street at night, standing on sidewalk, neon signs reflecting on wet pavement, outdoors, night",
+    "33": "library, standing between tall bookshelves, dim reading lamps, dust motes in light, indoors, quiet",
+    "34": "park in spring, walking on path, cherry blossom petals falling, soft green trees, outdoors, day",
+    "35": "rooftop at sunset, standing near railing, orange gradient sky, wind in hair, outdoors, golden hour",
+    "36": "rainy window, sitting beside glass, raindrops on pane, blurred lights outside, indoors, melancholy",
+    "37": "kitchen, standing at counter, cutting board and utensils, morning light, indoors, homely",
+    "38": "train interior, sitting by window, passing scenery blur, overhead handrails, indoors, travel mood",
+    "39": "starry night field, standing in open grass, milky way overhead, faint horizon glow, outdoors, night"
   }
 }

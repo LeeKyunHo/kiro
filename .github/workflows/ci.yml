@@ -1,0 +1,215 @@
+name: CI
+
+# 기본 브랜치와 리팩터링 브랜치, 그리고 모든 PR 에서 돌린다.
+on:
+  push:
+    branches: [main, "refactor/**", "feature/**"]
+    paths-ignore:
+      - "**.md"
+      - "**.txt"
+      - ".kiro/**"
+  pull_request:
+    branches: [main]
+  # 수동 실행. GPU 검증 전 상태 확인 등에 쓴다.
+  workflow_dispatch:
+
+# 최소 권한 원칙. 이 워크플로는 코드만 읽으면 된다.
+permissions:
+  contents: read
+
+# 같은 참조(브랜치/PR)에서 새 커밋이 오면 진행 중인 실행을 취소한다.
+# 러너 시간을 낭비하지 않고 최신 결과만 남긴다.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # 바이트코드 캐시를 만들지 않는다. 러너는 일회용이라 이득이 없다.
+  PYTHONDONTWRITEBYTECODE: "1"
+  # 출력 버퍼링을 끄면 로그가 실시간으로 보여 실패 지점 파악이 쉽다.
+  PYTHONUNBUFFERED: "1"
+  # UTF-8 강제. 이 프로젝트는 한국어 로그를 출력하며,
+  # 러너 로케일에 따라 UnicodeEncodeError 가 날 수 있다.
+  PYTHONIOENCODING: "utf-8"
+  PYTHONUTF8: "1"
+
+jobs:
+  # ── 1단계: 정적 검사 ────────────────────────────────
+  # 단일 버전으로 먼저 돌려 빠르게 실패시킨다.
+  # 문법·타입 오류가 있으면 매트릭스 6개를 돌릴 이유가 없다.
+  lint:
+    name: 정적 검사 (ruff + mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: ruff 린트
+        run: ruff check sd_charaset sd_batch_generator.py --output-format=github
+
+      - name: mypy 정적 타입 검사
+        run: mypy sd_charaset
+
+  # ── 2단계: 자체 진단 ───────────────────────────────
+  # 3.10~3.12 × (Linux, Windows). Windows 를 포함하는 이유는 이 도구가
+  # Windows 전제로 설계되었고 경로·인코딩 동작이 다르기 때문이다.
+  test:
+    name: 자체 진단 (py${{ matrix.python-version }} / ${{ matrix.os }})
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    strategy:
+      # 한 조합이 실패해도 나머지 결과를 보고 원인을 좁힌다.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+        include:
+          # Windows 는 최신 버전 하나만. 조합 수를 줄여 러너 시간을 아낀다.
+          - os: windows-latest
+            python-version: "3.12"
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 ${{ matrix.python-version }} 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: 패키지 import 확인
+        run: python -c "import sd_charaset; print(sd_charaset.__version__)"
+
+      - name: 자체 진단 (모듈 진입점)
+        run: python -m sd_charaset --test
+
+      - name: 자체 진단 (하위 호환 shim)
+        run: python sd_batch_generator.py --test
+
+      - name: 자체 진단 (콘솔 스크립트)
+        run: charaset --test
+
+      - name: 도움말 출력 확인
+        run: python -m sd_charaset --help
+
+      # 네트워크 없이 계획 경로가 도는지 확인한다.
+      # 파일을 쓰지 않으므로 러너 환경을 오염시키지 않는다.
+      - name: 계획 모드 (--dry-run)
+        run: >
+          python -m sd_charaset
+          --prefix ci
+          --char_prompt "silver hair, blue eyes"
+          --dry-run --mode all
+
+      # 파일 저장, WebP 변환, 원자적 쓰기까지 포함한 종단 검사.
+      # 산출물은 mock_assets/ 로 격리되며 --no-open 으로 파일 관리자를 막는다.
+      - name: 모의 생성 (--mock)
+        run: >
+          python -m sd_charaset
+          --prefix ci
+          --char_prompt "silver hair, blue eyes"
+          --mock --mode 0,1,2 --no-open
+
+      - name: 산출물 검증 (WebP 헤더 및 격리)
+        shell: python
+        run: |
+          import sys
+          from pathlib import Path
+
+          mock_dir = Path("mock_assets/ci")
+          real_dir = Path("generated_assets")
+
+          files = sorted(mock_dir.glob("*.webp"))
+          assert len(files) == 3, f"기대 3장, 실제 {len(files)}장"
+
+          for path in files:
+              head = path.read_bytes()[:12]
+              assert head[:4] == b"RIFF", f"{path.name}: RIFF 헤더 아님"
+              assert head[8:12] == b"WEBP", f"{path.name}: WEBP 헤더 아님"
+
+          assert (mock_dir / "_mock_manifest.json").is_file(), "매니페스트 없음"
+          assert not real_dir.exists(), "mock 이 실제 출력 폴더를 오염시켰다"
+          assert not list(mock_dir.glob("*.part")), ".part 잔여 파일 존재"
+
+          print(f"검증 통과: {len(files)}장, WebP 헤더 정상, 출력 격리 유지")
+
+      # 로그는 stderr, 산출물은 stdout 으로 나가는지 확인한다.
+      # 이 경계가 깨지면 리다이렉트로 마크다운만 추출하는 기능이 망가진다.
+      - name: 스트림 분리 확인
+        shell: python
+        run: |
+          import subprocess
+          import sys
+
+          result = subprocess.run(
+              [
+                  sys.executable, "-m", "sd_charaset",
+                  "--prefix", "stream",
+                  "--char_prompt", "x",
+                  "--dry-run", "--mode", "0,1",
+              ],
+              capture_output=True, text=True, encoding="utf-8", check=True,
+          )
+
+          assert result.stdout.count("![image](") == 2, "stdout 에 마크다운 2줄이 없다"
+          assert "[작업 시작]" not in result.stdout, "stdout 에 로그가 섞였다"
+          assert "![image](" not in result.stderr, "stderr 에 마크다운이 섞였다"
+          assert "[작업 시작]" in result.stderr, "stderr 에 로그가 없다"
+
+          print("스트림 분리 정상")
+
+      - name: 실패 시 산출물 업로드
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mock-assets-py${{ matrix.python-version }}-${{ matrix.os }}
+          path: |
+            mock_assets/
+            benchmark_assets/
+          retention-days: 5
+          if-no-files-found: ignore
+
+  # ── 3단계: 결과 집계 ───────────────────────────────
+  # 브랜치 보호 규칙에 이 잡 하나만 등록하면 된다.
+  # 매트릭스가 늘어나도 보호 규칙을 고칠 필요가 없다.
+  ci-status:
+    name: CI 통과
+    if: always()
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 결과 판정
+        run: |
+          echo "lint: ${{ needs.lint.result }}"
+          echo "test: ${{ needs.test.result }}"
+          if [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ]; then
+            echo "::error::CI 실패"
+            exit 1
+          fi
+          echo "모든 검사 통과"

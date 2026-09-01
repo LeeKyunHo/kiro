@@ -15,8 +15,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Final, Iterable, Sequence
+from typing import Final
 
 from . import config
 from .errors import ValidationError
@@ -153,7 +154,7 @@ def resolve_codes(
     section_map: dict[str, tuple[int, ...]],
     mode: str,
     explicit_expression: str | None = None,
-    on_warning=None,
+    on_warning: Callable[[str], None] | None = None,
 ) -> CodeSelection:
     """
     `--mode` / `--codes` 를 해석해 대상 코드를 결정한다.
