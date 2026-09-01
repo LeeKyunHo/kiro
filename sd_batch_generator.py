@@ -32,6 +32,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -53,6 +54,11 @@ INTERROGATE_URL = f"{API_HOST}/sdapi/v1/interrogate"
 # 모델명에 해시가 붙어 환경마다 다르므로 조회가 필수다.
 CN_MODULES_URL = f"{API_HOST}/controlnet/module_list"
 CN_MODELS_URL = f"{API_HOST}/controlnet/model_list"
+
+# VRAM 사용량 조회. 응답 구조가 버전마다 달라 방어적으로 파싱한다.
+MEMORY_URL = f"{API_HOST}/sdapi/v1/memory"
+MEMORY_TIMEOUT = 5
+GIB = 1024 ** 3
 
 SAMPLER_CANDIDATES = ("DPM++ 2M Karras", "DPM++ 2M", "Euler a")
 
@@ -301,12 +307,51 @@ class InterrogateResult:
         return ", ".join(tag for tag in self.tags if tag not in excluded)
 
 
+@dataclass(frozen=True, slots=True)
+class TimingStats:
+    """
+    생성 시간 집계.
+
+    VRAM 설정(--medvram-sdxl, xFormers 등)을 비교할 때 판단 근거가 된다.
+    에파는 한 배치에 수십 장을 순차 생성하므로 장당 손실이 누적된다.
+    """
+
+    count: int
+    total: float
+    average: float
+    fastest: float
+    slowest: float
+
+    def format(self) -> str:
+        return (
+            f"{self.count}장 / 총 {self.total:.1f}초 / "
+            f"장당 평균 {self.average:.1f}초 "
+            f"(최속 {self.fastest:.1f} ~ 최저 {self.slowest:.1f})"
+        )
+
+
+def summarize_durations(seconds: Sequence[float]) -> TimingStats | None:
+    """측정값을 집계한다 (순수 함수). 빈 입력은 None."""
+    if not seconds:
+        return None
+    total = sum(seconds)
+    return TimingStats(
+        count=len(seconds),
+        total=total,
+        average=total / len(seconds),
+        fastest=min(seconds),
+        slowest=max(seconds),
+    )
+
+
 @dataclass(slots=True)
 class BatchResult:
     success: list[int] = field(default_factory=list)
     skipped: list[int] = field(default_factory=list)
     failed: list[tuple[int, str]] = field(default_factory=list)
     planned: list[int] = field(default_factory=list)
+    # (코드, 소요 초). 실제로 생성한 것만 기록한다. 건너뛴 것은 제외.
+    durations: list[tuple[int, float]] = field(default_factory=list)
     aborted: bool = False
     dry_run: bool = False
 
@@ -327,6 +372,11 @@ class BatchResult:
     @property
     def failed_codes(self) -> list[int]:
         return [code for code, _ in self.failed]
+
+    @property
+    def timing(self) -> TimingStats | None:
+        """생성 시간 집계. 측정값이 없으면 None."""
+        return summarize_durations([sec for _, sec in self.durations])
 
 
 @dataclass(slots=True)
@@ -1019,6 +1069,52 @@ def resolve_controlnet_spec(
     return ControlNetSpec(module, model, "auto")
 
 
+def extract_vram_peak(payload: dict[str, Any]) -> tuple[float, float] | None:
+    """
+    /sdapi/v1/memory 응답에서 (피크 사용량 GiB, 전체 GiB) 를 뽑는다 (순수 함수).
+
+    응답 구조가 WebUI 버전과 Forge 여부에 따라 다르므로 여러 키를 순차
+    탐색한다. 어느 것도 찾지 못하면 None 을 반환하고 호출부는 조용히 넘어간다.
+    VRAM 표시는 부가 정보이며 이것 때문에 배치가 실패하면 안 된다.
+    """
+    cuda = payload.get("cuda")
+    if not isinstance(cuda, dict):
+        return None
+
+    total = (cuda.get("system") or {}).get("total")
+    if not isinstance(total, (int, float)) or total <= 0:
+        return None
+
+    peak: float | None = None
+    # 1) 최상위 스칼라 형태
+    for key in ("reserved_peak", "active_peak"):
+        value = cuda.get(key)
+        if isinstance(value, (int, float)):
+            peak = float(value)
+            break
+    # 2) 중첩 딕셔너리 형태
+    if peak is None:
+        for key in ("reserved", "active", "allocated"):
+            node = cuda.get(key)
+            if isinstance(node, dict) and isinstance(node.get("peak"), (int, float)):
+                peak = float(node["peak"])
+                break
+
+    if peak is None:
+        return None
+    return peak / GIB, total / GIB
+
+
+def fetch_vram_peak() -> tuple[float, float] | None:
+    """VRAM 피크를 조회한다. 실패하면 None (배치에 영향 없음)."""
+    try:
+        response = get_session().get(MEMORY_URL, timeout=MEMORY_TIMEOUT)
+        response.raise_for_status()
+        return extract_vram_peak(response.json())
+    except Exception:  # noqa: BLE001 — 부가 정보이므로 조용히 포기한다
+        return None
+
+
 def generate_image(payload: dict[str, Any]) -> bytes:
     """조립된 페이로드를 전송해 PNG 바이트를 받는다."""
     response = get_session().post(API_URL, json=payload, timeout=TXT2IMG_TIMEOUT)
@@ -1234,6 +1330,7 @@ def run_batch(
 
         print(f"  [{tag}] {'모의 생성' if mock else '생성'} 중... ", end="", flush=True)
 
+        started = time.perf_counter()
         try:
             full_prompt = join_tags(
                 base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
@@ -1264,7 +1361,9 @@ def run_batch(
             result.failed.append((code, str(e)))
             continue
 
-        print(f"완료 -> {filename}")
+        elapsed = time.perf_counter() - started
+        result.durations.append((code, elapsed))
+        print(f"완료 ({elapsed:.1f}초) -> {filename}")
         result.success.append(code)
 
     return result
@@ -1734,6 +1833,57 @@ def _test_reference(report: TestReport) -> None:
         match_model_name(("canny", "openpose"), IP_ADAPTER_MODEL_PATTERNS) is None,
     )
 
+    # ── T31: 시간 집계 ──
+    stats = summarize_durations([2.0, 4.0, 6.0])
+    report.check(
+        "T31 시간 집계",
+        stats is not None
+        and stats.count == 3
+        and stats.total == 12.0
+        and stats.average == 4.0
+        and stats.fastest == 2.0
+        and stats.slowest == 6.0,
+        stats.format() if stats else "None",
+    )
+    report.check("T31b 빈 측정값 None", summarize_durations([]) is None)
+
+    batch = BatchResult(durations=[(0, 1.5), (1, 2.5)])
+    report.check(
+        "T31c BatchResult.timing",
+        batch.timing is not None and batch.timing.total == 4.0,
+        batch.timing.format() if batch.timing else "None",
+    )
+
+    # ── T32: VRAM 파싱 (버전별 응답 구조 대응) ──
+    vram_cases: tuple[tuple[str, dict[str, Any], bool], ...] = (
+        ("최상위 reserved_peak",
+         {"cuda": {"system": {"total": 8 * GIB}, "reserved_peak": 6 * GIB}}, True),
+        ("중첩 reserved.peak",
+         {"cuda": {"system": {"total": 8 * GIB}, "reserved": {"peak": 5 * GIB}}}, True),
+        ("active_peak 폴백",
+         {"cuda": {"system": {"total": 8 * GIB}, "active_peak": 4 * GIB}}, True),
+        ("cuda 없음", {"ram": {}}, False),
+        ("total 없음", {"cuda": {"reserved_peak": 1}}, False),
+        ("peak 키 전무", {"cuda": {"system": {"total": 8 * GIB}}}, False),
+        ("total 0", {"cuda": {"system": {"total": 0}, "reserved_peak": 1}}, False),
+    )
+    vram_fail = [
+        name
+        for name, payload, expect in vram_cases
+        if (extract_vram_peak(payload) is not None) != expect
+    ]
+    report.check(f"T32 VRAM 파싱 {len(vram_cases)}케이스", not vram_fail,
+                 str(vram_fail) if vram_fail else "")
+
+    parsed = extract_vram_peak(
+        {"cuda": {"system": {"total": 8 * GIB}, "reserved_peak": 6 * GIB}}
+    )
+    report.check(
+        "T32b GiB 환산",
+        parsed is not None and abs(parsed[0] - 6.0) < 0.01 and abs(parsed[1] - 8.0) < 0.01,
+        f"{parsed[0]:.2f} / {parsed[1]:.2f} GiB" if parsed else "None",
+    )
+
 
 def _test_profiles(report: TestReport, db: PoseDatabase) -> None:
     """T18~T20: 프로필 정의 및 실제 태그 충돌 검사."""
@@ -1916,8 +2066,13 @@ def open_in_explorer(path: Path) -> None:
         print(f"[WARN] 탐색기를 열지 못했습니다: {e}")
 
 
-def print_summary(result: BatchResult, save_dir: Path, badge: str) -> None:
-    """실행 요약 리포트 (R6)."""
+def print_summary(
+    result: BatchResult,
+    save_dir: Path,
+    badge: str,
+    vram: tuple[float, float] | None = None,
+) -> None:
+    """실행 요약 리포트."""
     print(
         f"\n[작업 완료]{badge} 성공 {len(result.success)} / "
         f"건너뜀 {len(result.skipped)} / 실패 {len(result.failed)}"
@@ -1928,6 +2083,15 @@ def print_summary(result: BatchResult, save_dir: Path, badge: str) -> None:
         print(f"           실패 코드: {result.failed_codes}")
     if result.aborted:
         print("           WebUI 연결이 끊겨 중단되었습니다.")
+
+    # 설정 비교(--medvram-sdxl, xFormers 등)의 판단 근거가 된다.
+    if timing := result.timing:
+        print(f"[측정] {timing.format()}")
+    if vram:
+        peak, total = vram
+        ratio = peak / total * 100 if total else 0
+        print(f"[VRAM] 피크 {peak:.2f} / {total:.2f} GiB ({ratio:.0f}%)")
+
     print(f"           폴더: {save_dir}")
 
 
@@ -2041,7 +2205,9 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
         mock=mock,
     )
 
-    print_summary(result, save_dir, badge)
+    # VRAM 조회는 실제 생성 후에만 의미가 있다. mock/dry-run 은 GPU 를 쓰지 않는다.
+    vram = None if (mock or dry_run) else fetch_vram_peak()
+    print_summary(result, save_dir, badge, vram)
 
     existing = result.existing  # 프로퍼티가 매번 정렬하므로 한 번만 계산한다
     if not existing:
