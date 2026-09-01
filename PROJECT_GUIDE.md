@@ -22,11 +22,38 @@ JSON 항목을 늘리면 코드 수정 없이 생성 장수가 늘어난다.
 
 ```
 kiro/
-├── sd_batch_generator.py                    # 메인 실행 스크립트
+├── sd_batch_generator.py                    # 하위 호환 shim (33줄)
+├── pyproject.toml                           # 패키지 정의 + ruff/mypy 설정
 ├── pose_database.json                       # 프롬프트 데이터 (프로필 + 포즈)
 ├── PROJECT_GUIDE.md                         # 이 문서
 ├── 사용법.txt                                # 설치·사용 가이드 (사람용)
+├── WEDNESDAY_CHECKLIST.md                   # GPU 환경 검증 절차
 ├── .gitignore / .gitattributes
+│
+├── sd_charaset/                             # ★ 실제 구현 (20개 모듈)
+│   ├── __init__.py                          # 버전, 공개 API
+│   ├── __main__.py                          # python -m sd_charaset
+│   ├── config.py                            # 상수 단일 출처
+│   ├── errors.py                            # 예외 계층 + 종료 코드
+│   ├── logging_setup.py                     # 로깅, 스트림 분리
+│   ├── models.py                            # 불변 값 객체
+│   │
+│   ├── tags.py                              # 태그 정규화·충돌      [순수]
+│   ├── codes.py                             # CodeFormatter, 선택   [순수]
+│   ├── validators.py                        # prefix/weight/상충    [순수]
+│   ├── prompt.py                            # 프롬프트 조립         [순수]
+│   ├── payload.py                           # API 페이로드          [순수]
+│   │
+│   ├── database.py                          # JSON 로드 + 파싱
+│   ├── storage.py                           # 원자적 쓰기, 경로, 참조
+│   ├── api.py                               # WebUiClient
+│   ├── mock_image.py                        # 더미 이미지
+│   │
+│   ├── render.py                            # Strategy + BatchRunner
+│   ├── output.py                            # 마크다운 + 리포트
+│   ├── diagnostics.py                       # --test 65항목
+│   ├── commands.py                          # Command 디스패치
+│   └── cli.py                               # argparse
 │
 ├── references/                              # IP-Adapter 참조 이미지 (git 추적)
 │   ├── README.md
@@ -45,21 +72,153 @@ kiro/
 │           ├── design.md                     # 설계 (11장)
 │           └── tasks.md                      # 17단계
 │
-└── generated_assets/                        # 실행 시 자동 생성 (git 제외)
+├── generated_assets/                        # 실제 렌더링 산출물 (git 제외)
+│   └── {prefix}/{prefix}_{NN}.webp
+│
+└── mock_assets/                             # --mock 산출물 (git 제외)
     └── {prefix}/
-        └── {prefix}_{NN}.webp
+        ├── {prefix}_{NN}.webp
+        └── _mock_manifest.json
 ```
 
-`references/` 는 git 으로 추적한다. `generated_assets/` 는 재생성 가능한
-파생물이지만 참조 이미지는 잃으면 같은 캐릭터를 재현할 수 없는 원본 입력이고,
-여러 PC 간 동기화에도 필요하다.
+`references/` 는 git 으로 추적한다. 생성 결과물은 재생성 가능한 파생물이지만
+참조 이미지는 잃으면 같은 캐릭터를 재현할 수 없는 원본 입력이고, 여러 PC 간
+동기화에도 필요하다.
+
+**`generated_assets/` 와 `mock_assets/` 를 분리한 것이 중요하다.** 같은 폴더를
+쓰면 `--mock` 으로 검증한 뒤 실제 렌더링을 돌렸을 때 재개 로직이 더미 파일을
+완성품으로 보고 전부 건너뛴다. 최종 에셋이 더미 이미지가 되는 사고가 난다.
+
+---
+
+## 1A. 실행 방법 3가지
+
+세 방법 모두 완전히 동일하게 동작한다.
+
+| 방법 | 명령 | 용도 |
+|---|---|---|
+| shim | `python sd_batch_generator.py --test` | 기존 문서·명령 호환 |
+| 모듈 | `python -m sd_charaset --test` | **권장.** 설치 불필요 |
+| 콘솔 | `charaset --test` | `pip install -e .` 후 |
+
+`sd_batch_generator.py` 는 33줄짜리 shim 이다. `sys.path` 를 조정해
+패키지를 import 하고 `cli.main()` 을 호출한다. 기존 문서와 steering 규칙,
+그리고 `WEDNESDAY_CHECKLIST.md` 의 모든 명령을 깨지 않기 위해 유지한다.
+
+신규 코드는 패키지를 직접 쓴다.
+
+```python
+from sd_charaset.cli import main
+exit_code = main(["--test"])
+```
+
+### 출력 스트림 분리
+
+진행 로그와 경고는 **stderr**, 젠잇 마크다운은 **stdout** 으로 나간다.
+Unix 관행이며 파이프라인 도구로서 조합 가능성을 확보한다.
+
+```powershell
+python -m sd_charaset --prefix mika --char_prompt "silver hair" > assets.md
+```
+
+로그는 터미널에 그대로 보이고 마크다운만 파일로 떨어진다.
+
+| 스트림 | 내용 | 출력 수단 |
+|---|---|---|
+| stderr | 진행 로그, 경고, 에러 | `logging` |
+| stdout | 젠잇 마크다운, 태그 추출 결과, 진단 리포트 | `logging_setup.emit()` |
+
+확장 시 이 경계를 지켜야 한다. 산출물에 로그를 섞으면 리다이렉트가
+오염되고, 로그를 stdout 으로 보내면 이 기능이 깨진다.
+
+---
+
+## 1B. 계층 구조와 의존성 방향
+
+순환 참조가 **구조적으로 불가능**하게 배치했다.
+
+```
+cli → commands → render → { api, storage, mock_image }
+                        ↘ { payload, prompt, codes }
+       ↘ diagnostics ────↗
+       ↘ output ─────────↗
+
+순수 계층 (tags, codes, validators, prompt, payload)
+  → config, models, errors 만 참조. 그 외 아무것도 import 하지 않음
+```
+
+| 계층 | 모듈 | 네트워크 | 파일 I/O |
+|---|---|---|---|
+| 순수 | `tags`, `codes`, `validators`, `prompt`, `payload` | X | X |
+| I/O | `database`, `storage`, `mock_image` | X | O |
+| 통신 | `api` | O | X |
+| 조율 | `render`, `commands`, `cli`, `output`, `diagnostics` | 위임 | 위임 |
+
+**순수 계층이 I/O 계층을 절대 참조하지 않는다.** 이것이 GPU 없는 환경에서
+65개 검사가 전부 돌아가는 근거이며, 확장 시 유지해야 하는 핵심 불변식이다.
+
+새 기능을 넣을 때 판단 기준은 하나다. **네트워크나 파일이 필요한가?**
+아니라면 순수 계층에 두고 `--test` 에서 직접 호출해 검증한다.
+
+---
+
+## 1C. 적용된 디자인 패턴
+
+### Command (commands.py)
+
+| 클래스 | 트리거 | 이미지 생성 |
+|---|---|---|
+| `DiagnoseCommand` | `--test` | X |
+| `InterrogateCommand` | `--from_image` | X |
+| `GenerateCommand` | (기본) | O |
+
+### Strategy (render.py)
+
+`GenerateCommand` **내부**의 세 가지 방식이다.
+
+| 클래스 | 트리거 | API | 파일 |
+|---|---|---|---|
+| `ApiRenderStrategy` | (기본) | O | O |
+| `MockRenderStrategy` | `--mock` | X | O (더미) |
+| `PlanOnlyStrategy` | `--dry-run` | X | X |
+
+**두 패턴을 나눈 이유**가 중요하다. `--test` 와 `--from_image` 는 이미지를
+만들지 않는다. 이것들을 `RenderStrategy` 로 취급하면 "렌더링하지 않는
+렌더러" 라는 모순된 구현이 생기고 인터페이스가 오염된다.
+
+`RenderStrategy` 는 `typing.Protocol` 이다. ABC 대신 쓴 이유는 구조적
+서브타이핑이라 구현체가 특정 기반 클래스를 상속하도록 강요받지 않고,
+테스트용 가짜 전략을 만들 때 import 가 필요 없기 때문이다.
+
+전략이 `produces_files` / `plan_only` / `badge` 로 자기 성질을 알려주므로
+호출부에 `if mode == ...` 분기가 생기지 않는다.
+
+### 값 객체
+
+`CodeFormatter` 가 패딩 폭과 파일명 규칙을 캡슐화한다.
+
+리팩터링 전에는 `width: int` 를 생성 루프·스킵 판정·마크다운 조립·섹션
+가이드·더미 이미지 등 6개 지점에 인자로 전달했다. 한 곳에서 잘못된 값을
+넘기면 파일명 규칙이 갈라져 스킵 판정과 실제 파일명이 어긋난다.
+
+```python
+formatter = CodeFormatter.for_codes(database.all_codes)
+formatter.filename("mika", 7)   # "mika_07.webp"
+formatter.trigger("mika", 7)    # "mika_07"
+formatter.tag(7)                # "07"
+```
+
+`ReferenceContext` 도 같은 목적이다. `image` / `spec` / `weight` 를 묶고
+`active` 프로퍼티로 주입 가능 여부를 판단한다.
 
 ### 파일별 역할
 
 | 파일 | 역할 | 수정 빈도 |
 |---|---|---|
-| `sd_batch_generator.py` | 전체 로직. API 호출, WebP 변환, 마크다운 조립, 자체 검증 | 낮음 |
 | `pose_database.json` | 프로필·포즈·표정 프롬프트. **일상 편집 대상** | 높음 |
+| `sd_charaset/` | 전체 구현. 20개 모듈 | 낮음 |
+| `sd_batch_generator.py` | 하위 호환 shim. 손댈 일 없음 | 없음 |
+| `pyproject.toml` | 패키지·의존성·린터 설정 | 낮음 |
 | `.kiro/steering/sd_char_gen.md` | Kiro가 `"캐릭터 생성:"` 트리거를 감지해 자동 실행하는 규칙 | 낮음 |
 | `.kiro/specs/.../requirements.md` | 요구사항 명세 (R1~R8, 수용 기준) | 참조용 |
 | `.kiro/specs/.../design.md` | 아키텍처, 설계 결정 근거, 보안 강화 이력 | 참조용 |
@@ -208,7 +367,9 @@ pose_database.json
 ## 5. CLI 레퍼런스
 
 ```
-python sd_batch_generator.py [옵션]
+python -m sd_charaset [옵션]          # 권장
+python sd_batch_generator.py [옵션]   # 하위 호환 (동일 동작)
+charaset [옵션]                        # pip install -e . 후
 ```
 
 | 플래그 | 기본값 | 필수 | 설명 |
@@ -316,25 +477,42 @@ API를 호출하지 않으므로 실존 파일만 필터링하면 마크다운�
 이미 15장이 있으면 dry-run은 "20장 계획"이라 하지만 실제로는 5장만 생성된다.
 장수 예측용이 아니라 대상 집합·파일명 확인용으로 쓴다.
 
-### 6.2 `--mock`의 함정 (중요)
+### 6.2 `--mock` 출력 격리 (해결됨)
 
-`--mock`은 **실제 에셋 폴더**(`generated_assets/{prefix}/`)에 더미 파일을 쓴다.
+**과거 문제.** `--mock` 이 실제 에셋 폴더(`generated_assets/{prefix}/`)에 더미
+파일을 썼다. `--prefix mika --mock` 으로 검증한 뒤 같은 약칭으로 실제 렌더링을
+돌리면 재개 로직이 더미 파일을 완성품으로 보고 전부 건너뛰었다. 최종 에셋이
+더미 이미지가 되는 사고가 났다.
 
-`--prefix mika --mock`으로 검증한 뒤 같은 `--prefix mika`로 실제 렌더링을 돌리면,
-재개 로직이 더미 파일을 완성품으로 보고 **전부 건너뛴다.** 최종 에셋이 더미
-이미지가 된다.
+**현재.** 세 겹으로 차단한다.
 
-검증 시에는 반드시 전용 접두어를 쓰고 끝나면 지운다.
+| 방어선 | 내용 |
+|---|---|
+| 출력 루트 분리 | mock 은 `mock_assets/{prefix}/` 에만 쓴다. 실제 스킵 판정이 더미 파일을 볼 경로 자체가 없다 |
+| 매니페스트 | `mock_assets/{prefix}/_mock_manifest.json` 에 생성 목록·시각 기록 |
+| 오염 감지 | 실제 출력 폴더에 매니페스트가 있으면 경고 후 **중단** |
 
 ```powershell
-python sd_batch_generator.py --prefix mocktest --char_prompt "none" --mock
-Remove-Item -Recurse -Force generated_assets\mocktest
+python -m sd_charaset --prefix mika --char_prompt "..." --mock
+# → mock_assets/mika/ 에 생성. generated_assets/ 는 건드리지 않음
+
+Remove-Item -Recurse -Force mock_assets\mika   # 정리 (선택)
 ```
 
-더미 이미지에는 코드 번호·prefix·섹션명·라벨·`MOCK` 텍스트가 그려져 육안 식별은
-가능하지만, 스킵 로직은 파일 존재만 본다.
+같은 약칭으로 실제 렌더링을 돌려도 안전하다. 경로가 다르므로 스킵되지 않는다.
 
-`--dry-run`은 폴더를 만들지 않으므로 실제 약칭을 써도 안전하다.
+세 번째 방어선은 사용자가 더미 파일을 손으로 복사한 경우를 잡는다.
+
+```
+[ERROR] 실제 출력 폴더에 mock 산출물이 있습니다: .../generated_assets/mika
+        _mock_manifest.json 과 함께 있는 더미 이미지를 삭제한 뒤 다시 실행하세요.
+```
+
+**검증 가치는 유지된다.** mock 이 `AtomicImageWriter` 와 `CodeFormatter` 를
+그대로 경유하므로 WebP 변환, 원자적 쓰기, 파일명 조립이 모두 검증된다.
+더미 이미지에는 `MOCK` (참조 적용 시 `MOCK +REF`) 텍스트가 그려진다.
+
+`--dry-run` 은 폴더를 만들지 않으므로 실제 약칭을 써도 안전하다.
 
 ### 6.3 탐색기 오픈은 비동기다
 
@@ -876,7 +1054,7 @@ python sd_batch_generator.py --prefix mika --char_prompt "silver hair" --custom_
 
 ---
 
-## 14. `--test` 검사 항목 (45개)
+## 14. `--test` 검사 항목 (65개)
 
 ### 데이터 검사
 
@@ -928,10 +1106,23 @@ python sd_batch_generator.py --prefix mika --char_prompt "silver hair" --custom_
 | T28 | interrogate 페이로드 구조 |
 | T29 / T29b | 성별 태그 필터 / `filtered` 프로퍼티 |
 | T30 / T30b | 해시 포함 모델명 부분 매칭 / 실패 시 `None` |
-| T31 / T31b / T31c | 시간 집계 / 빈 측정값 / `BatchResult.timing` |
+| T31 / T31b | 시간 집계 / 빈 측정값 |
 | T32 / T32b | VRAM 응답 파싱 7케이스 / GiB 환산 |
 
-현재 총 검사 수: **45항목** (데이터 8 + 로직 12 + 프로필 3 + 참조·측정 22).
+### 통합 경로 검사 (리팩터링 후 추가)
+
+| ID | 검사 |
+|---|---|
+| T33 ~ T33d | `mode=all` / 섹션명 / 코드 표현식 + 경고 / 미등록 모드 거부 |
+| T34 / T34b | 프롬프트 조립 순서 / `custom_neg` 가 추가(대체 아님) |
+| T35 / T35b | mock 출력 경로 격리 / mock 오염 감지 |
+| T36 / T36b | 원자적 쓰기 + WebP 변환 / 손상 입력 거부 |
+
+T33~T36 은 모듈 경계를 넘는 경로를 검사한다. 단일 파일 구조에서는 이런
+검사를 쓰기 어려웠다. 함수가 서로 얽혀 있어 한 지점만 떼어 호출할 수
+없었기 때문이다.
+
+현재 총 검사 수: **65항목** (데이터 8 + 로직 12 + 프로필 3 + 참조·측정 22).
 
 검사는 **실제 구현 함수를 직접 호출**한다. 로직을 복제하지 않으므로
 구현이 바뀌면 검사도 함께 따라간다.
@@ -1009,20 +1200,48 @@ python sd_batch_generator.py --prefix mika --char_prompt "silver hair" --custom_
 
 ### 안전하게 바꿔도 되는 것
 
-- `pose_database.json`의 모든 내용 (섹션 추가, 코드 추가, 프로필 추가)
-- `IMAGE_SIZE`, `STEPS`, `CFG_SCALE` 등 생성 파라미터 상수
-- `DEFAULT_PROFILE` 기본값
+- `pose_database.json`의 모든 내용 (섹션 추가, 코드 추가, 프로필 추가, `_rules`)
+- `config.py`의 생성 파라미터 (`IMAGE_WIDTH`, `STEPS`, `CFG_SCALE` 등)
+- `config.DEFAULT_PROFILE_NAME`
+- `config.MUTUALLY_EXCLUSIVE_DEFAULT` (또는 JSON `_rules` 로 덮어쓰기)
+
+### 새 기능을 넣을 위치 판단
+
+질문 하나로 결정된다. **네트워크나 파일이 필요한가?**
+
+| 답 | 위치 | 검증 |
+|---|---|---|
+| 아니오 | `tags` / `codes` / `validators` / `prompt` / `payload` | `--test` 에서 직접 호출 |
+| 파일만 | `database` / `storage` / `mock_image` | `--test` 에서 임시 폴더로 |
+| 네트워크 | `api` | GPU 환경 필요 |
+
+순수 계층에 넣을 수 있는 것을 I/O 계층에 넣으면 검증 범위가 줄어든다.
+페이로드 조립을 `api.py` 가 아니라 `payload.py` 에 둔 이유가 이것이다.
 
 ### 바꿀 때 주의할 것
 
 | 대상 | 주의 |
 |---|---|
-| `save_as_webp()` 변환 파라미터 | `quality=90`, `method=6`, RGBA→RGB는 검증된 값 |
-| `SAMPLER_CANDIDATES` 순서 | 폴백 순서가 화풍에 영향 |
-| `asset_filename()` | 파일명 조립 단일 진입점. 우회하면 스킵 판정과 어긋남 |
-| `MIN_CODE_WIDTH = 2` | 기존 생성 파일과의 하위 호환 |
-| `run_batch()`의 `dry_run` 검사 순서 | `path.exists()`보다 먼저여야 `planned`가 완전해짐 |
-| `URL_PLACEHOLDER` | f-string 이스케이프 실수 방지용 상수. 리터럴로 직접 쓰지 말 것 |
+| `AtomicImageWriter` 변환 파라미터 | `quality=90`, `method=6`, RGBA→RGB는 검증된 값 |
+| `config.SAMPLER_CANDIDATES` 순서 | 폴백 순서가 화풍에 영향 |
+| `CodeFormatter` | 파일명 조립 단일 진입점. 우회하면 스킵 판정과 어긋남 |
+| `config.CODE_MIN_WIDTH = 2` | 기존 생성 파일과의 하위 호환 |
+| `BatchRunner.run()` 의 `plan_only` 검사 순서 | `destination.exists()` 보다 먼저여야 `planned` 가 완전해짐 |
+| `config.URL_PLACEHOLDER` | f-string 이스케이프 실수 방지용 상수. 리터럴로 직접 쓰지 말 것 |
+| `inject_controlnet()` | 원본 dict 를 변경하지 않는 계약. 루프에서 상태 누적을 막는다 |
+| 순수 계층의 import | I/O 모듈을 참조하면 65개 검사의 전제가 깨진다 |
+| `logging` vs `emit` | 로그는 stderr, 산출물은 stdout. 섞으면 리다이렉트가 오염된다 |
+
+### 린터
+
+```powershell
+pip install -e ".[dev]"
+ruff check sd_charaset
+mypy sd_charaset
+```
+
+`pyproject.toml` 에 설정이 들어 있다. `PTH` 규칙으로 `os.path` 대신
+`pathlib` 사용을 강제한다.
 
 ### 알려진 개선 여지
 

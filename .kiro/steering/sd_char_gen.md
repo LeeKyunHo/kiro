@@ -23,10 +23,14 @@ description: 사용자가 "캐릭터 생성:" 형식으로 입력하면 sd_batch
 ## 동작 규칙
 
 1. 불필요한 설명이나 확인 질문 없이 터미널 명령을 실행한다.
-2. 작업 디렉터리는 워크스페이스 루트(`sd_batch_generator.py` 가 있는 폴더)로 한다.
+2. 작업 디렉터리는 워크스페이스 루트(`pose_database.json` 이 있는 폴더)로 한다.
    현재 경로: `C:\Users\USER\kiro`
    `cd` 를 쓰지 말고 `cwd` 파라미터로 지정한다.
    다른 PC에서 클론했다면 이 경로를 그 환경의 클론 위치로 수정한다.
+
+2-1. 실행은 `python sd_batch_generator.py` 형태를 쓴다.
+   구현은 `sd_charaset` 패키지에 있고 이 파일은 하위 호환 shim 이다.
+   `python -m sd_charaset` 도 완전히 동일하게 동작하므로 어느 쪽을 써도 된다.
 3. 아래 템플릿을 조립해 `execute_pwsh` 로 실행한다. 기본 모드는 `all`.
 4. 실행 후 터미널 출력을 그대로 전달하고, 스크립트가 출력하는
    젠잇 마크다운 블록을 채팅창에도 그대로 표시한다.
@@ -159,10 +163,26 @@ python sd_batch_generator.py --from_image "경로"
 | `--dry-run` | 파일 쓰기 없이 대상·파일명·마크다운만 출력 |
 | `--mock` | 더미 이미지를 실제로 저장해 종단 검증 |
 
-`--mock` 산출물은 실제 에셋과 같은 폴더에 저장되므로, 점검 시에는
-`--prefix test` 처럼 전용 약칭을 쓴다. 더미 이미지에는 `MOCK` 텍스트가 그려진다.
+`--mock` 산출물은 `mock_assets/{약칭}/` 에 저장된다. 실제 결과물이 들어가는
+`generated_assets/` 와 경로가 분리되어 있으므로 **실제 약칭을 그대로 써도
+안전하다.** 더미 이미지에는 `MOCK` 텍스트가 그려진다.
 
-우선순위는 `--test` > `--dry-run` > `--mock` > 기본이다.
+우선순위는 `--test` > `--from_image` > `--dry-run` > `--mock` > 기본이다.
+
+`실제 출력 폴더에 mock 산출물이 있습니다` 에러가 나면, 사용자가 더미 이미지를
+`generated_assets/` 로 복사한 상태다. `_mock_manifest.json` 과 함께 있는
+더미 이미지를 삭제하도록 안내한다. 임의로 삭제하지 않는다.
+
+## 출력 스트림
+
+진행 로그와 경고는 stderr, 젠잇 마크다운은 stdout 으로 나간다.
+따라서 마크다운만 파일로 받으려면 리다이렉트를 쓸 수 있다.
+
+```powershell
+python sd_batch_generator.py --prefix mika --char_prompt "..." > assets.md
+```
+
+사용자가 결과 복사를 번거로워하면 이 방법을 제안한다.
 
 ## 종료 코드 해석
 

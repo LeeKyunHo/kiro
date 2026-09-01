@@ -5,13 +5,35 @@
 >
 > 관련 spec: `.kiro/specs/image-reference-pipeline/requirements.md` R7
 
+## 어느 브랜치에서 할지 (먼저 결정)
+
+`refactor/modular` 브랜치에 모듈형 리팩터링이 올라가 있다. GPU 세션은
+**`main`에서 하는 것을 권한다.**
+
+```powershell
+git checkout main       # 검증된 상태
+```
+
+이유는 목적 분리다. 오늘 세션의 목적은 weight 확정이다. 여기에 새 구조
+검증이 겹치면 문제가 생겼을 때 원인이 weight 인지 리팩터링인지 가려내기
+어려워진다.
+
+리팩터링 병합은 이 검증이 끝난 뒤에 한다. 두 브랜치의 동작은 동일하며
+(회귀 74건 검증 완료), 명령어도 `sd_batch_generator.py` 로 같다.
+
+`refactor/modular` 에서 진행할 경우 차이점 두 가지만 알아두면 된다.
+
+- `--test` 항목 수가 45 → 65
+- `--mock` 산출물이 `generated_assets/` 가 아니라 `mock_assets/` 에 저장됨
+  (이 문서의 2단계 이후는 실제 렌더링이므로 영향 없음)
+
 ---
 
 ## 노트북에서 이미 검증된 것 (다시 하지 않아도 됨)
 
 | 항목 | 결과 |
 |---|---|
-| `--test` 자체 진단 | 45항목 PASS |
+| `--test` 자체 진단 | 45항목 (main) / 65항목 (refactor) PASS |
 | 시간 측정·집계 로직 | 검증됨 |
 | VRAM 응답 파싱 (7케이스) | 검증됨 |
 | 참조 이미지 탐색·우선순위 | 검증됨 |
@@ -77,7 +99,8 @@
   python sd_batch_generator.py --test
   ```
 
-  **통과 기준**: `PASS 45 / FAIL 0`, 종료 코드 0
+  **통과 기준**: `FAIL 0`, 종료 코드 0
+  (항목 수는 `main` 45개, `refactor/modular` 65개)
 
   실패 시: JSON 문법 오류 또는 패키지 누락. 메시지에 line 번호가 나온다.
 
@@ -493,7 +516,7 @@ B는 메모리 절약 없이 속도만 본 것이다.
   python sd_batch_generator.py --test
   ```
 
-  `PASS 45 / FAIL 0` 유지 확인.
+  `PASS 65 / FAIL 0` 유지 확인.
 
 - [ ] **5-3.** 참조 이미지 커밋 여부 결정
 
