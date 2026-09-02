@@ -1,0 +1,40 @@
+{
+  "_schema": {
+    "목적": "캐릭터별 외형 태그와 옵션을 저장해 --char 약칭 한 번으로 실행한다.",
+    "규약": "최상위 키가 캐릭터 약칭이며 그대로 --prefix 가 된다. '_' 로 시작하는 키는 메타이며 캐릭터로 세지 않는다. pose_database.json 과 같은 규약이다.",
+    "약칭_규격": "영문·숫자·밑줄·하이픈 1~64자. 파일명과 젠잇 호출 코드에 그대로 들어가므로 한글은 쓸 수 없다.",
+    "우선순위": "CLI 명시값 > 프리셋 > 내장 기본값. 예: --char mika --mode emotions 는 프리셋의 mode 를 무시하고 emotions 만 생성한다.",
+    "필드": {
+      "char_prompt": "필수. 캐릭터 외형 태그. 성별 태그(1girl/1boy)는 넣지 않는다. 그건 profile 축에서 다룬다.",
+      "profile": "선택. pose_database.json 의 _profiles 키. 생략하면 female 이 적용된다.",
+      "custom_neg": "선택. 이 캐릭터에만 추가할 네거티브. 프로필 네거티브를 대체하지 않고 덧붙는다.",
+      "ref_weight": "선택. IP-Adapter 적용 강도 0.0~2.0. 생략하면 0.7.",
+      "ref_image": "선택. 참조 이미지 경로. 생략하면 references/{약칭}.png 를 자동 탐색한다.",
+      "mode": "선택. all | 섹션명 | 코드 표현식(0,5,12 / 10-14). 생략하면 all.",
+      "note": "선택. 사람이 읽는 메모. 생성에 영향을 주지 않는다."
+    },
+    "담지_않는_것": "--mock / --dry-run / --test / --benchmark 는 실행 의도이고 --cn_module / --cn_model 은 환경 설정이다. 캐릭터의 속성이 아니므로 여기 두지 않는다.",
+    "검증": "python sd_batch_generator.py --test 가 프로필 존재 여부, 성별 태그 혼입, mode 유효성을 검사한다."
+  },
+
+  "mika": {
+    "char_prompt": "silver hair, long straight hair, blue eyes, school uniform, detailed face",
+    "profile": "female",
+    "custom_neg": "glasses, hat",
+    "ref_weight": 0.7,
+    "note": "기준 캐릭터. 참조 이미지 부트스트랩은 00번을 먼저 뽑아 references/mika.webp 로 복사한다."
+  },
+
+  "ryu": {
+    "char_prompt": "short black hair, sharp eyes, black suit, necktie",
+    "profile": "male",
+    "note": "남성 캐릭터. profile 을 male 로 두었으므로 --profile 을 따로 붙이지 않아도 된다."
+  },
+
+  "sei": {
+    "char_prompt": "silver bob cut, violet eyes, oversized shirt, slim figure",
+    "profile": "male_otokonoko",
+    "ref_weight": 0.6,
+    "note": "중성적 외형. 참조 강도를 낮게 둔 이유는 강하게 걸면 프로필의 중성 태그보다 참조 이미지의 성별 인상이 앞서기 때문이다."
+  }
+}

@@ -63,6 +63,15 @@ class OutputKind(str, Enum):
             OutputKind.BENCHMARK: config.BENCHMARK_ASSETS_DIRNAME,
         }[self]
 
+    @property
+    def label(self) -> str:
+        """사람이 읽는 산출물 설명. 카드 머리말과 로그에 쓴다."""
+        return {
+            OutputKind.REAL: "실제 렌더링",
+            OutputKind.MOCK: "모의 생성 (--mock) — 더미 이미지입니다",
+            OutputKind.BENCHMARK: "가중치 벤치마크",
+        }[self]
+
 
 @dataclass(frozen=True, slots=True)
 class AssetPaths:

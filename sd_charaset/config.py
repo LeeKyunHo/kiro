@@ -66,6 +66,9 @@ FALLBACK_NEGATIVE: Final = (
 # ─────────────────────────────────────────────
 POSE_DB_FILENAME: Final = "pose_database.json"
 
+# 캐릭터 프리셋 DB. 없어도 동작한다 (--char 를 쓸 때만 필요).
+CHARACTERS_FILENAME: Final = "characters.json"
+
 # 실제 렌더링 산출물
 ASSETS_DIRNAME: Final = "generated_assets"
 
@@ -104,6 +107,46 @@ RULES_EXCLUSIVE_KEY: Final = "mutually_exclusive"
 
 DEFAULT_PROFILE_NAME: Final = "female"
 BUILTIN_PROFILE_NAME: Final = "(built-in)"
+
+# ─────────────────────────────────────────────
+# characters.json 스키마 키
+# ─────────────────────────────────────────────
+# pose_database.json 과 같은 규약을 쓴다. 최상위 키가 캐릭터 약칭이고
+# '_' 로 시작하는 키는 메타다. 두 파일의 규약을 통일해야 한 쪽을 익히면
+# 다른 쪽도 바로 편집할 수 있다.
+CHAR_FIELD_PROMPT: Final = "char_prompt"
+CHAR_FIELD_PROFILE: Final = "profile"
+CHAR_FIELD_NEGATIVE: Final = "custom_neg"
+CHAR_FIELD_REF_WEIGHT: Final = "ref_weight"
+CHAR_FIELD_REF_IMAGE: Final = "ref_image"
+CHAR_FIELD_MODE: Final = "mode"
+CHAR_FIELD_NOTE: Final = "note"
+
+# 알려진 필드 집합. 여기 없는 키는 오타로 보고 경고한다.
+# 조용히 무시하면 'char_promt' 같은 오타가 "프리셋이 안 먹는다" 로만
+# 드러나고 원인을 찾기 어렵다.
+CHAR_FIELDS: Final = frozenset({
+    CHAR_FIELD_PROMPT,
+    CHAR_FIELD_PROFILE,
+    CHAR_FIELD_NEGATIVE,
+    CHAR_FIELD_REF_WEIGHT,
+    CHAR_FIELD_REF_IMAGE,
+    CHAR_FIELD_MODE,
+    CHAR_FIELD_NOTE,
+})
+
+# 프리셋에 담지 않는 것: --mock / --dry-run / --test / --benchmark 는
+# 실행 의도이고, --cn_module / --cn_model 은 환경 설정이다. 둘 다
+# 캐릭터의 속성이 아니므로 프리셋 축에서 제외한다.
+
+# ─────────────────────────────────────────────
+# 생성 범위 기본값
+# ─────────────────────────────────────────────
+# argparse 기본값으로 두지 않고 여기서 관리한다. argparse 가 기본값을
+# 채우면 "사용자가 --mode all 을 명시했다" 와 "기본값이 채워졌다" 를
+# 구분할 수 없어 프리셋 오버라이드 판정이 불가능해진다.
+MODE_DEFAULT: Final = "all"
+MODE_ALL: Final = "all"
 
 # ─────────────────────────────────────────────
 # 코드 범위 및 포맷
@@ -169,6 +212,14 @@ GENIT_STATUS_DEFAULTS: Final = {
     "status": "현재상태",
     "desc": "대사한줄",
 }
+
+# 캐릭터 카드 파일. 에셋 폴더 안에 함께 두어 이미지와 설정이 같이
+# 이동하도록 한다. 별도 폴더에 모으면 캐릭터를 지울 때 한쪽이 남는다.
+GENIT_CARD_TEMPLATE: Final = "{prefix}_genit_card.md"
+
+# 파일명에서 코드를 역파싱할 때 쓴다. 카드는 이번 실행의 결과가 아니라
+# 폴더의 현재 상태를 기술해야 하므로 디스크를 읽어야 한다.
+ASSET_FILENAME_PATTERN_SOURCE: Final = r"^(?P<prefix>.+)_(?P<code>\d{1,4})$"
 
 SEPARATOR_WIDTH: Final = 64
 SEPARATOR: Final = "=" * SEPARATOR_WIDTH

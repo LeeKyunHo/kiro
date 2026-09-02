@@ -12,13 +12,15 @@
 
 | | `main` | `refactor/modular` |
 |---|---|---|
-| 구조 | 단일 파일 1,842줄 | 패키지 23모듈 + 33줄 shim |
-| `--test` | 45항목 | 67항목 |
+| 구조 | 단일 파일 1,842줄 | 패키지 25모듈 + 33줄 shim |
+| `--test` | 45항목 | 93항목 |
 | 2단계 weight 비교 | 수동. `Copy-Item` 20여 줄 반복 | `--benchmark` 한 줄 + HTML 비교표 |
 | `--no-open` | 없음 | 있음 (삭제 반복 시 경고창 방지) |
 | `--interactive` | 없음 | 있음 |
+| `--char` 프리셋 | 없음 | 있음 (`characters.json`) |
+| 젠잇 카드 자동 저장 | 없음 | 있음 (`{prefix}_genit_card.md`) |
 | 기본 JSON | 20종 (2섹션) | 40종 (4섹션) |
-| 검증 상태 | 실전 검증됨 | 회귀 69건 통과, GPU 미검증 |
+| 검증 상태 | 실전 검증됨 | 회귀 93건 통과, GPU 미검증 |
 
 ### 판단 기준
 
@@ -45,11 +47,15 @@ git checkout refactor/modular     # 2단계부터
 
 `refactor/modular` 에서 알아둘 차이점:
 
-- `--test` 항목 수가 45 → 67
+- `--test` 항목 수가 45 → 93
 - `--mock` 산출물이 `generated_assets/` 가 아니라 `mock_assets/` 에 저장됨
   (이 문서의 2단계 이후는 실제 렌더링이므로 영향 없음)
 - `--benchmark` 산출물은 `benchmark_assets/` 에 저장됨. 실제 결과물 폴더를
   오염시키지 않는다
+- `--char mika` 한 줄로 `characters.json` 에 등록된 캐릭터를 뽑을 수 있다
+  (외형·프로필·네거티브가 파일에 저장됨)
+- 생성이 끝나면 `generated_assets/{prefix}/{prefix}_genit_card.md` 가 자동
+  생성된다. 젠잇에 붙여넣을 호출 코드·매핑 가이드·상태창 템플릿이 들어 있다
 - 기본 JSON 이 40종이므로 `--mode all` 이 40장이다. 비교용으로는
   `--mode 3,5,12` 처럼 좁히는 편이 낫다
 
@@ -59,7 +65,7 @@ git checkout refactor/modular     # 2단계부터
 
 | 항목 | 결과 |
 |---|---|
-| `--test` 자체 진단 | 45항목 (main) / 67항목 (refactor) PASS |
+| `--test` 자체 진단 | 45항목 (main) / 93항목 (refactor) PASS |
 | 시간 측정·집계 로직 | 검증됨 |
 | VRAM 응답 파싱 (7케이스) | 검증됨 |
 | 참조 이미지 탐색·우선순위 | 검증됨 |
@@ -74,6 +80,8 @@ git checkout refactor/modular     # 2단계부터
 | 벤치마크 가중치 파싱·중복 제거 | 검증됨 |
 | 벤치마크 HTML 조립·이스케이프 | 검증됨 (`--mock` 종단) |
 | 벤치마크 variant 폴더 분리 | 검증됨 |
+| `--char` 프리셋 파싱·병합 | 검증됨 (T37~T39) |
+| 젠잇 카드 조립·쓰기·축소 방지 | 검증됨 (T40~T42) |
 | 대화형 모드 argv 조립 | 검증됨 |
 | 비대화형 폴백 (tty 없음) | 검증됨 |
 | ruff / mypy | 통과 (23모듈) |
@@ -89,6 +97,10 @@ git checkout refactor/modular     # 2단계부터
 - `/sdapi/v1/memory` 응답 구조가 실제로 파싱되는지
 - 벤치마크 뷰어가 **실제 이미지로** 판단에 쓸 만한지
   (노트북에서는 더미 이미지로 구조만 확인했다)
+- `--char` 프리셋으로 실행했을 때 `characters.json` 의 외형·프로필이
+  실제 이미지에 반영되는지 (텍스트 확인은 됐지만 화질 확인 필요)
+- 실제 생성 후 `generated_assets/{prefix}/{prefix}_genit_card.md` 가
+  올바른 파일명과 URL 로 생성되는지
 
 ---
 
@@ -134,7 +146,7 @@ git checkout refactor/modular     # 2단계부터
   ```
 
   **통과 기준**: `FAIL 0`, 종료 코드 0
-  (항목 수는 `main` 45개, `refactor/modular` 67개)
+  (항목 수는 `main` 45개, `refactor/modular` 93개)
 
   실패 시: JSON 문법 오류 또는 패키지 누락. 메시지에 line 번호가 나온다.
 
@@ -638,7 +650,7 @@ B는 메모리 절약 없이 속도만 본 것이다.
   python sd_batch_generator.py --test
   ```
 
-  `FAIL 0` 유지 확인. (항목 수는 `main` 45개, `refactor/modular` 67개)
+  `FAIL 0` 유지 확인. (항목 수는 `main` 45개, `refactor/modular` 93개)
 
 - [ ] **5-3.** 참조 이미지 커밋 여부 결정
 

@@ -32,7 +32,12 @@ from .database import (
 from .diagnostics import run_diagnostics
 from .errors import ApiError, ConfigError, ValidationError
 from .logging_setup import get_logger
-from .models import InterrogateResult, ReferenceContext
+from .models import (
+    InterrogateResult,
+    PoseDatabase,
+    ReferenceContext,
+    ResolvedCharacter,
+)
 from .prompt import PromptComposer
 from .render import (
     ApiRenderStrategy,
@@ -206,10 +211,16 @@ class GenerateCommand:
 
     세 모드는 `RenderStrategy` 로 갈라지고, 그 외 흐름(코드 선택, 프롬프트
     조립, 집계, 출력)은 공유한다.
+
+    `resolved` 와 `program` 은 젠잇 카드에만 쓴다. `args` 에서 재구성하지
+    않고 받는 이유: 프리셋 병합 결과(어느 축이 CLI 로 덮였는지)는 Namespace
+    에 남지 않는다. 카드의 재생성 명령을 정확히 쓰려면 그 정보가 필요하다.
     """
 
     base_dir: Path
     args: argparse.Namespace
+    program: str = "sd_charaset"
+    resolved: ResolvedCharacter | None = None
 
     # ── 모드 결정 ────────────────────────────────
     @property
@@ -326,6 +337,8 @@ class GenerateCommand:
             _logger.info("생성된 파일이 없어 마크다운을 출력하지 않습니다.")
             return 1 if result.failures else 0
 
+        self._export_card(paths, database, formatter, profile.name, composer.negative)
+
         if strategy.opens_file_manager and not getattr(args, "no_open", False):
             open_in_file_manager(paths.output_dir)
 
@@ -339,6 +352,39 @@ class GenerateCommand:
         return 1 if result.aborted else 0
 
     # ── 내부 단계 ────────────────────────────────
+    def _export_card(
+        self,
+        paths: AssetPaths,
+        database: PoseDatabase,
+        formatter: CodeFormatter,
+        profile_name: str,
+        negative: str,
+    ) -> None:
+        """
+        젠잇 카드를 저장한다.
+
+        `--dry-run` 에서는 건너뛴다. 파일을 쓰지 않는 것이 그 모드의
+        계약이므로 카드도 예외가 아니다.
+
+        지연 import 를 쓰는 이유: 카드는 생성 경로의 마지막 단계이며
+        `--test` / `--from_image` 에는 전혀 필요하지 않다.
+        """
+        if self.plan_only or getattr(self.args, "no_card", False):
+            return
+
+        from . import exporter
+
+        exporter.export_card(
+            paths,
+            database=database,
+            formatter=formatter,
+            resolved=self.resolved,
+            profile_name=profile_name,
+            negative=negative,
+            program=self.program,
+            kind_label=paths.kind.label,
+        )
+
     def _resolve_reference(self, prefix: str, weight: float) -> ReferenceContext:
         """
         참조 이미지를 해석한다.

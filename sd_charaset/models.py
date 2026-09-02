@@ -92,6 +92,114 @@ class PoseDatabase:
 
 
 # ─────────────────────────────────────────────
+# 캐릭터 프리셋
+# ─────────────────────────────────────────────
+@dataclass(frozen=True, slots=True)
+class CharacterPreset:
+    """
+    characters.json 의 단일 캐릭터 정의.
+
+    `char_prompt` 만 필수다. 나머지가 `None` 인 것과 빈 문자열인 것은
+    의미가 다르다. `None` 은 "이 축을 프리셋이 정하지 않음" 이고,
+    빈 문자열은 "비워두라고 정함" 이다. 이 구분이 있어야 병합에서
+    프리셋 미지정과 명시적 비움을 갈라낼 수 있다.
+
+    `note` 는 사람이 읽는 메모이며 생성에 영향을 주지 않는다.
+    """
+
+    name: str
+    char_prompt: str
+    profile: str | None = None
+    custom_neg: str | None = None
+    ref_weight: float | None = None
+    ref_image: str | None = None
+    mode: str | None = None
+    note: str = ""
+
+    def field_value(self, field_name: str) -> object | None:
+        """
+        병합에서 오버라이드 판정에 쓸 값을 돌려준다.
+
+        `getattr` 을 호출부에 흩뿌리지 않기 위한 좁은 접근자다.
+        """
+        return getattr(self, field_name, None)
+
+
+@dataclass(frozen=True, slots=True)
+class CharacterRoster:
+    """
+    characters.json 을 정규화한 결과.
+
+    `available` 로 파일 자체의 유무를 구분한다. 파일이 없는 것은 정상
+    상태(선택 기능)이고, 파일이 있는데 항목이 0개인 것은 편집 실수다.
+    두 경우의 안내 문구가 달라야 하므로 플래그를 따로 둔다.
+
+    `warnings` 는 PoseDatabase 와 같은 정책이다. 항목 하나의 오류로
+    전체를 막지 않고 모아서 출력한다.
+    """
+
+    entries: dict[str, CharacterPreset] = field(default_factory=dict)
+    available: bool = False
+    warnings: tuple[str, ...] = ()
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        """정의 순서를 유지한다. 사용자가 JSON 에 적은 순서가 그대로 보인다."""
+        return tuple(self.entries)
+
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def __contains__(self, name: object) -> bool:
+        return name in self.entries
+
+    def get(self, name: str) -> CharacterPreset | None:
+        return self.entries.get(name)
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedCharacter:
+    """
+    CLI 인자와 프리셋을 병합한 최종 결과.
+
+    모든 축이 확정된 상태다. `mode` 와 `ref_weight` 는 `None` 이 될 수
+    없다. 병합 시점에 기본값까지 채우기 때문이다. 덕분에 하위 계층은
+    프리셋의 존재를 전혀 알 필요가 없다.
+
+    `prefix` 와 `char_prompt` 만 `None` 이 가능하다. 둘이 비어 있으면
+    argparse 가 기존과 동일한 "필수 인자 누락" 메시지를 내야 하므로,
+    여기서 임의로 채우지 않고 그대로 넘긴다.
+
+    `overridden` 은 CLI 가 프리셋을 덮어쓴 축의 이름이다. 로그에 근거를
+    남기기 위한 것으로, 사용자가 "프리셋을 썼는데 왜 이 값이지" 를
+    되짚을 수 있게 한다.
+    """
+
+    prefix: str | None
+    char_prompt: str | None
+    profile: str | None
+    custom_neg: str
+    ref_weight: float
+    ref_image: str | None
+    mode: str
+    preset_name: str | None = None
+    overridden: tuple[str, ...] = ()
+
+    @property
+    def from_preset(self) -> bool:
+        return self.preset_name is not None
+
+    @property
+    def source(self) -> str:
+        """로그용 출처 표기."""
+        if self.preset_name is None:
+            return "cli"
+        if self.overridden:
+            return f"preset:{self.preset_name} + cli({', '.join(self.overridden)})"
+        return f"preset:{self.preset_name}"
+
+
+# ─────────────────────────────────────────────
 # 참조 이미지 및 ControlNet
 # ─────────────────────────────────────────────
 @dataclass(frozen=True, slots=True)

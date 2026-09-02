@@ -31,7 +31,7 @@ from typing import Any
 
 from PIL import Image
 
-from . import config, payload
+from . import config, exporter, payload
 from .codes import (
     CodeFormatter,
     looks_like_code_expression,
@@ -47,6 +47,7 @@ from .database import (
 from .errors import ConfigError, DatabaseError, ValidationError
 from .logging_setup import emit
 from .models import (
+    CharacterPreset,
     CheckOutcome,
     ControlNetSpec,
     InterrogateResult,
@@ -56,7 +57,16 @@ from .models import (
     summarize_durations,
 )
 from .output import build_genit_block
+from .roster import (
+    audit_preset,
+    load_roster,
+    merge_character,
+    parse_roster,
+    resolve_preset,
+)
 from .storage import (
+    AssetPaths,
+    OutputKind,
     find_reference_candidates,
     resolve_reference_image,
 )
@@ -219,6 +229,39 @@ CN_MODULE_FIXTURE: tuple[str, ...] = (
 
 REF_WEIGHT_REJECT: tuple[float, ...] = (-0.1, 2.1, -1.0, 99.0)
 REF_WEIGHT_ACCEPT: tuple[float, ...] = (0.0, 0.5, 0.7, 1.0, 2.0)
+
+# characters.json 파싱 픽스처. 유효 항목 2개와 무효 항목 5개를 섞어
+# "한 명의 오류가 나머지를 막지 않는다" 를 검증한다.
+SYNTHETIC_ROSTER: dict[str, Any] = {
+    "_schema": {"note": "메타 키는 캐릭터로 세지 않는다"},
+    "good": {
+        "char_prompt": "silver hair, blue eyes",
+        "profile": "female",
+        "custom_neg": "glasses",
+        "ref_weight": 0.55,
+        "mode": "emotions",
+        "note": "정상 항목",
+    },
+    "minimal": {"char_prompt": "short black hair"},
+    "미카": {"char_prompt": "한글 이름은 prefix 규격 위반"},
+    "no_prompt": {"profile": "female"},
+    "empty_prompt": {"char_prompt": "   "},
+    "not_a_dict": "문자열은 캐릭터가 될 수 없다",
+    "bad_weight": {"char_prompt": "tag", "ref_weight": True},
+    "typo_field": {"char_prompt": "tag", "char_promt": "오타 필드"},
+}
+
+# 카드 파일명 역파싱 픽스처. (파일 stem, 기대 코드 또는 None)
+CARD_SCAN_FIXTURE: tuple[tuple[str, int | None], ...] = (
+    ("mika_00", 0),
+    ("mika_07", 7),
+    ("mika_123", 123),
+    ("mika_007", 7),          # 패딩 폭이 늘어난 뒤 남은 과거 파일
+    ("other_03", None),       # 다른 접두어
+    ("mika", None),           # 코드 없음
+    ("mika_ab", None),        # 숫자 아님
+    ("mika_00_extra", None),  # 코드가 말미가 아님
+)
 
 
 @contextmanager
@@ -915,11 +958,7 @@ def _check_integration(report: Report, database: PoseDatabase) -> None:
     )
 
     # T35 — 파일명·경로 정책
-    from .storage import AssetPaths
-
     with temp_workspace() as root:
-        from .storage import OutputKind
-
         real_paths = AssetPaths(root, "mika", kind=OutputKind.REAL)
         mock_paths = AssetPaths(root, "mika", kind=OutputKind.MOCK)
         bench_paths = AssetPaths(
@@ -1006,6 +1045,365 @@ def _check_integration(report: Report, database: PoseDatabase) -> None:
 
 
 # ─────────────────────────────────────────────
+# 캐릭터 프리셋 검사 (T37~T39)
+# ─────────────────────────────────────────────
+def _check_roster(report: Report, base_dir: Path, database: PoseDatabase) -> None:
+    emit("\n[캐릭터 프리셋 검사]")
+
+    # T37 — 합성 픽스처 파싱. 실제 파일 상태와 무관하게 항상 검사된다.
+    #
+    # char_prompt 가 유효하면 항목은 채택된다. ref_weight 오류나 오타 필드는
+    # 경고로 남기고 해당 축만 버린다. 캐릭터 하나를 통째로 못 쓰게 만드는
+    # 것보다 나머지 축을 살리는 편이 낫다.
+    synthetic = parse_roster(SYNTHETIC_ROSTER)
+    report.check(
+        "T37",
+        "프리셋 파싱 (채택 4 / 배제 4)",
+        set(synthetic.names) == {"good", "minimal", "bad_weight", "typo_field"},
+        f"채택 {list(synthetic.names)} / 경고 {len(synthetic.warnings)}건",
+    )
+    report.check(
+        "T37a",
+        "char_prompt 결손 항목만 배제",
+        all(
+            name not in synthetic
+            for name in ("no_prompt", "empty_prompt", "not_a_dict", "미카")
+        ),
+        "프롬프트 부재·빈 값·타입 불일치·이름 규격 위반",
+    )
+    report.check(
+        "T37b",
+        "메타 키·규격 위반 이름 배제",
+        "_schema" not in synthetic
+        and "미카" not in synthetic
+        and any("미카" in message for message in synthetic.warnings),
+        "'_' 접두 키는 건너뛰고 한글 이름은 경고 후 무시",
+    )
+    report.check(
+        "T37c",
+        "필드 값 정규화",
+        synthetic.entries["good"].ref_weight == 0.55
+        and synthetic.entries["good"].mode == "emotions"
+        and synthetic.entries["minimal"].profile is None
+        and synthetic.entries["minimal"].custom_neg is None,
+        "미지정 축은 None 으로 남아 병합에서 기본값이 적용됨",
+    )
+    report.check(
+        "T37d",
+        "bool ref_weight 거부 · 오타 필드 경고",
+        synthetic.entries["bad_weight"].ref_weight is None
+        and any("bad_weight" in message for message in synthetic.warnings)
+        and any("char_promt" in message for message in synthetic.warnings),
+        "isinstance(True, int) 로 1.0 이 되는 것을 막고 오타를 알린다. "
+        "항목 자체는 살리고 해당 축만 버린다",
+    )
+    report.check(
+        "T37e",
+        "파일 부재와 빈 로스터 구분",
+        parse_roster(None).available is False
+        and parse_roster({}).available is True,
+        "선택 기능의 부재는 정상, 항목 0개는 편집 실수",
+    )
+
+    # T38 — 병합 우선순위
+    preset = synthetic.entries["good"]
+    plain = merge_character(preset)
+    report.check(
+        "T38",
+        "프리셋 값 적용 (CLI 미지정)",
+        plain.prefix == "good"
+        and plain.mode == "emotions"
+        and plain.ref_weight == 0.55
+        and plain.custom_neg == "glasses"
+        and plain.overridden == (),
+        f"mode={plain.mode} weight={plain.ref_weight} source={plain.source}",
+    )
+
+    overridden = merge_character(
+        preset, prefix="good_v2", mode="all", ref_weight=0.9
+    )
+    report.check(
+        "T38b",
+        "CLI 가 프리셋을 덮어씀",
+        overridden.mode == "all"
+        and overridden.ref_weight == 0.9
+        and overridden.prefix == "good_v2"
+        and set(overridden.overridden) == {"mode", "ref_weight"},
+        f"덮인 축 {list(overridden.overridden)}",
+    )
+    report.check(
+        "T38c",
+        "프리셋 미정의 축 지정은 오버라이드 아님",
+        merge_character(
+            synthetic.entries["minimal"], mode="poses"
+        ).overridden == (),
+        "minimal 은 mode 를 정하지 않았으므로 지정일 뿐 덮어쓴 것이 아니다",
+    )
+
+    empty_neg = merge_character(preset, custom_neg="")
+    report.check(
+        "T38d",
+        '--custom_neg "" 로 프리셋 비우기',
+        empty_neg.custom_neg == ""
+        and empty_neg.overridden == ("custom_neg",),
+        "빈 문자열이 argparse 기본값이면 표현할 수 없는 의도",
+    )
+
+    bare = merge_character(None)
+    report.check(
+        "T38e",
+        "프리셋 없을 때 기본값만 채움",
+        bare.mode == config.MODE_DEFAULT
+        and bare.ref_weight == config.REF_WEIGHT_DEFAULT
+        and bare.custom_neg == ""
+        and bare.prefix is None
+        and bare.char_prompt is None
+        and bare.source == "cli",
+        "prefix/char_prompt 는 None 을 유지해 argparse 필수 검사에 맡긴다",
+    )
+
+    # T39 — 조회 실패 경로
+    failures: list[str] = []
+    for label, roster_case, name in (
+        ("파일 부재", parse_roster(None), "any"),
+        ("항목 0개", parse_roster({}), "any"),
+        ("미등록 이름", synthetic, "__nosuch__"),
+    ):
+        try:
+            resolve_preset(roster_case, name)
+            failures.append(label)
+        except ValidationError:
+            pass
+    report.check(
+        "T39",
+        "프리셋 조회 실패 3종 거부",
+        not failures,
+        f"통과됨: {failures}" if failures else "각각 다른 안내 메시지",
+    )
+
+    # T39b — 실제 characters.json
+    try:
+        actual = load_roster(base_dir)
+    except DatabaseError as exc:
+        report.check(
+            "T39b",
+            f"{config.CHARACTERS_FILENAME} 로드",
+            False,
+            f"{exc.message} {exc.hint}".strip(),
+        )
+        return
+
+    if not actual.available:
+        report.warn(
+            "T39b",
+            f"{config.CHARACTERS_FILENAME} 없음",
+            "--char 를 쓰려면 만드세요. 없어도 기존 명령은 정상 동작합니다",
+        )
+        return
+
+    report.ok(
+        "T39b",
+        f"프리셋 {len(actual)}종 로드",
+        str(list(actual.names)),
+    )
+    for message in actual.warnings:
+        report.warn("T39c", f"{config.CHARACTERS_FILENAME} 경고", message)
+
+    found_issue = False
+    for name, entry in actual.entries.items():
+        for message in audit_preset(
+            entry,
+            profile_names=database.profile_names,
+            section_names=database.section_names,
+        ):
+            found_issue = True
+            report.warn("T39d", f"캐릭터 '{name}'", message)
+    if not found_issue:
+        report.ok(
+            "T39d",
+            "프리셋 정합성",
+            f"{len(actual)}종 검사 (프로필 참조·성별 태그·mode 유효성)",
+        )
+
+
+# ─────────────────────────────────────────────
+# 젠잇 카드 검사 (T40~T42)
+# ─────────────────────────────────────────────
+def _card_meta(prefix: str = "t") -> exporter.CardMeta:
+    return exporter.CardMeta(
+        prefix=prefix,
+        profile_name="female",
+        char_prompt="silver hair",
+        negative="worst quality",
+        command="charaset --char t",
+        kind_label="자체 진단",
+    )
+
+
+def _check_card(report: Report, database: PoseDatabase) -> None:
+    emit("\n[젠잇 카드 검사]")
+
+    synthetic = parse_pose_database(SYNTHETIC_DB)
+    codes = synthetic.all_codes
+    formatter = CodeFormatter.for_codes(codes)
+
+    # 메타를 한 번만 만들어 재사용한다. 매번 새로 만들면 created_at 이
+    # 분 경계에서 달라져 T42 의 문자열 비교가 간헐적으로 실패한다.
+    meta = _card_meta()
+    card = exporter.build_card(
+        meta=meta,
+        codes=codes,
+        database=synthetic,
+        formatter=formatter,
+    )
+
+    # T40 — 조립 불변식
+    calls = card.count("![image](")
+    report.check(
+        "T40",
+        "카드 호출 라인 수 == 대상 수",
+        calls == len(codes),
+        f"{calls}/{len(codes)}",
+    )
+    report.check(
+        "T40b",
+        "세 블록 모두 포함",
+        "이미지 호출 코드" in card
+        and "상태 매핑 가이드" in card
+        and "상태창 템플릿" in card
+        and config.GENIT_STATUS_TEMPLATE.split("|")[0] in card,
+        "호출 코드 / 매핑 가이드 / 상태창",
+    )
+    report.check(
+        "T40c",
+        "{{url}} 리터럴 보존",
+        config.URL_PLACEHOLDER in card,
+        "젠잇이 치환하는 자리표시자가 그대로 남아야 한다",
+    )
+    report.check(
+        "T40d",
+        "재생성 명령 조립",
+        exporter.build_command_hint(
+            merge_character(CharacterPreset("mika", "silver hair")), "charaset", "mika"
+        )
+        == "charaset --char mika"
+        and "--char_prompt" in exporter.build_command_hint(None, "charaset", "x"),
+        "프리셋 사용 시 짧은 명령을 제시한다",
+    )
+
+    # T41 — 디스크 스캔
+    with temp_workspace() as root:
+        folder = root / "assets"
+        folder.mkdir()
+        for stem, _expected in CARD_SCAN_FIXTURE:
+            (folder / f"{stem}{config.ASSET_SUFFIX}").write_bytes(b"x")
+        # 확장자가 다른 파일은 스캔 대상이 아니다.
+        (folder / "mika_55.png").write_bytes(b"x")
+
+        scanned = exporter.scan_asset_codes(folder, "mika")
+        expected = tuple(
+            sorted({code for _stem, code in CARD_SCAN_FIXTURE if code is not None})
+        )
+        report.check(
+            "T41",
+            f"파일명 역파싱 {len(CARD_SCAN_FIXTURE)}케이스",
+            scanned == expected,
+            f"{list(scanned)} (기대 {list(expected)})",
+        )
+        report.check(
+            "T41b",
+            "다른 접두어·확장자 제외",
+            3 not in scanned and 55 not in scanned,
+            "other_03.webp 와 mika_55.png 를 무시",
+        )
+        report.check(
+            "T41c",
+            "폴더 부재 시 빈 튜플",
+            exporter.scan_asset_codes(root / "nosuch", "mika") == (),
+        )
+
+        known, unknown = exporter.select_card_codes(folder, "mika", synthetic)
+        report.check(
+            "T41d",
+            "DB 에 없는 코드 분리",
+            set(known) <= set(synthetic.entries)
+            and 123 in unknown
+            and 0 in unknown,
+            f"채택 {list(known)} / 제외 {list(unknown)}",
+        )
+
+    # T42 — 쓰기 왕복 및 경로 격리
+    with temp_workspace() as root:
+        real_paths = AssetPaths(root, "t", kind=OutputKind.REAL)
+        mock_paths = AssetPaths(root, "t", kind=OutputKind.MOCK)
+        real_paths.ensure()
+
+        written = exporter.write_card(
+            real_paths,
+            meta=meta,
+            codes=codes,
+            database=synthetic,
+            formatter=formatter,
+        )
+        reloaded = written.read_text(encoding="utf-8")
+        report.check(
+            "T42",
+            "카드 쓰기·재읽기 왕복",
+            written.is_file()
+            and reloaded == card
+            and reloaded.count("![image](") == len(codes),
+            f"{written.name} ({len(reloaded)}자, 조립 결과와 바이트 일치)",
+        )
+        report.check(
+            "T42b",
+            "카드 경로가 출력 폴더 안",
+            written.parent == real_paths.output_dir
+            and written.name.endswith(".md")
+            and exporter.card_path(mock_paths) != written,
+            "mock 카드는 mock_assets/ 로 격리된다",
+        )
+
+        # T42c — 좁은 범위 실행이 카드를 축소시키지 않는다.
+        # 파일은 전부 있는 상태에서 일부 코드만 넘겨도, 카드는 디스크
+        # 스캔 결과를 쓰므로 전체를 유지해야 한다.
+        for code in codes:
+            (real_paths.output_dir / formatter.filename("t", code)).write_bytes(b"x")
+        narrow = exporter.export_card(
+            real_paths,
+            database=synthetic,
+            formatter=formatter,
+            resolved=None,
+            profile_name="female",
+            negative="n",
+            program="charaset",
+            kind_label="자체 진단",
+        )
+        content = narrow.read_text(encoding="utf-8") if narrow else ""
+        report.check(
+            "T42c",
+            "좁은 범위 실행이 카드를 축소시키지 않음",
+            narrow is not None and content.count("![image](") == len(codes),
+            f"{content.count('![image](')}/{len(codes)}장 유지",
+        )
+
+    # T42d — 실제 DB 로도 조립이 성립하는지 (라벨·섹션 누락 검출)
+    actual_formatter = CodeFormatter.for_codes(database.all_codes)
+    actual_card = exporter.build_card(
+        meta=_card_meta(prefix="real"),
+        codes=database.all_codes,
+        database=database,
+        formatter=actual_formatter,
+    )
+    report.check(
+        "T42d",
+        "실제 DB 로 카드 조립",
+        actual_card.count("![image](") == len(database.all_codes)
+        and "(unknown)" not in actual_card,
+        f"{len(database.all_codes)}장",
+    )
+
+
+# ─────────────────────────────────────────────
 # 진입점
 # ─────────────────────────────────────────────
 def run_diagnostics(base_dir: Path) -> int:
@@ -1029,8 +1427,10 @@ def run_diagnostics(base_dir: Path) -> int:
 
     _check_logic(report, database)
     _check_profiles(report, database)
+    _check_roster(report, base_dir, database)
     _check_reference(report)
     _check_integration(report, database)
+    _check_card(report, database)
     return _finish(report)
 
 

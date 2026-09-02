@@ -156,6 +156,67 @@ jobs:
 
           print(f"검증 통과: {len(files)}장, WebP 헤더 정상, 출력 격리 유지")
 
+      # 카드는 이미지 옆에 저장되며 젠잇에 붙여넣을 세 블록을 담는다.
+      - name: 젠잇 카드 검증
+        shell: python
+        run: |
+          from pathlib import Path
+
+          card = Path("mock_assets/ci/ci_genit_card.md")
+          assert card.is_file(), f"카드가 없다: {card}"
+
+          text = card.read_text(encoding="utf-8")
+          assert text.count("![image](") == 3, "호출 코드 3줄이 아니다"
+          assert "{{url}}" in text, "젠잇 자리표시자가 치환되어 버렸다"
+          for heading in ("이미지 호출 코드", "상태 매핑 가이드", "상태창 템플릿"):
+              assert heading in text, f"'{heading}' 블록 누락"
+          assert not Path("generated_assets").exists(), "카드가 실제 폴더에 쓰였다"
+
+          print(f"카드 검증 통과: {len(text)}자")
+
+      # characters.json 프리셋 경로. --prefix / --char_prompt 없이 도는지 본다.
+      # 카드 축소 방지 불변식도 함께 확인한다. 좁은 범위로 다시 돌려도
+      # 카드는 폴더 전체를 반영해야 한다.
+      - name: 캐릭터 프리셋 (--char)
+        run: >
+          python -m sd_charaset --char mika --mock --mode 0,1,2,3 --no-open
+
+      - name: 프리셋·카드 불변식 검증
+        shell: python
+        run: |
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          card = Path("mock_assets/mika/mika_genit_card.md")
+          assert card.is_file(), "프리셋 실행이 카드를 만들지 않았다"
+          assert card.read_text(encoding="utf-8").count("![image](") == 4
+
+          # 좁은 범위로 재실행. 디스크 스캔 기반이므로 카드는 4장을 유지해야 한다.
+          subprocess.run(
+              [
+                  sys.executable, "-m", "sd_charaset",
+                  "--char", "mika", "--mock", "--mode", "0", "--no-open",
+              ],
+              check=True, capture_output=True, text=True, encoding="utf-8",
+          )
+          calls = card.read_text(encoding="utf-8").count("![image](")
+          assert calls == 4, f"카드가 축소되었다: {calls}장 (기대 4장)"
+
+          # --no-card 는 카드를 갱신하지 않는다.
+          card.unlink()
+          subprocess.run(
+              [
+                  sys.executable, "-m", "sd_charaset",
+                  "--char", "mika", "--mock", "--mode", "0",
+                  "--no-open", "--no-card",
+              ],
+              check=True, capture_output=True, text=True, encoding="utf-8",
+          )
+          assert not card.exists(), "--no-card 인데 카드가 생성되었다"
+
+          print("프리셋·카드 불변식 통과")
+
       # 로그는 stderr, 산출물은 stdout 으로 나가는지 확인한다.
       # 이 경계가 깨지면 리다이렉트로 마크다운만 추출하는 기능이 망가진다.
       - name: 스트림 분리 확인

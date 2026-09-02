@@ -20,6 +20,23 @@ description: 사용자가 "캐릭터 생성:" 형식으로 입력하면 sd_batch
 
 슬래시(`/`) 기준으로 나누고 각 조각의 앞뒤 공백을 제거해 파싱한다.
 
+### 약칭만 준 경우 — 프리셋을 먼저 확인한다
+
+```
+캐릭터 생성: mika
+```
+
+외형 프롬프트 없이 약칭만 오면 `characters.json` 에 등록된 캐릭터일 수
+있다. 이때는 외형을 되묻지 말고 프리셋으로 실행한다.
+
+```powershell
+python sd_batch_generator.py --char mika
+```
+
+등록되지 않은 이름이면 스크립트가 종료 코드 1과 함께 사용 가능한 목록을
+출력한다. 그 목록을 사용자에게 전달하고 외형 프롬프트를 요청한다.
+**임의로 외형을 만들어 넣지 않는다.**
+
 ## 동작 규칙
 
 1. 불필요한 설명이나 확인 질문 없이 터미널 명령을 실행한다.
@@ -46,6 +63,64 @@ python sd_batch_generator.py --prefix "[약칭]" --char_prompt "[외형 프롬�
 ```powershell
 python sd_batch_generator.py --prefix "[약칭]" --char_prompt "[외형 프롬프트]" --mode all
 ```
+
+## 캐릭터 프리셋 (`characters.json` / `--char`)
+
+캐릭터별 외형·프로필·네거티브·참조 강도를 저장한 파일이다. 약칭 하나로
+전부 불러온다.
+
+```powershell
+python sd_batch_generator.py --char mika
+```
+
+| 필드 | 생략 시 |
+|---|---|
+| `char_prompt` | **필수** |
+| `profile` | `female` |
+| `custom_neg` | 없음 |
+| `ref_weight` | 0.7 |
+| `ref_image` | `references/{약칭}` 자동 탐색 |
+| `mode` | `all` |
+| `note` | 사람용 메모. 생성에 영향 없음 |
+
+### ★ 우선순위: CLI 명시값 > 프리셋 > 기본값
+
+프리셋을 쓰면서 일부만 바꿀 수 있다.
+
+```powershell
+python sd_batch_generator.py --char mika --mode emotions      # 범위만 변경
+python sd_batch_generator.py --char mika --ref_weight 0.4     # 강도만 변경
+python sd_batch_generator.py --char mika --prefix mika_v2     # 다른 폴더에 변형
+python sd_batch_generator.py --char mika --custom_neg ""      # 프리셋 네거티브 비우기
+```
+
+실행 로그의 `[CHAR]` 줄에 무엇이 적용됐는지 나온다. 사용자에게 전달한다.
+
+```
+[CHAR]  preset:mika + cli(ref_weight) | prefix=mika | mode=all |
+        profile=female | ref_weight=0.4
+        CLI 가 덮어쓴 축: ref_weight
+```
+
+### 안내 규칙
+
+- **사용자가 "mika 다시 뽑아줘" 처럼 말하면 `--char mika` 를 먼저 시도한다.**
+  긴 외형 프롬프트를 다시 조립하지 않는다. 매번 태그가 조금씩 달라지면
+  같은 캐릭터인데 결과물의 일관성이 깨진다.
+- 새 캐릭터를 반복해서 뽑을 것 같으면 `characters.json` 등록을 제안한다.
+  등록은 사용자 승인 후에 한다. 파일을 임의로 고치지 않는다.
+- `--char` 는 `--test` / `--from_image` 에서 쓰이지 않는다. 함께 주면
+  경고가 뜨고 무시된다. 그 모드에는 붙이지 않는다.
+- 프리셋 파일이 없어도 기존 명령은 정상 동작한다. 선택 기능이다.
+
+### 실패 메시지 대응
+
+| 메시지 | 대응 |
+|---|---|
+| `등록되지 않은 캐릭터 'X'. 사용 가능: [...]` | 출력된 목록을 전달하고 선택을 받는다. 이름을 추측해 재시도하지 않는다 |
+| `characters.json 이 없어 --char 를 쓸 수 없습니다` | `--prefix` / `--char_prompt` 로 실행하거나 파일 생성을 제안한다 |
+| `[WARN] 캐릭터 'X' 의 알 수 없는 필드: [...]` | 필드명 오타다. 위 표의 7가지와 대조해 알린다 |
+| `[WARN] 프로필 'X' 이 pose_database.json 에 없음` | `_profiles` 에 없는 이름이다. 둘 중 어느 쪽을 고칠지 묻는다 |
 
 ## 약칭(prefix) 제약
 
@@ -234,10 +309,13 @@ python sd_batch_generator.py --from_image "경로"
 
 | 명령 | 용도 |
 |---|---|
-| `--test` | JSON 데이터·로직 자체 진단 (67항목). 인자 불필요 |
+| `--test` | 두 JSON 파일과 로직 자체 진단 (93항목). 인자 불필요 |
 | `--dry-run` | 파일 쓰기 없이 대상·파일명·마크다운만 출력 |
 | `--mock` | 더미 이미지를 실제로 저장해 종단 검증 |
 | `--benchmark --mock` | 벤치마크 뷰어 조립까지 검증 (참조 파일 필요) |
+
+`--test` 는 `pose_database.json` 과 `characters.json` 을 함께 검사한다.
+어느 쪽을 편집한 뒤에도 이것만 돌리면 된다.
 
 `--mock` 산출물은 `mock_assets/{약칭}/` 에 저장된다. 실제 결과물이 들어가는
 `generated_assets/` 와 경로가 분리되어 있으므로 **실제 약칭을 그대로 써도
