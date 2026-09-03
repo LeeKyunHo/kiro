@@ -717,7 +717,7 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
 # default_mode 값 → --mode 표현식 매핑
 _DEFAULT_MODE_MAP: dict[str, str] = {
     "female":     "emotions,poses,h_scenes",
-    "otokonoko":  "emotions,poses_otokonoko,scenes_otokonoko",
+    "otokonoko":  "emotions,poses,scenes_otokonoko",
 }
 
 
