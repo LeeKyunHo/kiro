@@ -2,6 +2,6 @@
   "prefix": "mai",
   "default_mode": "female",
   "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (purple-tinted black hair, dark violet-black hair, purple hair highlights, bob cut, blunt bangs:1.25), (dark purple eyes, deep violet eyes:1.2), (classic long black maid dress, white apron, frilled maid headdress:1.15), polite posture",
-  "negative": "1boy, male, masculine, beard, mustache, horns, wings, tail, animal ears, brown hair, brown eyes",
+  "negative": "1boy, male, masculine, beard, mustache, horns, wings, tail, animal ears, brown hair, brown eyes, uncensored, no censor, thin censorship",
   "ref_weight": 0.7
 }
