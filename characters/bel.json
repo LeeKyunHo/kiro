@@ -1,7 +1,7 @@
 {
   "prefix": "bel",
   "default_mode": "otokonoko",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, androgynous, delicate face, golden eyes, single mole under left eye:1.05), (solid black military uniform, ultra-short black cropped military jacket:1.2), bare midriff, bare navel, (black pleated miniskirt:1.25), platinum blonde bob cut, rimless glasses",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, androgynous, delicate face, golden eyes, single mole under left eye:1.05), (solid black military uniform, ultra-short black cropped military jacket:1.2), bare midriff, bare navel, (black pleated miniskirt:1.25), platinum blonde bob cut, rimless glasses, (small penis:1.3), (tiny penis:1.2), (micropenis:1.1)",
   "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, facial hair, heels, boots, animal ears, cat ears, beast ears, animal tail",
   "ref_weight": 0.7
 }

@@ -1,7 +1,7 @@
 {
   "prefix": "rog",
   "default_mode": "otokonoko",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, androgynous, feminine face, slender build, flat chest, delicate features, (otokonoko, femboy, trap, delicate androgynous face, sharp green eyes, slender build:1.15), (red hair, medium hair, shoulder-length hair, slightly messy hair:1.2), (tattered leather vest, open collar, thief clothes:1.1), no glasses, clean face",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, androgynous, feminine face, slender build, flat chest, delicate features, (otokonoko, femboy, trap, delicate androgynous face, sharp green eyes, slender build:1.15), (red hair, medium hair, shoulder-length hair, slightly messy hair:1.2), (tattered leather vest, open collar, thief clothes:1.1), no glasses, clean face, (small penis:1.3), (tiny penis:1.2), (micropenis:1.1)",
   "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, mustache, facial hair, freckles, skin spots, blemishes, glasses, rimless glasses, eyewear, sunglasses, animal ears, cat ears, horns, wings",
   "ref_weight": 0.7
 }
