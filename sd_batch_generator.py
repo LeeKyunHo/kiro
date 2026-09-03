@@ -276,6 +276,10 @@ class CharacterConfig:
     profile: str | None = None
     custom_neg: str = ""
     ref_weight: float | None = None  # None 이면 REF_WEIGHT_DEFAULT 사용
+    # positive/negative 가 있으면 profile+char_prompt 조합을 완전히 대체한다.
+    # 없으면 기존 방식(profile + char_prompt + custom_neg) 폴백.
+    positive: str | None = None
+    negative: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -502,7 +506,7 @@ def validate_prefix(prefix: str) -> str:
 # 4A. 캐릭터 프리셋 (characters/*.json)
 # ─────────────────────────────────────────────
 _CHAR_REQUIRED_KEYS = frozenset({"char_prompt"})
-_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg", "ref_weight"})
+_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg", "ref_weight", "positive", "negative"})
 _CHAR_ALL_KEYS = _CHAR_REQUIRED_KEYS | _CHAR_OPTIONAL_KEYS
 
 
@@ -536,19 +540,32 @@ def load_character(base_dir: Path, name: str) -> CharacterConfig:
         raise ConfigError(f"{path.name} 최상위가 딕셔너리가 아닙니다")
 
     missing = _CHAR_REQUIRED_KEYS - raw.keys()
+    # positive 가 있으면 char_prompt 없이도 동작 가능하므로 필수 검사에서 제외한다.
+    if "positive" in raw:
+        missing -= {"char_prompt"}
     if missing:
         raise ConfigError(
             f"{path.name} 필수 키 누락: {sorted(missing)}",
-            f"필수: {sorted(_CHAR_REQUIRED_KEYS)}  선택: {sorted(_CHAR_OPTIONAL_KEYS)}",
+            f"'positive'+'negative' 직접 기재 또는 'char_prompt' 중 하나가 필요합니다",
         )
 
     unknown = set(raw.keys()) - _CHAR_ALL_KEYS
     if unknown:
         print(f"[WARN] {path.name} 알 수 없는 키 무시: {sorted(unknown)}")
 
-    char_prompt = raw["char_prompt"]
-    if not isinstance(char_prompt, str) or not char_prompt.strip():
-        raise ConfigError(f"{path.name} 'char_prompt' 가 비어 있습니다")
+    # positive 직접 기재 방식: char_prompt 불필요
+    raw_positive = raw.get("positive")
+    raw_negative = raw.get("negative")
+    positive = raw_positive.strip() if isinstance(raw_positive, str) and raw_positive.strip() else None
+    negative = raw_negative.strip() if isinstance(raw_negative, str) and raw_negative.strip() else None
+
+    # 기존 방식: char_prompt 필요
+    raw_char_prompt = raw.get("char_prompt", "")
+    char_prompt = raw_char_prompt.strip() if isinstance(raw_char_prompt, str) else ""
+    if not positive and not char_prompt:
+        raise ConfigError(
+            f"{path.name} 'char_prompt' 또는 'positive' 중 하나는 있어야 합니다"
+        )
 
     # prefix 미지정 시 파일명을 사용한다.
     raw_prefix = raw.get("prefix") or name
@@ -556,11 +573,13 @@ def load_character(base_dir: Path, name: str) -> CharacterConfig:
 
     return CharacterConfig(
         name=name,
-        char_prompt=char_prompt.strip(),
+        char_prompt=char_prompt,
         prefix=prefix,
         profile=raw.get("profile") or None,
         custom_neg=str(raw.get("custom_neg") or "").strip(),
         ref_weight=float(raw["ref_weight"]) if "ref_weight" in raw else None,
+        positive=positive,
+        negative=negative,
     )
 
 
@@ -651,6 +670,8 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
             char_prompt=cfg.char_prompt,
             profile=cfg.profile,
             custom_neg=cfg.custom_neg,
+            positive=cfg.positive,
+            negative=cfg.negative,
             mode=mode,
             codes=codes_expr,
             ref_image=None,
@@ -714,6 +735,13 @@ def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> N
     # ref_weight: --ref_weight 가 기본값 그대로이고 캐릭터에 지정값이 있으면 채운다.
     if cfg.ref_weight is not None and args.ref_weight == REF_WEIGHT_DEFAULT:
         args.ref_weight = cfg.ref_weight
+
+    # positive/negative: 캐릭터 json 에 있으면 args 에 심는다.
+    # execute() 는 args.positive 유무로 분기한다.
+    if cfg.positive and not getattr(args, "positive", None):
+        args.positive = cfg.positive
+    if cfg.negative and not getattr(args, "negative", None):
+        args.negative = cfg.negative
 
 
 # ─────────────────────────────────────────────
@@ -2425,23 +2453,37 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
         print("[WARN] --dry-run 이 우선합니다. --mock 무시됨")
 
     prefix = validate_prefix(args.prefix)
-    char_prompt = args.char_prompt.strip()
+    char_prompt = (args.char_prompt or "").strip()
 
     db = load_pose_db(base_dir)
     print_warnings(db)
 
-    # 프로필이 스크립트 하드코딩값(POS_BASE / COMMON_NEG)을 완전히 대체한다.
-    profile = resolve_profile(db, args.profile)
-    if args.profile:
-        print(f"[PROFILE] '{profile.name}' 적용")
-    else:
-        print(f"[PROFILE] 미지정 - 기본값 '{profile.name}' 적용")
+    # ── positive/negative 결정 ─────────────────────────
+    # 캐릭터 json 에 positive/negative 가 직접 기재된 경우 프로필을 완전히 무시한다.
+    # 없으면 기존 방식(profile.base_positive + char_prompt / profile.base_negative + custom_neg) 폴백.
+    raw_positive: str | None = getattr(args, "positive", None)
+    raw_negative: str | None = getattr(args, "negative", None)
 
-    negative_prompt = join_tags(profile.base_negative, args.custom_neg)
+    if raw_positive:
+        base_positive = raw_positive
+        negative_prompt = raw_negative or ""
+        print(f"[POSITIVE] 캐릭터 전용 프롬프트 사용")
+        if raw_negative:
+            print(f"[NEGATIVE] 캐릭터 전용 네거티브 사용")
+        else:
+            print(f"[WARN] 'negative' 미지정 - 네거티브 없이 생성합니다")
+    else:
+        # 프로필이 스크립트 하드코딩값(POS_BASE / COMMON_NEG)을 완전히 대체한다.
+        profile = resolve_profile(db, args.profile)
+        if args.profile:
+            print(f"[PROFILE] '{profile.name}' 적용")
+        else:
+            print(f"[PROFILE] 미지정 - 기본값 '{profile.name}' 적용")
+        base_positive = join_tags(profile.base_positive, char_prompt)
+        negative_prompt = join_tags(profile.base_negative, args.custom_neg)
 
     # 같은 태그가 양쪽에 있으면 모델이 모순된 지시를 받는다.
-    positive_preview = join_tags(profile.base_positive, char_prompt)
-    if conflicts := find_tag_conflicts(positive_preview, negative_prompt):
+    if conflicts := find_tag_conflicts(base_positive, negative_prompt):
         print(f"[WARN] 태그 충돌: {conflicts} 가 포지티브와 네거티브에 동시 존재")
 
     targets = resolve_targets(db, args.mode, args.codes)
@@ -2501,18 +2543,19 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
     sampler_name = "(mock)" if (mock or dry_run) else resolve_sampler()
     badge = mode_badge(dry_run, mock)
 
+    profile_label = "전용" if raw_positive else profile.name
     print(
-        f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile.name} | "
+        f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile_label} | "
         f"모드: {args.mode} ({len(targets)}장) | 폭: {width}"
     )
     print(f"[저장] {save_dir}")
-    print(f"[POS]  {profile.base_positive}")
+    print(f"[POS]  {base_positive}")
     print(f"[NEG]  {negative_prompt}\n")
 
     result = run_batch(
         prefix=prefix,
-        base_positive=profile.base_positive,
-        char_prompt=char_prompt,
+        base_positive=base_positive,
+        char_prompt="" if raw_positive else char_prompt,
         negative_prompt=negative_prompt,
         targets=targets,
         db=db,
@@ -2595,8 +2638,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         apply_character_to_args(cfg, args)
         print(f"[CHAR]  '{args.char}' 프리셋 로드 ({CHARACTERS_DIRNAME}/{args.char}.json)")
 
-    # --test / --from_image / --char 가 아닐 때만 필수 인자를 강제한다
-    if missing := [n for n in ("prefix", "char_prompt") if not getattr(args, n)]:
+    # positive 직접 기재 방식이면 char_prompt 없어도 통과시킨다
+    char_prompt_needed = not getattr(args, "positive", None)
+    if missing := [n for n in ("prefix",) + (("char_prompt",) if char_prompt_needed else ()) if not getattr(args, n)]:
         parser.error("다음 인자가 필요합니다: " + ", ".join(f"--{m}" for m in missing))
 
     try:
