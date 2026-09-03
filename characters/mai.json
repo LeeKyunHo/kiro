@@ -1,6 +1,7 @@
 {
   "prefix": "mai",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (short black hair, bob cut, brown eyes:1.2), (classic long black maid dress, white apron:1.1), polite posture",
-  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, horns, wings, tail, animal ears"
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (purple-tinted black hair, dark violet-black hair, purple hair highlights, bob cut, blunt bangs:1.25), (dark purple eyes, deep violet eyes:1.2), (classic long black maid dress, white apron, frilled maid headdress:1.15), polite posture",
+  "negative": "1boy, male, masculine, beard, mustache, horns, wings, tail, animal ears, brown hair, brown eyes",
+  "ref_weight": 0.7
 }

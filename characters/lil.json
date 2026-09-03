@@ -1,6 +1,6 @@
 {
   "prefix": "lil",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (dark purple wavy hair, long hair, crimson eyes, large black horns, bat wings, voluptuous, very large breasts, mole on breast:1.2), (dark purple gothic dress, (underboob:1.3):1.2)",
-  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, short hair, small breasts, flat chest"
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (dark purple wavy hair, long hair, crimson eyes, large black horns, bat wings, voluptuous, very large breasts, mole on breast:1.2), (dark purple gothic dress, (underboob:1.3):1.2)",
+  "negative": "1boy, male, masculine, beard, mustache, short hair, small breasts, flat chest"
 }
