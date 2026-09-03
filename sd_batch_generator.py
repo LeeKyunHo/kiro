@@ -275,6 +275,7 @@ class CharacterConfig:
     prefix: str        # json 의 "prefix" 또는 name 으로 채워진다
     profile: str | None = None
     custom_neg: str = ""
+    ref_weight: float | None = None  # None 이면 REF_WEIGHT_DEFAULT 사용
 
 
 @dataclass(frozen=True, slots=True)
@@ -501,7 +502,7 @@ def validate_prefix(prefix: str) -> str:
 # 4A. 캐릭터 프리셋 (characters/*.json)
 # ─────────────────────────────────────────────
 _CHAR_REQUIRED_KEYS = frozenset({"char_prompt"})
-_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg"})
+_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg", "ref_weight"})
 _CHAR_ALL_KEYS = _CHAR_REQUIRED_KEYS | _CHAR_OPTIONAL_KEYS
 
 
@@ -559,6 +560,7 @@ def load_character(base_dir: Path, name: str) -> CharacterConfig:
         prefix=prefix,
         profile=raw.get("profile") or None,
         custom_neg=str(raw.get("custom_neg") or "").strip(),
+        ref_weight=float(raw["ref_weight"]) if "ref_weight" in raw else None,
     )
 
 
@@ -601,6 +603,90 @@ def list_characters(base_dir: Path) -> int:
     return 0
 
 
+def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
+                  dry_run: bool, mock: bool) -> int:
+    """
+    characters/ 의 모든 캐릭터를 순서대로 생성한다.
+
+    각 캐릭터마다 execute() 를 호출한다. 이미 있는 파일은 기존 스킵 로직이 처리한다.
+    한 캐릭터가 실패해도 나머지는 계속 진행하고, 마지막에 전체 요약을 출력한다.
+
+    Returns:
+        0: 전체 성공 (부분 스킵 포함)
+        1: 1개 이상 실패
+    """
+    chars_dir = _characters_dir(base_dir)
+    if not chars_dir.is_dir():
+        print(f"[ERROR] {CHARACTERS_DIRNAME}/ 폴더가 없습니다.", file=sys.stderr)
+        return 1
+
+    files = sorted(chars_dir.glob("*.json"))
+    if not files:
+        print(f"[INFO] {CHARACTERS_DIRNAME}/ 에 json 파일이 없습니다.")
+        return 0
+
+    total = len(files)
+    succeeded: list[str] = []
+    failed: list[str] = []
+
+    print(f"\n[ALL-CHARS] {total}명 순차 생성 시작\n{'=' * 64}")
+
+    for idx, path in enumerate(files, 1):
+        name = path.stem
+        print(f"\n[ALL-CHARS] ({idx}/{total}) {name}")
+        print("-" * 40)
+
+        try:
+            cfg = load_character(base_dir, name)
+        except ConfigError as e:
+            print(f"[ERROR] {name} 로드 실패: {e}", file=sys.stderr)
+            failed.append(name)
+            continue
+
+        # execute()가 요구하는 최소 args 를 조립한다.
+        # --all-chars 와 함께 넘어온 --mode / --codes / --dry-run / --mock 은
+        # 모든 캐릭터에 동일하게 적용된다.
+        args = argparse.Namespace(
+            prefix=cfg.prefix,
+            char_prompt=cfg.char_prompt,
+            profile=cfg.profile,
+            custom_neg=cfg.custom_neg,
+            mode=mode,
+            codes=codes_expr,
+            ref_image=None,
+            ref_weight=cfg.ref_weight if cfg.ref_weight is not None else REF_WEIGHT_DEFAULT,
+            no_ref=False,
+            cn_module=None,
+            cn_model=None,
+            dry_run=dry_run,
+            mock=mock,
+        )
+
+        try:
+            code = execute(args, base_dir)
+            (succeeded if code == 0 else failed).append(name)
+        except ConfigError as e:
+            print(f"[ERROR] {name}: {e}", file=sys.stderr)
+            if e.hint:
+                print(f"        {e.hint}", file=sys.stderr)
+            failed.append(name)
+        except KeyboardInterrupt:
+            print(f"\n[중단] {name} 처리 중 취소되었습니다.", file=sys.stderr)
+            failed.append(name)
+            break
+
+    # 전체 요약
+    print(f"\n{'=' * 64}")
+    print(f"[ALL-CHARS] 완료: {len(succeeded)}명 성공 / {len(failed)}명 실패 (총 {total}명)")
+    if succeeded:
+        print(f"  성공: {succeeded}")
+    if failed:
+        print(f"  실패: {failed}")
+    print()
+
+    return 1 if failed else 0
+
+
 def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> None:
     """
     CharacterConfig 값을 args 에 채운다. 커맨드라인 명시값이 있으면 건드리지 않는다.
@@ -624,6 +710,10 @@ def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> N
     if cfg.custom_neg:
         existing = (args.custom_neg or "").strip()
         args.custom_neg = join_tags(existing, cfg.custom_neg) if existing else cfg.custom_neg
+
+    # ref_weight: --ref_weight 가 기본값 그대로이고 캐릭터에 지정값이 있으면 채운다.
+    if cfg.ref_weight is not None and args.ref_weight == REF_WEIGHT_DEFAULT:
+        args.ref_weight = cfg.ref_weight
 
 
 # ─────────────────────────────────────────────
@@ -2112,7 +2202,8 @@ def _test_characters(report: TestReport, base_dir: Path) -> None:
         cfg = loaded[0]
         # 빈 args — 캐릭터 값으로 채워져야 한다
         empty_args = argparse.Namespace(
-            prefix=None, char_prompt=None, profile=None, custom_neg=""
+            prefix=None, char_prompt=None, profile=None, custom_neg="",
+            ref_weight=REF_WEIGHT_DEFAULT,
         )
         apply_character_to_args(cfg, empty_args)
         filled_ok = (
@@ -2123,7 +2214,7 @@ def _test_characters(report: TestReport, base_dir: Path) -> None:
         # 이미 채워진 args — 덮어쓰지 않아야 한다
         full_args = argparse.Namespace(
             prefix="override", char_prompt="override prompt",
-            profile="male", custom_neg=""
+            profile="male", custom_neg="", ref_weight=REF_WEIGHT_DEFAULT,
         )
         apply_character_to_args(cfg, full_args)
         preserved_ok = (
@@ -2221,6 +2312,10 @@ def build_parser(
     parser.add_argument(
         "--list", dest="list_chars", action="store_true",
         help=f"{CHARACTERS_DIRNAME}/ 폴더의 캐릭터 목록 출력 후 종료",
+    )
+    parser.add_argument(
+        "--all-chars", dest="all_chars", action="store_true",
+        help=f"{CHARACTERS_DIRNAME}/ 의 모든 캐릭터를 순서대로 생성. 이미 있는 파일은 건너뜀",
     )
     parser.add_argument("--prefix", help="에셋 식별자 (영문·숫자·_·- 1~64자)")
     parser.add_argument("--char_prompt", help="캐릭터 외형 태그")
@@ -2465,6 +2560,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     # --list: 캐릭터 목록 출력 후 종료
     if args.list_chars:
         return list_characters(base_dir)
+
+    # --all-chars: characters/ 의 모든 캐릭터를 순서대로 생성
+    if args.all_chars:
+        return run_all_chars(
+            base_dir,
+            mode=args.mode,
+            codes_expr=args.codes,
+            dry_run=args.dry_run,
+            mock=args.mock,
+        )
 
     # --from_image 는 생성과 무관한 독립 작업이므로 다른 생성 플래그보다
     # 먼저 분기해 즉시 종료한다. prefix/char_prompt 도 요구하지 않는다.
