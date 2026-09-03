@@ -1,5 +1,5 @@
 {
   "prefix": "mai",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (no horns, human-like, short black hair, bob cut, brown eyes:1.2), (classic long black maid dress, white apron:1.1), polite posture",
-  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, bare feet, feet, toes, bad feet, squatting, crouching, sitting on heels, hugging knees, sitting on ground, panties, bottomless, uncensored, 1boy, male, masculine, beard, mustache, horns, wings, tail, animal ears"
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (short black hair, bob cut, brown eyes:1.2), (classic long black maid dress, white apron:1.1), polite posture",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, horns, wings, tail, animal ears"
 }

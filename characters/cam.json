@@ -1,5 +1,5 @@
 {
   "prefix": "cam",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (silver hair, very long hair, sharp eyes, blue-grey eyes, glowing purple eyes, slender, large breasts, narrow waist:1.2), (black and white maid dress, tight corset bodice:1.1)",
-  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, bare feet, feet, toes, bad feet, squatting, crouching, sitting on heels, hugging knees, sitting on ground, panties, bottomless, uncensored, 1boy, male, masculine, beard, mustache, short hair, flat chest"
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (silver hair, very long hair, sharp eyes, glowing purple eyes, slender, large breasts, narrow waist:1.2), (black and white maid dress, tight corset bodice:1.1)",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, short hair, flat chest"
 }
