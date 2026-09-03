@@ -280,6 +280,11 @@ class CharacterConfig:
     # 없으면 기존 방식(profile + char_prompt + custom_neg) 폴백.
     positive: str | None = None
     negative: str | None = None
+    # default_mode: --mode 미지정 시 이 값을 사용한다.
+    # "female"    -> emotions, poses, h_scenes (00-09, 10-19, 20-29)
+    # "otokonoko" -> emotions, poses_otokonoko, scenes_otokonoko (00-09, 30-39, 40-49)
+    # None        -> "all" (기존 동작 유지)
+    default_mode: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -506,7 +511,7 @@ def validate_prefix(prefix: str) -> str:
 # 4A. 캐릭터 프리셋 (characters/*.json)
 # ─────────────────────────────────────────────
 _CHAR_REQUIRED_KEYS = frozenset({"char_prompt"})
-_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg", "ref_weight", "positive", "negative"})
+_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg", "ref_weight", "positive", "negative", "default_mode"})
 _CHAR_ALL_KEYS = _CHAR_REQUIRED_KEYS | _CHAR_OPTIONAL_KEYS
 
 
@@ -580,6 +585,7 @@ def load_character(base_dir: Path, name: str) -> CharacterConfig:
         ref_weight=float(raw["ref_weight"]) if "ref_weight" in raw else None,
         positive=positive,
         negative=negative,
+        default_mode=str(raw["default_mode"]).strip() or None if "default_mode" in raw else None,
     )
 
 
@@ -672,7 +678,7 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
             custom_neg=cfg.custom_neg,
             positive=cfg.positive,
             negative=cfg.negative,
-            mode=mode,
+            mode=_resolve_default_mode(cfg.default_mode) if (cfg.default_mode and mode == "all") else mode,
             codes=codes_expr,
             ref_image=None,
             ref_weight=cfg.ref_weight if cfg.ref_weight is not None else REF_WEIGHT_DEFAULT,
@@ -706,6 +712,26 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
     print()
 
     return 1 if failed else 0
+
+
+# default_mode 값 → --mode 표현식 매핑
+_DEFAULT_MODE_MAP: dict[str, str] = {
+    "female":     "emotions,poses,h_scenes",
+    "otokonoko":  "emotions,poses_otokonoko,scenes_otokonoko",
+}
+
+
+def _resolve_default_mode(default_mode: str) -> str:
+    """
+    default_mode 문자열을 --mode 표현식으로 변환한다.
+
+    알 수 없는 값은 경고 후 "all" 로 폴백한다.
+    """
+    resolved = _DEFAULT_MODE_MAP.get(default_mode.lower())
+    if resolved is None:
+        print(f"[WARN] 알 수 없는 default_mode '{default_mode}' - 'all' 로 폴백")
+        return "all"
+    return resolved
 
 
 def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> None:
@@ -742,6 +768,10 @@ def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> N
         args.positive = cfg.positive
     if cfg.negative and not getattr(args, "negative", None):
         args.negative = cfg.negative
+
+    # default_mode: --mode 가 기본값("all")이고 캐릭터에 default_mode 가 있으면 채운다.
+    if cfg.default_mode and getattr(args, "mode", "all") == "all":
+        args.mode = _resolve_default_mode(cfg.default_mode)
 
 
 # ─────────────────────────────────────────────
@@ -1022,6 +1052,19 @@ def resolve_targets(
         return db.all_codes
     if mode in db.sections:
         return db.sections[mode]
+
+    # 콤마로 구분된 섹션명 목록 처리 (예: "emotions,poses,h_scenes")
+    # default_mode 에서 전달되는 형식이다. 숫자가 섞이지 않은 경우만 이 경로로 처리한다.
+    tokens = [t.strip() for t in mode.split(",") if t.strip()]
+    if len(tokens) > 1 and all(t in db.sections for t in tokens):
+        seen: set[int] = set()
+        result: list[int] = []
+        for token in tokens:
+            for code in db.sections[token]:
+                if code not in seen:
+                    seen.add(code)
+                    result.append(code)
+        return sorted(result)
 
     raise ConfigError(
         f"알 수 없는 모드 '{mode}'. 사용 가능: {['all'] + sorted(db.sections)}",

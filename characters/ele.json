@@ -1,5 +1,6 @@
 {
   "prefix": "ele",
+  "default_mode": "female",
   "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, (straight black hair, very long hair, beautiful face, red eyes, natural skin tone, smooth skin:1.2), (dark bikini armor, black metal bikini top, matching armored pauldrons and gauntlets:1.25), (very large breasts, huge breasts, heavy cleavage, narrow waist, wide hips:1.3)",
   "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, short hair, flat chest, horns, demon tail",
   "ref_weight": 0.7

@@ -1,5 +1,6 @@
 {
   "prefix": "dem",
+  "default_mode": "female",
   "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, upper body, 1girl, solo, dark-skinned female, brown skin, dark red hair, short hair, bob cut, slit pupils, yellow eyes, pointed ears, small forehead horns, (large breasts:1.2), (off-shoulder blouse, bare shoulders, collarbone, brown pleated miniskirt:1.2)",
   "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, facial hair, pale skin, white skin, animal ears, cat ears, dog ears"
 }
