@@ -82,6 +82,7 @@ COMMON_NEG = (
 
 POSE_DB_FILE = "pose_database.json"
 ASSETS_DIRNAME = "generated_assets"
+CHARACTERS_DIRNAME = "characters"
 
 # ── 참조 이미지 (IP-Adapter) ─────────────────
 REFERENCES_DIRNAME = "references"
@@ -255,6 +256,25 @@ class PoseDatabase:
     @property
     def profile_names(self) -> list[str]:
         return list(self.profiles)
+
+
+@dataclass(frozen=True, slots=True)
+class CharacterConfig:
+    """
+    characters/{name}.json 에서 로드한 캐릭터 프리셋.
+
+    --char name 으로 지정하면 이 값들이 커맨드라인 기본값으로 쓰인다.
+    커맨드라인에 같은 인자가 있으면 커맨드라인 쪽이 우선한다.
+
+    prefix: 생략 시 파일명(name)을 사용한다.
+    profile / custom_neg: 생략 가능. 생략 시 기존 기본값 동작.
+    """
+
+    name: str          # 파일명 (확장자 제외). bel.json -> "bel"
+    char_prompt: str
+    prefix: str        # json 의 "prefix" 또는 name 으로 채워진다
+    profile: str | None = None
+    custom_neg: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -475,6 +495,135 @@ def validate_prefix(prefix: str) -> str:
             "영문·숫자·밑줄·하이픈 1~64자만 허용합니다. (예: mika, test_01)",
         )
     return candidate
+
+
+# ─────────────────────────────────────────────
+# 4A. 캐릭터 프리셋 (characters/*.json)
+# ─────────────────────────────────────────────
+_CHAR_REQUIRED_KEYS = frozenset({"char_prompt"})
+_CHAR_OPTIONAL_KEYS = frozenset({"prefix", "profile", "custom_neg"})
+_CHAR_ALL_KEYS = _CHAR_REQUIRED_KEYS | _CHAR_OPTIONAL_KEYS
+
+
+def _characters_dir(base_dir: Path) -> Path:
+    return base_dir / CHARACTERS_DIRNAME
+
+
+def load_character(base_dir: Path, name: str) -> CharacterConfig:
+    """
+    characters/{name}.json 을 읽어 CharacterConfig 로 변환한다.
+
+    Raises:
+        ConfigError: 파일 없음, JSON 문법 오류, 필수 키 누락.
+    """
+    path = _characters_dir(base_dir) / f"{name}.json"
+    if not path.is_file():
+        chars_dir = _characters_dir(base_dir)
+        available = sorted(p.stem for p in chars_dir.glob("*.json")) if chars_dir.is_dir() else []
+        hint = (
+            f"사용 가능: {available}" if available
+            else f"{CHARACTERS_DIRNAME}/ 폴더에 json 파일이 없습니다"
+        )
+        raise ConfigError(f"캐릭터 '{name}' 을 찾을 수 없습니다 ({path})", hint)
+
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise ConfigError(f"{path.name} JSON 문법 오류: {e}") from None
+
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{path.name} 최상위가 딕셔너리가 아닙니다")
+
+    missing = _CHAR_REQUIRED_KEYS - raw.keys()
+    if missing:
+        raise ConfigError(
+            f"{path.name} 필수 키 누락: {sorted(missing)}",
+            f"필수: {sorted(_CHAR_REQUIRED_KEYS)}  선택: {sorted(_CHAR_OPTIONAL_KEYS)}",
+        )
+
+    unknown = set(raw.keys()) - _CHAR_ALL_KEYS
+    if unknown:
+        print(f"[WARN] {path.name} 알 수 없는 키 무시: {sorted(unknown)}")
+
+    char_prompt = raw["char_prompt"]
+    if not isinstance(char_prompt, str) or not char_prompt.strip():
+        raise ConfigError(f"{path.name} 'char_prompt' 가 비어 있습니다")
+
+    # prefix 미지정 시 파일명을 사용한다.
+    raw_prefix = raw.get("prefix") or name
+    prefix = validate_prefix(str(raw_prefix))
+
+    return CharacterConfig(
+        name=name,
+        char_prompt=char_prompt.strip(),
+        prefix=prefix,
+        profile=raw.get("profile") or None,
+        custom_neg=str(raw.get("custom_neg") or "").strip(),
+    )
+
+
+def list_characters(base_dir: Path) -> int:
+    """
+    characters/ 폴더의 캐릭터 목록을 출력한다.
+
+    Returns:
+        종료 코드.
+    """
+    chars_dir = _characters_dir(base_dir)
+    if not chars_dir.is_dir():
+        print(f"[INFO] {CHARACTERS_DIRNAME}/ 폴더가 없습니다. 캐릭터를 추가하세요.")
+        return 0
+
+    files = sorted(chars_dir.glob("*.json"))
+    if not files:
+        print(f"[INFO] {CHARACTERS_DIRNAME}/ 에 json 파일이 없습니다.")
+        return 0
+
+    print(f"\n{'캐릭터':16}  {'프로필':20}  {'prefix'}")
+    print("-" * 56)
+    errors: list[str] = []
+    for path in files:
+        try:
+            cfg = load_character(base_dir, path.stem)
+            profile_display = cfg.profile or f"(기본값: {DEFAULT_PROFILE})"
+            prefix_display = cfg.prefix if cfg.prefix != path.stem else "(파일명과 동일)"
+            print(f"  {path.stem:<14}  {profile_display:<20}  {prefix_display}")
+        except ConfigError as e:
+            errors.append(f"  [ERROR] {path.name}: {e}")
+
+    if errors:
+        print()
+        for msg in errors:
+            print(msg)
+        return 1
+
+    print()
+    return 0
+
+
+def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> None:
+    """
+    CharacterConfig 값을 args 에 채운다. 커맨드라인 명시값이 있으면 건드리지 않는다.
+
+    args 를 직접 변경하는 이유: argparse.Namespace 는 setattr 로 조작하는 것이
+    공식 패턴이며, 새 객체를 만들면 모든 필드를 복사해야 해 유지보수가 어렵다.
+    """
+    # prefix: --prefix 가 없으면 캐릭터 파일의 값으로 채운다
+    if not args.prefix:
+        args.prefix = cfg.prefix
+
+    # char_prompt: --char_prompt 가 없으면 캐릭터 파일의 값으로 채운다
+    if not args.char_prompt:
+        args.char_prompt = cfg.char_prompt
+
+    # profile: --profile 이 없으면 캐릭터 파일의 값으로 채운다
+    if args.profile is None and cfg.profile:
+        args.profile = cfg.profile
+
+    # custom_neg: 양쪽을 합친다. 중복이 있어도 WebUI 가 알아서 처리한다.
+    if cfg.custom_neg:
+        existing = (args.custom_neg or "").strip()
+        args.custom_neg = join_tags(existing, cfg.custom_neg) if existing else cfg.custom_neg
 
 
 # ─────────────────────────────────────────────
@@ -1924,6 +2073,73 @@ def _test_profiles(report: TestReport, db: PoseDatabase) -> None:
         )
 
 
+def _test_characters(report: TestReport, base_dir: Path) -> None:
+    """T33~T36: characters/ 폴더 및 각 json 파일 검증."""
+    print("\n[캐릭터 프리셋 검사]")
+
+    chars_dir = _characters_dir(base_dir)
+
+    # T33 — 폴더 존재 여부 (없어도 경고만. 폴더 자체는 선택 사항)
+    if not chars_dir.is_dir():
+        report.warn("T33 characters/ 폴더 없음", "캐릭터 프리셋 미사용 — 건너뜀")
+        return
+    report.ok("T33 characters/ 폴더 존재", str(chars_dir))
+
+    files = sorted(chars_dir.glob("*.json"))
+    if not files:
+        report.warn("T34 json 파일 없음", f"{CHARACTERS_DIRNAME}/ 에 파일을 추가하세요")
+        return
+    report.ok(f"T34 json 파일 {len(files)}개 발견", str([f.name for f in files]))
+
+    # T35 — 각 파일 로드·필수키·prefix 유효성
+    load_errors: list[str] = []
+    loaded: list[CharacterConfig] = []
+    for path in files:
+        try:
+            cfg = load_character(base_dir, path.stem)
+            loaded.append(cfg)
+        except ConfigError as e:
+            load_errors.append(f"{path.name}: {e}")
+
+    report.check(
+        f"T35 파일 로드 성공 ({len(loaded)}/{len(files)})",
+        not load_errors,
+        str(load_errors) if load_errors else "",
+    )
+
+    # T36 — apply_character_to_args 우선순위: 커맨드라인 명시값 보존 확인
+    if loaded:
+        cfg = loaded[0]
+        # 빈 args — 캐릭터 값으로 채워져야 한다
+        empty_args = argparse.Namespace(
+            prefix=None, char_prompt=None, profile=None, custom_neg=""
+        )
+        apply_character_to_args(cfg, empty_args)
+        filled_ok = (
+            empty_args.prefix == cfg.prefix
+            and empty_args.char_prompt == cfg.char_prompt
+        )
+
+        # 이미 채워진 args — 덮어쓰지 않아야 한다
+        full_args = argparse.Namespace(
+            prefix="override", char_prompt="override prompt",
+            profile="male", custom_neg=""
+        )
+        apply_character_to_args(cfg, full_args)
+        preserved_ok = (
+            full_args.prefix == "override"
+            and full_args.char_prompt == "override prompt"
+            and full_args.profile == "male"
+        )
+
+        report.check(
+            f"T36 apply_character_to_args 우선순위 ({cfg.name})",
+            filled_ok and preserved_ok,
+            "빈 args 채움 OK, 명시값 보존 OK" if (filled_ok and preserved_ok)
+            else f"채움={filled_ok} 보존={preserved_ok}",
+        )
+
+
 def run_self_test(base_dir: Path) -> int:
     """데이터·로직 자체 진단. 파일 쓰기와 네트워크 요청을 하지 않는다."""
     report = TestReport()
@@ -1957,6 +2173,7 @@ def run_self_test(base_dir: Path) -> int:
     _test_logic(report, db)
     _test_profiles(report, db)
     _test_reference(report)
+    _test_characters(report, base_dir)
     return _finish_test(report)
 
 
@@ -1995,6 +2212,15 @@ def build_parser(
         prog=Path(__file__).name,
         description="캐릭터 챗봇용 이미지 에셋 배치 생성기 (SD WebUI)",
         add_help=add_help,
+    )
+    parser.add_argument(
+        "--char", default=None,
+        metavar="NAME",
+        help=f"{CHARACTERS_DIRNAME}/NAME.json 을 읽어 프리셋 적용. 커맨드라인 인자가 있으면 그쪽 우선",
+    )
+    parser.add_argument(
+        "--list", dest="list_chars", action="store_true",
+        help=f"{CHARACTERS_DIRNAME}/ 폴더의 캐릭터 목록 출력 후 종료",
     )
     parser.add_argument("--prefix", help="에셋 식별자 (영문·숫자·_·- 1~64자)")
     parser.add_argument("--char_prompt", help="캐릭터 외형 태그")
@@ -2236,6 +2462,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser(sections, profiles)
     args = parser.parse_args(argv)
 
+    # --list: 캐릭터 목록 출력 후 종료
+    if args.list_chars:
+        return list_characters(base_dir)
+
     # --from_image 는 생성과 무관한 독립 작업이므로 다른 생성 플래그보다
     # 먼저 분기해 즉시 종료한다. prefix/char_prompt 도 요구하지 않는다.
     if args.from_image:
@@ -2247,7 +2477,20 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"        {e.hint}", file=sys.stderr)
             return 1
 
-    # --test / --from_image 가 아닐 때만 필수 인자를 강제한다
+    # --char: characters/{name}.json 을 읽어 args 빈 필드를 채운다.
+    # 커맨드라인 명시값이 있으면 그쪽이 우선한다 (apply_character_to_args 계약).
+    if args.char:
+        try:
+            cfg = load_character(base_dir, args.char)
+        except ConfigError as e:
+            print(f"[ERROR] {e}", file=sys.stderr)
+            if e.hint:
+                print(f"        {e.hint}", file=sys.stderr)
+            return 1
+        apply_character_to_args(cfg, args)
+        print(f"[CHAR]  '{args.char}' 프리셋 로드 ({CHARACTERS_DIRNAME}/{args.char}.json)")
+
+    # --test / --from_image / --char 가 아닐 때만 필수 인자를 강제한다
     if missing := [n for n in ("prefix", "char_prompt") if not getattr(args, n)]:
         parser.error("다음 인자가 필요합니다: " + ", ".join(f"--{m}" for m in missing))
 
