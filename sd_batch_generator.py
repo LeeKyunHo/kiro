@@ -84,6 +84,15 @@ POSE_DB_FILE = "pose_database.json"
 ASSETS_DIRNAME = "generated_assets"
 CHARACTERS_DIRNAME = "characters"
 
+# ── 로스터 (Roster) 시스템 ──────────────────
+# 프로젝트 단위 (다크 제너럴스, 오토코노코 등)로 캐릭터와 에셋을 분리 관리.
+# OCP 원칙: 신규 로스터 추가 시 코드 수정 없이 폴더 생성만으로 자동 인식.
+ROSTER_ALIAS = {
+    "dar": "dark_generals",
+    "oto": "oto",
+    "default": "dark_generals",  # --roster 생략 시 기본값
+}
+
 # ── 참조 이미지 (IP-Adapter) ─────────────────
 REFERENCES_DIRNAME = "references"
 # 탐색 우선순위. 여러 확장자가 공존하면 앞의 것을 쓴다.
@@ -210,6 +219,28 @@ def _configure_stdio() -> None:
 # 2. 데이터 모델
 # ─────────────────────────────────────────────
 @dataclass(frozen=True, slots=True)
+class RosterPaths:
+    """
+    로스터별 경로 캡슐화 (SSOT - Single Source of Truth).
+    
+    신규 프로젝트가 추가되어도 이 클래스만 생성하면 전체 파이프라인이
+    자동으로 해당 경로를 참조한다.
+    """
+    roster_name: str
+    characters_dir: Path
+    assets_dir: Path
+    references_dir: Path  # 모든 로스터가 공유하는 참조 이미지 폴더
+    
+    def validate(self) -> tuple[bool, str]:
+        """경로 존재 여부 검증. 반환: (성공 여부, 에러 메시지)"""
+        if not self.characters_dir.exists():
+            return False, f"캐릭터 폴더가 존재하지 않습니다: {self.characters_dir}"
+        if not self.characters_dir.is_dir():
+            return False, f"캐릭터 경로가 디렉터리가 아닙니다: {self.characters_dir}"
+        return True, ""
+
+
+@dataclass(frozen=True, slots=True)
 class PoseEntry:
     """포즈/표정 단일 항목."""
 
@@ -221,6 +252,29 @@ class PoseEntry:
     def label(self) -> str:
         """프롬프트 첫 태그를 사람이 읽을 라벨로 사용."""
         return self.prompt.split(",")[0].strip()
+
+
+
+@dataclass(frozen=True, slots=True)
+class RosterPaths:
+    """
+    로스터별 경로 캡슐화 (SSOT - Single Source of Truth).
+    
+    신규 프로젝트가 추가되어도 이 클래스만 생성하면 전체 파이프라인이
+    자동으로 해당 경로를 참조한다.
+    """
+    roster_name: str
+    characters_dir: Path
+    assets_dir: Path
+    references_dir: Path  # 모든 로스터가 공유하는 참조 이미지 폴더
+    
+    def validate(self) -> tuple[bool, str]:
+        """경로 존재 여부 검증. 반환: (성공 여부, 에러 메시지)"""
+        if not self.characters_dir.exists():
+            return False, f"캐릭터 폴더가 존재하지 않습니다: {self.characters_dir}"
+        if not self.characters_dir.is_dir():
+            return False, f"캐릭터 경로가 디렉터리가 아닙니다: {self.characters_dir}"
+        return True, ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,6 +310,80 @@ class PoseDatabase:
     @property
     def profile_names(self) -> list[str]:
         return list(self.profiles)
+
+
+
+# ─────────────────────────────────────────────
+# 2A. 로스터 경로 관리자 (Path Resolver)
+# ─────────────────────────────────────────────
+class RosterPathManager:
+    """
+    로스터(프로젝트) 단위 경로 해석 및 동적 탐색.
+    
+    OCP 원칙: 신규 로스터 추가 시 코드 수정 없이 폴더 생성만으로 자동 인식.
+    SRP 원칙: CLI 파싱과 파일 시스템 탐색을 분리.
+    """
+    
+    def __init__(self, base_dir: Path):
+        self.base_dir = base_dir
+    
+    def resolve_roster(self, name: str | None) -> RosterPaths:
+        """
+        로스터 이름을 실제 경로로 해석.
+        
+        1. Alias 테이블 조회 (dar -> dark_generals)
+        2. Alias에 없으면 그대로 사용 (xyz -> xyz)
+        3. characters_{roster}/ 형식으로 경로 구성
+        """
+        # 1. 기본값 처리
+        if name is None or name == "":
+            name = ROSTER_ALIAS["default"]
+        
+        # 2. Alias 테이블 조회
+        roster_key = ROSTER_ALIAS.get(name, name)
+        
+        # 3. 경로 구성
+        characters_dir = self.base_dir / f"{CHARACTERS_DIRNAME}_{roster_key}"
+        assets_dir = self.base_dir / f"{ASSETS_DIRNAME}_{roster_key}"
+        references_dir = self.base_dir / REFERENCES_DIRNAME  # 공유
+        
+        return RosterPaths(
+            roster_name=roster_key,
+            characters_dir=characters_dir,
+            assets_dir=assets_dir,
+            references_dir=references_dir,
+        )
+    
+    def list_available_rosters(self) -> list[str]:
+        """
+        현재 디렉터리에서 사용 가능한 로스터 목록 탐색.
+        
+        characters_*/ 패턴의 폴더를 찾아 로스터명 추출.
+        """
+        pattern = f"{CHARACTERS_DIRNAME}_*"
+        found = []
+        for path in self.base_dir.glob(pattern):
+            if path.is_dir():
+                # "characters_dark_generals" -> "dark_generals"
+                roster_name = path.name[len(CHARACTERS_DIRNAME) + 1:]
+                found.append(roster_name)
+        return sorted(found)
+    
+    def validate_roster(self, paths: RosterPaths) -> tuple[bool, str]:
+        """
+        로스터 경로 검증 및 안내 메시지 생성.
+        
+        반환: (성공 여부, 에러 메시지 또는 빈 문자열)
+        """
+        ok, msg = paths.validate()
+        if not ok:
+            available = self.list_available_rosters()
+            if available:
+                avail_list = ", ".join(available)
+                msg += f"\n\n사용 가능한 로스터: {avail_list}"
+            else:
+                msg += f"\n\n{self.base_dir}에 characters_*/ 폴더가 없습니다."
+        return ok, msg
 
 
 @dataclass(frozen=True, slots=True)
@@ -519,20 +647,21 @@ def _characters_dir(base_dir: Path) -> Path:
     return base_dir / CHARACTERS_DIRNAME
 
 
-def load_character(base_dir: Path, name: str) -> CharacterConfig:
+def load_character(chars_dir: Path, name: str) -> CharacterConfig:
     """
-    characters/{name}.json 을 읽어 CharacterConfig 로 변환한다.
+    {chars_dir}/{name}.json 을 읽어 CharacterConfig 로 변환한다.
+
+    chars_dir: 로스터의 캐릭터 디렉터리 (RosterPaths.characters_dir)
 
     Raises:
         ConfigError: 파일 없음, JSON 문법 오류, 필수 키 누락.
     """
-    path = _characters_dir(base_dir) / f"{name}.json"
+    path = chars_dir / f"{name}.json"
     if not path.is_file():
-        chars_dir = _characters_dir(base_dir)
         available = sorted(p.stem for p in chars_dir.glob("*.json")) if chars_dir.is_dir() else []
         hint = (
             f"사용 가능: {available}" if available
-            else f"{CHARACTERS_DIRNAME}/ 폴더에 json 파일이 없습니다"
+            else f"{chars_dir} 에 json 파일이 없습니다"
         )
         raise ConfigError(f"캐릭터 '{name}' 을 찾을 수 없습니다 ({path})", hint)
 
@@ -589,14 +718,15 @@ def load_character(base_dir: Path, name: str) -> CharacterConfig:
     )
 
 
-def list_characters(base_dir: Path) -> int:
+def list_characters(chars_dir: Path) -> int:
     """
-    characters/ 폴더의 캐릭터 목록을 출력한다.
+    캐릭터 디렉터리의 목록을 출력한다.
+
+    chars_dir: 로스터의 캐릭터 디렉터리 (RosterPaths.characters_dir)
 
     Returns:
         종료 코드.
     """
-    chars_dir = _characters_dir(base_dir)
     if not chars_dir.is_dir():
         print(f"[INFO] {CHARACTERS_DIRNAME}/ 폴더가 없습니다. 캐릭터를 추가하세요.")
         return 0
@@ -611,7 +741,7 @@ def list_characters(base_dir: Path) -> int:
     errors: list[str] = []
     for path in files:
         try:
-            cfg = load_character(base_dir, path.stem)
+            cfg = load_character(chars_dir, path.stem)
             profile_display = cfg.profile or f"(기본값: {DEFAULT_PROFILE})"
             prefix_display = cfg.prefix if cfg.prefix != path.stem else "(파일명과 동일)"
             print(f"  {path.stem:<14}  {profile_display:<20}  {prefix_display}")
@@ -628,11 +758,12 @@ def list_characters(base_dir: Path) -> int:
     return 0
 
 
-def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
+def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
                   dry_run: bool, mock: bool) -> int:
     """
-    characters/ 의 모든 캐릭터를 순서대로 생성한다.
+    로스터의 모든 캐릭터를 순서대로 생성한다.
 
+    roster: RosterPathManager.resolve_roster() 결과
     각 캐릭터마다 execute() 를 호출한다. 이미 있는 파일은 기존 스킵 로직이 처리한다.
     한 캐릭터가 실패해도 나머지는 계속 진행하고, 마지막에 전체 요약을 출력한다.
 
@@ -640,7 +771,7 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
         0: 전체 성공 (부분 스킵 포함)
         1: 1개 이상 실패
     """
-    chars_dir = _characters_dir(base_dir)
+    chars_dir = roster.characters_dir
     if not chars_dir.is_dir():
         print(f"[ERROR] {CHARACTERS_DIRNAME}/ 폴더가 없습니다.", file=sys.stderr)
         return 1
@@ -662,7 +793,7 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
         print("-" * 40)
 
         try:
-            cfg = load_character(base_dir, name)
+            cfg = load_character(chars_dir, name)
         except ConfigError as e:
             print(f"[ERROR] {name} 로드 실패: {e}", file=sys.stderr)
             failed.append(name)
@@ -690,7 +821,7 @@ def run_all_chars(base_dir: Path, mode: str, codes_expr: str | None,
         )
 
         try:
-            code = execute(args, base_dir)
+            code = execute(args, roster)
             (succeeded if code == 0 else failed).append(name)
         except ConfigError as e:
             print(f"[ERROR] {name}: {e}", file=sys.stderr)
@@ -2257,7 +2388,7 @@ def _test_characters(report: TestReport, base_dir: Path) -> None:
     loaded: list[CharacterConfig] = []
     for path in files:
         try:
-            cfg = load_character(base_dir, path.stem)
+            cfg = load_character(chars_dir, path.stem)
             loaded.append(cfg)
         except ConfigError as e:
             load_errors.append(f"{path.name}: {e}")
@@ -2388,6 +2519,10 @@ def build_parser(
         "--all-chars", dest="all_chars", action="store_true",
         help=f"{CHARACTERS_DIRNAME}/ 의 모든 캐릭터를 순서대로 생성. 이미 있는 파일은 건너뜀",
     )
+    parser.add_argument(
+        "--roster", "-r", default=None, metavar="NAME",
+        help="로스터(프로젝트) 선택. dar=dark_generals, oto=oto. 생략 시 기본 로스터 사용",
+    )
     parser.add_argument("--prefix", help="에셋 식별자 (영문·숫자·_·- 1~64자)")
     parser.add_argument("--char_prompt", help="캐릭터 외형 태그")
     parser.add_argument("--custom_neg", default="", help="추가 네거티브 태그 (선택)")
@@ -2487,7 +2622,7 @@ def print_summary(
     print(f"           폴더: {save_dir}")
 
 
-def execute(args: argparse.Namespace, base_dir: Path) -> int:
+def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     """생성 파이프라인 본체. ConfigError 는 호출자가 처리한다."""
     # 모드 우선순위: dry-run > mock (부작용이 적은 쪽 우선, R7.8)
     dry_run: bool = args.dry_run
@@ -2498,6 +2633,7 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
     prefix = validate_prefix(args.prefix)
     char_prompt = (args.char_prompt or "").strip()
 
+    base_dir = roster.characters_dir.parent  # pose_database.json 은 항상 루트
     db = load_pose_db(base_dir)
     print_warnings(db)
 
@@ -2536,7 +2672,7 @@ def execute(args: argparse.Namespace, base_dir: Path) -> int:
         )
 
     width = code_width(db.all_codes)
-    save_dir = base_dir / ASSETS_DIRNAME / prefix
+    save_dir = roster.assets_dir / prefix
     if not dry_run:
         save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -2643,14 +2779,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser(sections, profiles)
     args = parser.parse_args(argv)
 
+    # ── 로스터 경로 해석 ──────────────────────────────
+    rpm = RosterPathManager(base_dir)
+    roster = rpm.resolve_roster(getattr(args, "roster", None))
+    ok, errmsg = rpm.validate_roster(roster)
+    # --list / --all-chars 는 유효한 로스터가 필요하다.
+    # --char / 직접 생성도 roster 없이는 동작 안 함.
+    # (단, --test / --from_image 는 이미 위에서 분기됨)
+    if not ok:
+        print(f"[ERROR] {errmsg}", file=sys.stderr)
+        return 1
+    # 산출물 디렉터리는 실행 시점에 자동 생성 (방어적 코딩)
+    roster.assets_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.roster:
+        print(f"[ROSTER] '{roster.roster_name}' -> {roster.characters_dir}")
+
     # --list: 캐릭터 목록 출력 후 종료
     if args.list_chars:
-        return list_characters(base_dir)
+        return list_characters(roster.characters_dir)
 
-    # --all-chars: characters/ 의 모든 캐릭터를 순서대로 생성
+    # --all-chars: 로스터의 모든 캐릭터를 순서대로 생성
     if args.all_chars:
         return run_all_chars(
-            base_dir,
+            roster,
             mode=args.mode,
             codes_expr=args.codes,
             dry_run=args.dry_run,
@@ -2672,14 +2824,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     # 커맨드라인 명시값이 있으면 그쪽이 우선한다 (apply_character_to_args 계약).
     if args.char:
         try:
-            cfg = load_character(base_dir, args.char)
+            cfg = load_character(roster.characters_dir, args.char)
         except ConfigError as e:
             print(f"[ERROR] {e}", file=sys.stderr)
             if e.hint:
                 print(f"        {e.hint}", file=sys.stderr)
             return 1
         apply_character_to_args(cfg, args)
-        print(f"[CHAR]  '{args.char}' 프리셋 로드 ({CHARACTERS_DIRNAME}/{args.char}.json)")
+        print(f"[CHAR]  '{args.char}' 프리셋 로드 ({roster.characters_dir}/{args.char}.json)")
 
     # positive 직접 기재 방식이면 char_prompt 없어도 통과시킨다
     char_prompt_needed = not getattr(args, "positive", None)
@@ -2687,7 +2839,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("다음 인자가 필요합니다: " + ", ".join(f"--{m}" for m in missing))
 
     try:
-        return execute(args, base_dir)
+        return execute(args, roster)
     except ConfigError as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         if e.hint:

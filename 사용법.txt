@@ -33,24 +33,31 @@
 
   kiro\
    ├─ sd_batch_generator.py     실행 파일. 건드릴 일 거의 없음
-   ├─ pose_database.json        ★ 프롬프트 데이터. 여기를 편집합니다
+   ├─ pose_database.json        ★ 프롬프트 데이터 (모든 로스터 공유)
    ├─ 사용법.txt                 이 문서
    ├─ PROJECT_GUIDE.md          기술 명세 (AI에게 물어볼 때 참고용)
-   ├─ .gitignore                git 추적 제외 목록
-   ├─ .gitattributes            줄바꿈 정규화 설정
+   ├─ .gitignore / .gitattributes
    │
-   ├─ references\               ★ 참조 이미지를 넣는 곳 (4A장 참고)
+   ├─ references\               ★ 참조 이미지 (모든 로스터 공유)
    │   ├─ README.md
-   │   └─ {약칭}.png             예: mika.png
+   │   └─ {약칭}.png
    │
-   ├─ .kiro\                    Kiro IDE 설정 (Kiro를 안 쓰면 무시해도 됨)
-   │   ├─ steering\sd_char_gen.md          자동 실행 규칙
-   │   └─ specs\                            설계 문서
-   │       ├─ dynamic-pose-pipeline\        동적 순회·프로필
-   │       └─ image-reference-pipeline\     참조 이미지
+   ├─ characters_{로스터}\      ★ 로스터별 캐릭터 JSON
+   │   ├─ characters_dark_generals\   흑막사천왕 로스터 (별칭: dar)
+   │   │   ├─ bel.json
+   │   │   └─ ...
+   │   └─ characters_oto\             오토코노코 로스터 (별칭: oto)
    │
-   └─ generated_assets\         첫 실행 시 자동 생성됨 (git 제외)
+   ├─ characters\               신규/미분류 캐릭터 작업공간
+   │
+   └─ generated_assets_{로스터}\ 첫 실행 시 자동 생성됨 (git 제외)
        └─ {약칭}\{약칭}_00.webp ...
+
+  ★ 로스터(Roster) = 프로젝트 단위 캐릭터 세트
+
+      --roster dar   →  characters_dark_generals/ + generated_assets_dark_generals/
+      --roster oto   →  characters_oto/ + generated_assets_oto/
+      --roster xyz   →  characters_xyz/ (별칭 없어도 폴더만 있으면 자동 인식)
 
   폴더 위치는 어디든 상관없습니다.
   스크립트가 자기 파일 위치를 기준으로 동작하므로 D드라이브에 두어도 됩니다.
@@ -618,6 +625,10 @@
 
     --prefix         에셋 약칭. 영문/숫자/_/- 1~64자. (필수)
     --char_prompt    캐릭터 외형 태그. (필수)
+    --roster / -r    로스터 선택. dar=흑막사천왕, oto=오토코노코 (생략 시 dar)
+    --char           로스터 내 단일 캐릭터 프리셋 로드
+    --list           로스터 캐릭터 목록 출력
+    --all-chars      로스터 내 모든 캐릭터 일괄 생성
     --profile        female / male / male_otokonoko  (생략 시 female)
     --custom_neg     이 캐릭터에만 추가할 네거티브
     --mode           생성 범위 (생략 시 all)
@@ -705,9 +716,28 @@
       python sd_batch_generator.py --prefix mika --char_prompt "silver hair, blue eyes, school uniform, detailed face"
 
   --profile 을 생략했으니 female 이 적용됩니다.
-  JSON에 20개가 있으면 mika_00.webp ~ mika_19.webp 가 생성됩니다.
 
-  화면 출력 예:
+  ------------------------------------------------------------------
+  예시 1-A. 로스터에서 캐릭터 프리셋으로 생성 (권장)
+  ------------------------------------------------------------------
+
+    ● 특정 로스터의 단일 캐릭터
+
+      python sd_batch_generator.py --char bel -r dar
+
+    ● 특정 로스터의 모든 캐릭터 일괄 생성
+
+      python sd_batch_generator.py --all-chars -r dar
+
+    ● 로스터 캐릭터 목록 확인
+
+      python sd_batch_generator.py --list -r dar
+
+    ● 오토코노코 로스터
+
+      python sd_batch_generator.py --all-chars -r oto
+
+  ------------------------------------------------------------------
 
       [PROFILE] 미지정 - 기본값 'female' 적용
       [작업 시작] 캐릭터: mika | 프로필: female | 모드: all (20장) | 폭: 2

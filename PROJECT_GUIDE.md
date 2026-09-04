@@ -23,36 +23,48 @@ JSON 항목을 늘리면 코드 수정 없이 생성 장수가 늘어난다.
 ```
 kiro/
 ├── sd_batch_generator.py                    # 메인 실행 스크립트
-├── pose_database.json                       # 프롬프트 데이터 (프로필 + 포즈)
+├── pose_database.json                       # 프롬프트 데이터 (공용 — 모든 로스터 공유)
 ├── PROJECT_GUIDE.md                         # 이 문서
 ├── 사용법.txt                                # 설치·사용 가이드 (사람용)
 ├── .gitignore / .gitattributes
 │
-├── references/                              # IP-Adapter 참조 이미지 (git 추적)
+├── references/                              # IP-Adapter 참조 이미지 (git 추적, 로스터 공유)
 │   ├── README.md
-│   └── {prefix}.png                         # --prefix 와 같은 이름
+│   └── {prefix}.png
+│
+├── characters_{roster}/                     # ★ 로스터별 캐릭터 JSON
+│   ├── characters_dark_generals/            # 흑막사천왕 로스터 (별칭: dar)
+│   │   ├── bel.json
+│   │   └── ...
+│   └── characters_oto/                      # 오토코노코 로스터 (별칭: oto)
+│
+├── generated_assets_{roster}/               # 로스터별 생성 결과 (git 제외)
+│   └── {prefix}/{prefix}_{NN}.webp
 │
 ├── .kiro/
 │   ├── steering/
-│   │   └── sd_char_gen.md                   # Kiro 자동 실행 규칙
+│   │   └── sd_char_gen.md
 │   └── specs/
-│       ├── dynamic-pose-pipeline/            # 동적 순회·프로필 (완료)
-│       │   ├── requirements.md               # R1~R8
-│       │   ├── design.md                     # 설계 (10장)
-│       │   └── tasks.md                      # 13단계
-│       └── image-reference-pipeline/          # 참조 이미지 (진행 중)
-│           ├── requirements.md               # R1~R7
-│           ├── design.md                     # 설계 (11장)
-│           └── tasks.md                      # 17단계
-│
-└── generated_assets/                        # 실행 시 자동 생성 (git 제외)
-    └── {prefix}/
-        └── {prefix}_{NN}.webp
+│       └── ...
+└── characters/                              # 신규/미분류 캐릭터 작업공간
 ```
 
-`references/` 는 git 으로 추적한다. `generated_assets/` 는 재생성 가능한
-파생물이지만 참조 이미지는 잃으면 같은 캐릭터를 재현할 수 없는 원본 입력이고,
-여러 PC 간 동기화에도 필요하다.
+### 로스터 (Roster) 시스템
+
+프로젝트(캐릭터 세트) 단위로 캐릭터와 에셋을 분리 관리하는 구조다.
+
+| 별칭 | 폴더 | 설명 |
+|---|---|---|
+| `dar` | `characters_dark_generals/` | 흑막사천왕 세트 |
+| `oto` | `characters_oto/` | 오토코노코 세트 |
+| *(임의)* | `characters_{name}/` | 별칭 없이도 자동 인식 |
+
+`pose_database.json`과 `references/`는 모든 로스터가 루트에서 공유한다.
+
+### OCP 원칙
+
+신규 로스터 추가 시 **스크립트 수정 없이** `characters_xyz/` 폴더 생성만으로
+`--roster xyz`가 자동 인식된다.
 
 ### 파일별 역할
 
@@ -213,6 +225,10 @@ python sd_batch_generator.py [옵션]
 
 | 플래그 | 기본값 | 필수 | 설명 |
 |---|---|---|---|
+| `--roster` / `-r` | `dar` | X | 로스터 선택. `dar`=dark_generals, `oto`=oto, 임의 문자열도 가능 |
+| `--char` | — | X | `{roster}/NAME.json` 읽어 프리셋 적용 |
+| `--list` | — | X | 로스터의 캐릭터 목록 출력 후 종료 |
+| `--all-chars` | — | X | 로스터의 모든 캐릭터를 순서대로 생성 |
 | `--prefix` | — | O* | 에셋 식별자. `^[A-Za-z0-9_-]{1,64}$` |
 | `--char_prompt` | — | O* | 캐릭터 외형 태그 |
 | `--custom_neg` | `""` | X | 프로필 네거티브에 **추가**(대체 아님) |
@@ -222,6 +238,27 @@ python sd_batch_generator.py [옵션]
 | `--dry-run` | `False` | X | 파일·네트워크 없이 계획만 출력 |
 | `--mock` | `False` | X | 더미 이미지를 실제 저장 |
 | `--test` | `False` | X | 자체 진단 후 종료 |
+
+### 로스터 CLI 예시
+
+```powershell
+# 로스터 dar 의 모든 캐릭터 배치 생성
+python sd_batch_generator.py --all-chars -r dar
+
+# 로스터 dar 에서 단일 캐릭터 생성
+python sd_batch_generator.py --char bel -r dar
+
+# 로스터 dar 캐릭터 목록 확인
+python sd_batch_generator.py --list -r dar
+
+# 별칭 없는 임의 로스터 (characters_new/ 폴더가 있으면 자동 인식)
+python sd_batch_generator.py --all-chars -r new
+
+# 사용 가능한 로스터 확인 (잘못된 이름 입력 시 자동 안내)
+python sd_batch_generator.py --all-chars -r 없는이름
+# → [ERROR] 캐릭터 폴더가 존재하지 않습니다: .../characters_없는이름
+#           사용 가능한 로스터: dark_generals, oto
+```
 
 **참조 이미지 (IP-Adapter)**
 
