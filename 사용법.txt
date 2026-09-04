@@ -5,6 +5,61 @@
   이 폴더를 처음 받았다면 이 문서만 따라가면 됩니다.
   0장부터 순서대로 읽으세요.
 
+
+==============================================================================
+  ★ 빠른 명령어 참조 (자주 쓰는 것만)
+==============================================================================
+
+  ── 로스터(프로젝트) ──────────────────────────────────────────────────
+  dar  = characters_dark_generals/   (흑막사천왕)
+  oto  = characters_oto/             (오토코노코)
+
+  ── 전체 생성 ─────────────────────────────────────────────────────────
+
+  # 다크제너럴 전 캐릭터 전 포즈 (없는 것만 생성)
+  python sd_batch_generator.py --all-chars -r dar
+
+  # 오토코노코 전 캐릭터 전 포즈
+  python sd_batch_generator.py --all-chars -r oto
+
+  ── 단일 캐릭터 ───────────────────────────────────────────────────────
+
+  # 특정 캐릭터 전 포즈
+  python sd_batch_generator.py --char rog -r dar
+
+  # 특정 캐릭터 특정 번호 1장
+  python sd_batch_generator.py --char rog -r dar --mode 20
+
+  # 특정 캐릭터 범위
+  python sd_batch_generator.py --char rog -r dar --mode 140-170
+
+  # 특정 캐릭터 여러 번호 지정
+  python sd_batch_generator.py --char rog -r dar --mode 0,7,24
+
+  ── 재생성 (이미 있는 것도 덮어쓰기) ──────────────────────────────────
+
+  # 특정 파일 삭제 후 재실행하면 해당 번호만 다시 생성됨
+  Remove-Item generated_assets_dark_generals\rog\rog_020.webp
+  python sd_batch_generator.py --char rog -r dar --mode 20
+
+  # 캐릭터 전체 재생성
+  Remove-Item -Recurse -Force generated_assets_dark_generals\rog
+  python sd_batch_generator.py --char rog -r dar
+
+  ── 캐릭터 목록 확인 ──────────────────────────────────────────────────
+
+  python sd_batch_generator.py --list -r dar
+  python sd_batch_generator.py --list -r oto
+
+  ── 규칙 ─────────────────────────────────────────────────────────────
+  ★ 기존 파일이 있으면 자동으로 건너뜀 (덮어쓰기 안 함)
+  ★ WebUI가 켜져 있어야 생성 가능 (http://127.0.0.1:7860)
+  ★ 중단돼도 재실행하면 이어서 생성됨
+  ★ 번호 범위: 00-20 감정, 21-30 포즈, 40-70 여성H씬, 140-170 오토코노코H씬
+  ★ prefix(약칭)는 영문/숫자/_/- 만 가능 (한글 불가)
+
+==============================================================================
+
   [문서 안내]
     사용법.txt          이 문서. 사람이 읽는 설치·사용 가이드
     PROJECT_GUIDE.md    AI/개발자용 상세 기술 명세 (내부 동작, 상수, 확장 방법)
