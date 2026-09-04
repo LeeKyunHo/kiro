@@ -1,0 +1,7 @@
+{
+  "prefix": "luc",
+  "default_mode": "otokonoko",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, noble young lady, refined elegant face, young adult, bright violet eyes, confident graceful smile:1.15), small breasts, (subtle bulge, tiny bulge under clothing:1.1), slender waist, soft curves, (platinum blonde hair, loose side ponytail, wavy ends:1.2), (japanese high school uniform, white sailor blouse, navy pleated skirt, red necktie, school blazer:1.2), white knee socks, loafers, no glasses",
+  "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, mustache, facial hair, glasses, dark skin, animal ears, child, loli, chibi, gothic dress, victorian, pearl",
+  "ref_weight": 0.7
+}
