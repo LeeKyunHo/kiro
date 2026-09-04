@@ -1,7 +1,7 @@
 {
   "prefix": "yuk",
   "default_mode": "otokonoko",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, tomboyish yet cute, young adult, energetic, bright green eyes, cheerful smile, slight blush:1.1), small breasts, (subtle bulge, tiny bulge under clothing:1.1), slender toned body, soft curves, (golden blonde messy short hair, hairclip:1.2), (sporty polo crop top, white pleated tennis miniskirt:1.25), bare waist, exposed midriff, wrist sweatbands, no glasses",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, tomboyish yet cute, young adult, energetic, bright green eyes:1.1), small breasts, (subtle bulge, tiny bulge under clothing:1.1), slender toned body, soft curves, (golden blonde messy short hair, hairclip:1.2), (sporty polo crop top, white pleated tennis miniskirt:1.25), bare waist, exposed midriff, wrist sweatbands, no glasses",
   "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, mustache, facial hair, glasses, dark skin, animal ears, wings, child, loli",
   "ref_weight": 0.65
 }

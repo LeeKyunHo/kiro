@@ -1,7 +1,7 @@
 {
   "prefix": "ren",
   "default_mode": "otokonoko",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, beautiful feminine face, young adult, seductive smile, flirty expression, heavy-lidded eyes, crimson eyes, lightly tanned skin:1.15), small breasts, (subtle bulge, tiny bulge under clothing:1.1), hourglass silhouette, soft curves, (raven black straight silky hair, hime cut, blunt bangs:1.2), (short yukata, form-fitting yukata, thigh-length hemline, floral pattern, open collar, loosely tied obi belt:1.2), bare legs, bare shoulders, sandals",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, beautiful feminine face, young adult, heavy-lidded eyes, crimson eyes, lightly tanned skin:1.15), small breasts, (subtle bulge, tiny bulge under clothing:1.1), hourglass silhouette, soft curves, (raven black straight silky hair, hime cut, blunt bangs:1.2), (short yukata, form-fitting yukata, thigh-length hemline, floral pattern, open collar, loosely tied obi belt:1.2), bare legs, bare shoulders, sandals",
   "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, masculine face, square jaw, broad shoulders, beard, mustache, facial hair, glasses, very dark skin, dark tan, freckles, animal ears, child, loli",
   "ref_weight": 0.7
 }
