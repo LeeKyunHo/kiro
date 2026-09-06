@@ -1,7 +1,0 @@
-{
-  "prefix": "cam",
-  "default_mode": "female",
-  "positive": "(silver hair, very long hair, sharp eyes, blue-grey eyes, slender, large breasts, narrow waist:1.2), (black and white classic maid dress, long maid dress, neat corset apron, white frilled maid headdress, black ribbons:1.15), (high collar, gemstone brooch:1.05), dimly lit gothic corridor",
-  "negative": "short hair, flat chest, horns, wings, animal ears, glowing eyes, purple eyes, glowing aura, magic circle, multiple eyes, latex, shiny vinyl, glossy clothes, neon lighting, mini skirt",
-  "ref_weight": 0.7
-}
