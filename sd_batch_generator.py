@@ -34,6 +34,14 @@ import sys
 import tempfile
 import time
 from contextlib import contextmanager
+
+# PowerShell 파이프 환경에서 출력이 버퍼링되어 중간에 잘리는 문제 방지.
+# sys import 직후에 바로 적용해야 모든 출력에 효과가 있다.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+except (AttributeError, OSError):
+    pass
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -146,7 +154,7 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 
 # 실제 생성 파라미터
 IMAGE_SIZE = (832, 1216)
-STEPS = 15  # 고속 생성 (이전 28 → 15)
+STEPS = 25
 CFG_SCALE = 7
 LORA_STRING = ""  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
 WEBP_QUALITY = 90
@@ -205,15 +213,18 @@ class ConfigError(Exception):
 
 def _configure_stdio() -> None:
     """
-    표준 출력을 UTF-8 로 고정한다.
+    표준 출력을 UTF-8 + unbuffered 로 고정한다.
 
     Windows에서 출력을 파이프/파일로 리다이렉트하면 Python이 콘솔 UTF-8 대신
     로케일 인코딩(cp949)으로 폴백해 비-ASCII 기호에서 UnicodeEncodeError 가
     발생한다. 직접 실행 시에는 재현되지 않아 놓치기 쉬운 경로다.
+
+    line_buffering=True: 줄 단위로 즉시 flush → PowerShell 등 파이프 환경에서
+    'python -u' 없이도 출력이 중간에 잘리지 않는다.
     """
     for stream in (sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(encoding="utf-8", errors="replace")
+            stream.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
         except (AttributeError, OSError):
             pass  # 구버전 파이썬이나 비표준 스트림은 그대로 둔다
 
@@ -3030,7 +3041,14 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
                 print(f"[REF]  {reference.label} - ControlNet 미해석, 텍스트만 사용")
 
     # mock/dry-run 에서는 HTTP 요청을 일절 발생시키지 않는다
-    sampler_name = "(mock)" if (mock or dry_run) else resolve_sampler()
+    # Lightning 모드에서는 DPM++ SDE 고정이므로 resolve_sampler() 불필요
+    if mock or dry_run:
+        sampler_name = "(mock)"
+    elif args.enable_lightning:
+        sampler_name = "DPM++ SDE"  # run_batch에서도 덮어쓰지만 로그 일관성 유지
+        print(f"[SAMPLER] Lightning 모드 → 'DPM++ SDE' 고정")
+    else:
+        sampler_name = resolve_sampler()
     badge = mode_badge(dry_run, mock)
 
     profile_label = "전용" if raw_positive else profile.name
