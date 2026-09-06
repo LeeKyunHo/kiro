@@ -146,8 +146,9 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 
 # 실제 생성 파라미터
 IMAGE_SIZE = (832, 1216)
-STEPS = 28
+STEPS = 15  # 고속 생성 (이전 28 → 15)
 CFG_SCALE = 7
+LORA_STRING = ""  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
 WEBP_QUALITY = 90
 WEBP_METHOD = 6
 
@@ -764,7 +765,10 @@ def list_characters(chars_dir: Path) -> int:
 
 
 def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
-                  dry_run: bool, mock: bool) -> int:
+                  dry_run: bool, mock: bool,
+                  enable_freeu: bool = False, freeu_b1: float = 1.1, freeu_b2: float = 1.2,
+                  freeu_s1: float = 0.9, freeu_s2: float = 0.2,
+                  enable_adetailer: bool = False) -> int:
     """
     로스터의 모든 캐릭터를 순서대로 생성한다.
 
@@ -823,6 +827,12 @@ def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
             cn_model=None,
             dry_run=dry_run,
             mock=mock,
+            enable_freeu=enable_freeu,
+            freeu_b1=freeu_b1,
+            freeu_b2=freeu_b2,
+            freeu_s1=freeu_s1,
+            freeu_s2=freeu_s2,
+            enable_adetailer=enable_adetailer,
         )
 
         try:
@@ -1921,6 +1931,9 @@ def run_batch(
             full_prompt = join_tags(
                 base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
             )
+            # LoRA 적용 (LORA_STRING이 설정되어 있으면 프롬프트 앞에 추가)
+            if LORA_STRING:
+                full_prompt = f"{LORA_STRING}, {full_prompt}"
             # 페이로드는 mock 에서도 조립한다. 조립 오류는 mock 에서 잡아야
             # 할 결함이므로 전송만 생략한다.
             
@@ -3035,6 +3048,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             codes_expr=args.codes,
             dry_run=args.dry_run,
             mock=args.mock,
+            enable_freeu=args.enable_freeu,
+            freeu_b1=args.freeu_b1,
+            freeu_b2=args.freeu_b2,
+            freeu_s1=args.freeu_s1,
+            freeu_s2=args.freeu_s2,
+            enable_adetailer=args.enable_adetailer,
         )
 
     # --from_image 는 생성과 무관한 독립 작업이므로 다른 생성 플래그보다
