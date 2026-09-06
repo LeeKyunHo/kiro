@@ -13,6 +13,7 @@ generated_assets_*/
 pose_database.json
 characters_*/
 references/
+사용법.txt
 
 # ── 파이썬 ───────────────────────────────────
 __pycache__/
