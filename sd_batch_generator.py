@@ -249,6 +249,8 @@ class PoseEntry:
     code: int
     prompt: str
     section: str
+    width: int | None = None  # 동적 해상도 오버라이드 (optional)
+    height: int | None = None
 
     @property
     def label(self) -> str:
@@ -974,7 +976,23 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 )
                 continue
 
-            if not isinstance(value, str) or not value.strip():
+            # 동적 해상도 지원: value가 dict면 {"prompt": ..., "width": ..., "height": ...}
+            if isinstance(value, dict):
+                prompt = value.get("prompt", "")
+                width = value.get("width")
+                height = value.get("height")
+                if not isinstance(prompt, str) or not prompt.strip():
+                    db.warnings.append(f"코드 {key} 의 prompt 가 비어 있음 - 무시")
+                    continue
+            elif isinstance(value, str):
+                prompt = value
+                width = None
+                height = None
+            else:
+                db.warnings.append(f"코드 {key} 의 값이 문자열/딕셔너리가 아님 - 무시")
+                continue
+
+            if not prompt.strip():
                 db.warnings.append(f"코드 {key} 의 프롬프트가 비어 있음 - 무시")
                 continue
 
@@ -984,7 +1002,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                     f"코드 {code} 중복 정의 ('{previous}' -> '{section}') - 나중 값 사용"
                 )
 
-            db.entries[code] = PoseEntry(code, value.strip(), section)
+            db.entries[code] = PoseEntry(code, prompt.strip(), section, width, height)
             section_codes.append(code)
 
         db.sections[section] = sorted(section_codes)
@@ -1386,7 +1404,8 @@ def save_as_webp(
 
 
 def build_txt2img_payload(
-    *, prompt: str, negative_prompt: str, sampler_name: str
+    *, prompt: str, negative_prompt: str, sampler_name: str,
+    width: int = IMAGE_SIZE[0], height: int = IMAGE_SIZE[1]
 ) -> dict[str, Any]:
     """
     txt2img 페이로드를 조립한다 (순수 함수).
@@ -1396,12 +1415,14 @@ def build_txt2img_payload(
 
     FreeU / HRFix 는 inject_alwayson_scripts 에서 항상 포함된다.
     여기서는 alwayson_scripts 를 포함하지 않아 T25 테스트 계약을 보존한다.
+    
+    width/height는 동적 해상도 지원을 위해 오버라이드 가능.
     """
     return {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
-        "width": IMAGE_SIZE[0],
-        "height": IMAGE_SIZE[1],
+        "width": width,
+        "height": height,
         "steps": STEPS,
         "batch_size": 1,
         "n_iter": 1,
@@ -1410,23 +1431,78 @@ def build_txt2img_payload(
     }
 
 
-def _build_forge_scripts() -> dict[str, Any]:
+def _build_forge_scripts(
+    enable_freeu: bool = False,
+    freeu_b1: float = 1.1,
+    freeu_b2: float = 1.2,
+    freeu_s1: float = 0.9,
+    freeu_s2: float = 0.2,
+    enable_adetailer: bool = False,
+) -> dict[str, Any]:
     """
     Forge 내장 기능 스크립트를 조립한다 (순수 함수).
 
-    FreeU / HRFix 는 참조 이미지 유무와 무관하게 항상 주입한다.
-    ControlNet 은 inject_alwayson_scripts 에서 조건부로 추가된다.
+    FreeU / ADetailer 는 CLI 플래그에 따라 조건부로 활성화된다.
+    ControlNet 은 inject_alwayson_scripts 에서 별도 추가된다.
+
+    주의: WebUI 버전에 따라 스크립트명이 다를 수 있음. 422 에러 발생 시 비활성화 필요.
     """
-    return {
-        # ── FreeU (SDXL 최적화) ──────────────────────────────────
-        # args: [enabled, b1, b2, s1, s2]
-        # b1/b2: backbone 스케일 업 (고주파 디테일 강화)
-        # s1/s2: skip 스케일 다운 (과포화 억제)
-        "FreeU Integrated": {"args": [True, 1.3, 1.4, 0.9, 0.2]},
-        # ── Kohya HRFix (세로 해상도 신체 분리 방지) ─────────────
-        # 832x1216 같은 세로형에서 인체가 두 개로 나뉘는 문제 억제
-        "Kohya HRFix Integrated": {"args": [True]},
-    }
+    scripts: dict[str, Any] = {}
+
+    if enable_freeu:
+        scripts["FreeU Integrated"] = {
+            "args": [True, freeu_b1, freeu_b2, freeu_s1, freeu_s2]
+        }
+
+    if enable_adetailer:
+        # ADetailer 기본 설정: face_yolov8n.pt 1차 보정
+        scripts["ADetailer"] = {
+            "args": [
+                True,  # enabled
+                False,  # skip_img2img
+                {
+                    "ad_model": "face_yolov8n.pt",
+                    "ad_prompt": "",
+                    "ad_negative_prompt": "",
+                    "ad_confidence": 0.3,
+                    "ad_mask_k_largest": 0,
+                    "ad_mask_min_ratio": 0.0,
+                    "ad_mask_max_ratio": 1.0,
+                    "ad_dilate_erode": 4,
+                    "ad_x_offset": 0,
+                    "ad_y_offset": 0,
+                    "ad_mask_merge_invert": "None",
+                    "ad_mask_blur": 4,
+                    "ad_denoising_strength": 0.4,
+                    "ad_inpaint_only_masked": True,
+                    "ad_inpaint_only_masked_padding": 32,
+                    "ad_use_inpaint_width_height": False,
+                    "ad_inpaint_width": 512,
+                    "ad_inpaint_height": 512,
+                    "ad_use_steps": False,
+                    "ad_steps": 28,
+                    "ad_use_cfg_scale": False,
+                    "ad_cfg_scale": 7.0,
+                    "ad_use_checkpoint": False,
+                    "ad_checkpoint": "Use same checkpoint",
+                    "ad_use_vae": False,
+                    "ad_vae": "Use same VAE",
+                    "ad_use_sampler": False,
+                    "ad_sampler": "DPM++ 2M",
+                    "ad_use_noise_multiplier": False,
+                    "ad_noise_multiplier": 1.0,
+                    "ad_use_clip_skip": False,
+                    "ad_clip_skip": 1,
+                    "ad_restore_face": False,
+                    "ad_controlnet_model": "None",
+                    "ad_controlnet_weight": 1.0,
+                    "ad_controlnet_guidance_start": 0.0,
+                    "ad_controlnet_guidance_end": 1.0,
+                },
+            ]
+        }
+
+    return scripts
 
 
 def build_controlnet_unit(
@@ -1453,6 +1529,12 @@ def build_controlnet_unit(
 def inject_alwayson_scripts(
     payload: dict[str, Any],
     controlnet_units: list[dict[str, Any]],
+    enable_freeu: bool = False,
+    freeu_b1: float = 1.1,
+    freeu_b2: float = 1.2,
+    freeu_s1: float = 0.9,
+    freeu_s2: float = 0.2,
+    enable_adetailer: bool = False,
 ) -> dict[str, Any]:
     """
     페이로드의 alwayson_scripts 에 Forge 내장 기능 + ControlNet 유닛을 주입한다 (순수 함수).
@@ -1460,7 +1542,7 @@ def inject_alwayson_scripts(
     원본을 변경하지 않는다. 루프에서 페이로드를 재사용할 때 상태가 누적되는
     것을 막기 위한 계약이다.
 
-    FreeU / HRFix 는 항상 포함된다. ControlNet 은 유닛이 있을 때만 추가된다.
+    FreeU / ADetailer 는 CLI 플래그에 따라 조건부 포함. ControlNet 은 유닛이 있을 때만 추가된다.
 
     Multi-ControlNet 확장 구조:
         controlnet_units = []
@@ -1475,14 +1557,18 @@ def inject_alwayson_scripts(
         #         depth_reference, depth_spec, depth_weight
         #     ))
 
-        payload = inject_alwayson_scripts(payload, controlnet_units)
+        payload = inject_alwayson_scripts(payload, controlnet_units, ...)
     """
     merged = dict(payload)
-    # FreeU / HRFix 는 항상 포함
-    scripts = _build_forge_scripts()
+    # FreeU / ADetailer 조립
+    scripts = _build_forge_scripts(
+        enable_freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2, enable_adetailer
+    )
     # ControlNet 유닛이 있을 때만 추가 (빈 args 는 WebUI 가 오해할 수 있음)
     if controlnet_units:
         scripts["controlnet"] = {"args": controlnet_units}
+    merged["alwayson_scripts"] = scripts
+    return merged
     merged["alwayson_scripts"] = scripts
     return merged
 
@@ -1791,6 +1877,12 @@ def run_batch(
     reference: ReferenceImage | None = None,
     cn_spec: ControlNetSpec | None = None,
     ref_weight: float = REF_WEIGHT_DEFAULT,
+    enable_freeu: bool = False,
+    freeu_b1: float = 1.1,
+    freeu_b2: float = 1.2,
+    freeu_s1: float = 0.9,
+    freeu_s2: float = 0.2,
+    enable_adetailer: bool = False,
     dry_run: bool = False,
     mock: bool = False,
 ) -> BatchResult:
@@ -1831,14 +1923,20 @@ def run_batch(
             )
             # 페이로드는 mock 에서도 조립한다. 조립 오류는 mock 에서 잡아야
             # 할 결함이므로 전송만 생략한다.
+            
+            # 동적 해상도: entry에 width/height 지정되어 있으면 오버라이드
+            actual_width = entry.width if entry.width else IMAGE_SIZE[0]
+            actual_height = entry.height if entry.height else IMAGE_SIZE[1]
+            
             payload = build_txt2img_payload(
                 prompt=full_prompt,
                 negative_prompt=negative_prompt,
                 sampler_name=sampler_name,
+                width=actual_width,
+                height=actual_height,
             )
             # ── Multi-ControlNet 조립 + Forge 내장 기능 주입 ──────
             # OCP 원칙: 새 유닛(Depth 등)은 아래에 append 만 추가하면 됨
-            # FreeU / HRFix 는 유닛 유무와 무관하게 항상 포함됨
             controlnet_units: list[dict[str, Any]] = []
 
             # IP-Adapter: 참조 이미지 일관성
@@ -1849,12 +1947,38 @@ def run_batch(
             # if depth_unit is not None:
             #     controlnet_units.append(depth_unit)
 
-            payload = inject_alwayson_scripts(payload, controlnet_units)
+            payload = inject_alwayson_scripts(
+                payload, controlnet_units,
+                enable_freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2,
+                enable_adetailer
+            )
 
             if mock:
                 png_bytes = make_dummy_png(prefix, code, width, entry, reference)
             else:
-                png_bytes = generate_image(payload)
+                # Graceful Fallback: FreeU/ADetailer 스크립트가 422/500 에러 유발 시 순정 재시도
+                try:
+                    png_bytes = generate_image(payload)
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code in (422, 500):
+                        # 확장 기능이 없거나 버전 불일치로 실패 — 순정으로 폴백
+                        print(f"\n[WARN] Forge 확장 오류 ({e.response.status_code}) - 순정 페이로드로 재시도")
+                        fallback_payload = build_txt2img_payload(
+                            prompt=full_prompt,
+                            negative_prompt=negative_prompt,
+                            sampler_name=sampler_name,
+                            width=actual_width,
+                            height=actual_height,
+                        )
+                        # ControlNet만 유지 (FreeU/ADetailer 비활성화)
+                        fallback_payload = inject_alwayson_scripts(
+                            fallback_payload, controlnet_units,
+                            False, 1.1, 1.2, 0.9, 0.2, False
+                        )
+                        png_bytes = generate_image(fallback_payload)
+                        print(f"  [{tag}] 재시도 성공 (순정 모드)", end=" ")
+                    else:
+                        raise
             save_as_webp(png_bytes, save_path)
         except requests.exceptions.ConnectionError:
             # WebUI 가 죽은 상태에서 남은 코드를 계속 시도하면 대기만 누적된다.
@@ -2617,6 +2741,32 @@ def build_parser(
         help="ControlNet 모델 수동 지정 (자동 탐지 실패 시)",
     )
 
+    forge = parser.add_argument_group("Forge 내장 기능")
+    forge.add_argument(
+        "--enable-freeu", action="store_true",
+        help="FreeU 활성화 (SDXL 최적화 - 디테일 강화)",
+    )
+    forge.add_argument(
+        "--freeu-b1", type=float, default=1.1,
+        help="FreeU backbone1 스케일 (기본 1.1)",
+    )
+    forge.add_argument(
+        "--freeu-b2", type=float, default=1.2,
+        help="FreeU backbone2 스케일 (기본 1.2)",
+    )
+    forge.add_argument(
+        "--freeu-s1", type=float, default=0.9,
+        help="FreeU skip1 스케일 (기본 0.9)",
+    )
+    forge.add_argument(
+        "--freeu-s2", type=float, default=0.2,
+        help="FreeU skip2 스케일 (기본 0.2)",
+    )
+    forge.add_argument(
+        "--enable-adetailer", action="store_true",
+        help="ADetailer 활성화 (얼굴/손 자동 보정)",
+    )
+
     interrogate = parser.add_argument_group("태그 역추출")
     interrogate.add_argument(
         "--from_image", default=None,
@@ -2698,7 +2848,7 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     prefix = validate_prefix(args.prefix)
     char_prompt = (args.char_prompt or "").strip()
 
-    base_dir = roster.characters_dir.parent  # pose_database.json 은 항상 루트
+    base_dir = Path.cwd()  # pose_database.json 은 항상 작업 디렉터리 루트
     db = load_pose_db(base_dir)
     print_warnings(db)
 
@@ -2729,6 +2879,13 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     # 같은 태그가 양쪽에 있으면 모델이 모순된 지시를 받는다.
     if conflicts := find_tag_conflicts(base_positive, negative_prompt):
         print(f"[WARN] 태그 충돌: {conflicts} 가 포지티브와 네거티브에 동시 존재")
+
+    # ── Forge 내장 기능 상태 로깅 ──────────────────────
+    if args.enable_freeu:
+        print(f"[FORGE] FreeU 활성화 (b1={args.freeu_b1}, b2={args.freeu_b2}, "
+              f"s1={args.freeu_s1}, s2={args.freeu_s2})")
+    if args.enable_adetailer:
+        print(f"[FORGE] ADetailer 활성화 (face_yolov8n.pt)")
 
     targets = resolve_targets(db, args.mode, args.codes)
     if not targets:
@@ -2809,6 +2966,12 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         reference=reference,
         cn_spec=cn_spec,
         ref_weight=ref_weight,
+        enable_freeu=args.enable_freeu,
+        freeu_b1=args.freeu_b1,
+        freeu_b2=args.freeu_b2,
+        freeu_s1=args.freeu_s1,
+        freeu_s2=args.freeu_s2,
+        enable_adetailer=args.enable_adetailer,
         dry_run=dry_run,
         mock=mock,
     )
