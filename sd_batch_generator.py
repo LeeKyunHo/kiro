@@ -672,7 +672,7 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
         raise ConfigError(f"캐릭터 '{name}' 을 찾을 수 없습니다 ({path})", hint)
 
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as e:
         raise ConfigError(f"{path.name} JSON 문법 오류: {e}") from None
 
@@ -768,7 +768,10 @@ def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
                   dry_run: bool, mock: bool,
                   enable_freeu: bool = False, freeu_b1: float = 1.1, freeu_b2: float = 1.2,
                   freeu_s1: float = 0.9, freeu_s2: float = 0.2,
-                  enable_adetailer: bool = False) -> int:
+                  enable_adetailer: bool = False,
+                  enable_lightning: bool = False, lightning_steps: int = 2,
+                  lightning_cfg: float = 1.0,
+                  lightning_lora_name: str = "sdxl_lightning_2step_lora") -> int:
     """
     로스터의 모든 캐릭터를 순서대로 생성한다.
 
@@ -833,6 +836,10 @@ def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
             freeu_s1=freeu_s1,
             freeu_s2=freeu_s2,
             enable_adetailer=enable_adetailer,
+            enable_lightning=enable_lightning,
+            lightning_steps=lightning_steps,
+            lightning_cfg=lightning_cfg,
+            lightning_lora_name=lightning_lora_name,
         )
 
         try:
@@ -1030,7 +1037,7 @@ def read_pose_json(base_dir: Path) -> dict[str, Any]:
     db_path = base_dir / POSE_DB_FILE
 
     try:
-        text = db_path.read_text(encoding="utf-8")
+        text = db_path.read_text(encoding="utf-8-sig")
     except FileNotFoundError:
         raise ConfigError(
             f"프롬프트 DB 파일을 찾을 수 없습니다: {db_path}",
@@ -1415,7 +1422,9 @@ def save_as_webp(
 
 def build_txt2img_payload(
     *, prompt: str, negative_prompt: str, sampler_name: str,
-    width: int = IMAGE_SIZE[0], height: int = IMAGE_SIZE[1]
+    width: int = IMAGE_SIZE[0], height: int = IMAGE_SIZE[1],
+    steps: int | None = None, cfg_scale: float | None = None,
+    scheduler: str | None = None
 ) -> dict[str, Any]:
     """
     txt2img 페이로드를 조립한다 (순수 함수).
@@ -1427,18 +1436,26 @@ def build_txt2img_payload(
     여기서는 alwayson_scripts 를 포함하지 않아 T25 테스트 계약을 보존한다.
     
     width/height는 동적 해상도 지원을 위해 오버라이드 가능.
+    steps/cfg_scale/scheduler는 Lightning 모드 등 특수 모드에서 오버라이드 가능.
     """
-    return {
+    payload = {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
         "width": width,
         "height": height,
-        "steps": STEPS,
+        "steps": steps if steps is not None else STEPS,
         "batch_size": 1,
         "n_iter": 1,
-        "cfg_scale": CFG_SCALE,
+        "cfg_scale": cfg_scale if cfg_scale is not None else CFG_SCALE,
+        "scheduler": "Automatic",
         "sampler_name": sampler_name,
     }
+    
+    # scheduler는 지정된 경우에만 추가 (Lightning 등)
+    if scheduler:
+        payload["scheduler"] = scheduler
+    
+    return payload
 
 
 def _build_forge_scripts(
@@ -1893,6 +1910,10 @@ def run_batch(
     freeu_s1: float = 0.9,
     freeu_s2: float = 0.2,
     enable_adetailer: bool = False,
+    enable_lightning: bool = False,
+    lightning_steps: int = 2,
+    lightning_cfg: float = 1.0,
+    lightning_lora_name: str = "sdxl_lightning_2step_lora",
     dry_run: bool = False,
     mock: bool = False,
 ) -> BatchResult:
@@ -1931,9 +1952,35 @@ def run_batch(
             full_prompt = join_tags(
                 base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
             )
-            # LoRA 적용 (LORA_STRING이 설정되어 있으면 프롬프트 앞에 추가)
-            if LORA_STRING:
-                full_prompt = f"{LORA_STRING}, {full_prompt}"
+            
+            # ── Lightning 모드 처리 ──────────────────────────────
+            # Lightning 활성화 시 전용 세팅으로 오버라이드
+            actual_sampler = sampler_name
+            actual_steps = None
+            actual_cfg = None
+            actual_scheduler = None
+            actual_freeu = enable_freeu
+            
+            if enable_lightning:
+                # Lightning 최적 세팅
+                actual_sampler = "DPM++ SDE"
+                actual_steps = lightning_steps
+                actual_cfg = lightning_cfg
+                actual_scheduler = "Karras"
+                
+                # Lightning LoRA 주입
+                lora_tag = f"<lora:{lightning_lora_name}:1.0>"
+                full_prompt = f"{lora_tag}, {full_prompt}"
+                
+                # FreeU + Lightning 충돌 방지
+                if enable_freeu:
+                    print(f"\n[WARN] Lightning 모드에서는 FreeU 비활성화 (색감 왜곡 방지)")
+                    actual_freeu = False
+            else:
+                # 일반 LoRA 적용 (LORA_STRING이 설정되어 있으면 프롬프트 앞에 추가)
+                if LORA_STRING:
+                    full_prompt = f"{LORA_STRING}, {full_prompt}"
+            
             # 페이로드는 mock 에서도 조립한다. 조립 오류는 mock 에서 잡아야
             # 할 결함이므로 전송만 생략한다.
             
@@ -1944,9 +1991,12 @@ def run_batch(
             payload = build_txt2img_payload(
                 prompt=full_prompt,
                 negative_prompt=negative_prompt,
-                sampler_name=sampler_name,
+                sampler_name=actual_sampler,
                 width=actual_width,
                 height=actual_height,
+                steps=actual_steps,
+                cfg_scale=actual_cfg,
+                scheduler=actual_scheduler,
             )
             # ── Multi-ControlNet 조립 + Forge 내장 기능 주입 ──────
             # OCP 원칙: 새 유닛(Depth 등)은 아래에 append 만 추가하면 됨
@@ -2780,6 +2830,24 @@ def build_parser(
         help="ADetailer 활성화 (얼굴/손 자동 보정)",
     )
 
+    lightning = parser.add_argument_group("SDXL Lightning 가속")
+    lightning.add_argument(
+        "--enable-lightning", action="store_true",
+        help="SDXL Lightning 2-step LoRA 가속 모드 활성화 (초고속 생성)",
+    )
+    lightning.add_argument(
+        "--lightning-steps", type=int, default=2,
+        help="Lightning 모드 스텝 수 (기본 2, 품질 보강 시 최대 4~6)",
+    )
+    lightning.add_argument(
+        "--lightning-cfg", type=float, default=1.0,
+        help="Lightning 모드 CFG Scale (기본 1.0, 최대 1.5 권장)",
+    )
+    lightning.add_argument(
+        "--lightning-lora-name", type=str, default="sdxl_lightning_2step_lora",
+        help="Lightning LoRA 파일명 (기본 sdxl_lightning_2step_lora)",
+    )
+
     interrogate = parser.add_argument_group("태그 역추출")
     interrogate.add_argument(
         "--from_image", default=None,
@@ -2900,6 +2968,14 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     if args.enable_adetailer:
         print(f"[FORGE] ADetailer 활성화 (face_yolov8n.pt)")
 
+    # ── Lightning 모드 로깅 ──────────────────────────
+    if args.enable_lightning:
+        lora_tag = f"<lora:{args.lightning_lora_name}:1.0>"
+        print(f"[LIGHTNING] Mode Enabled: {args.lightning_steps} Steps | "
+              f"CFG {args.lightning_cfg} | Sampler: DPM++ SDE Karras | LoRA: {lora_tag}")
+        if args.enable_freeu:
+            print(f"[LIGHTNING] FreeU 자동 비활성화 (Lightning과 충돌 방지)")
+
     targets = resolve_targets(db, args.mode, args.codes)
     if not targets:
         raise ConfigError(
@@ -2985,6 +3061,10 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         freeu_s1=args.freeu_s1,
         freeu_s2=args.freeu_s2,
         enable_adetailer=args.enable_adetailer,
+        enable_lightning=args.enable_lightning,
+        lightning_steps=args.lightning_steps,
+        lightning_cfg=args.lightning_cfg,
+        lightning_lora_name=args.lightning_lora_name,
         dry_run=dry_run,
         mock=mock,
     )
@@ -3054,6 +3134,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             freeu_s1=args.freeu_s1,
             freeu_s2=args.freeu_s2,
             enable_adetailer=args.enable_adetailer,
+            enable_lightning=args.enable_lightning,
+            lightning_steps=args.lightning_steps,
+            lightning_cfg=args.lightning_cfg,
+            lightning_lora_name=args.lightning_lora_name,
         )
 
     # --from_image 는 생성과 무관한 독립 작업이므로 다른 생성 플래그보다
