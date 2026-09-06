@@ -1391,6 +1391,9 @@ def build_txt2img_payload(
 
     조립과 전송을 분리한 이유: 전송이 섞여 있으면 페이로드 구조를 검증하려고
     HTTP 를 가로채야 한다. 분리하면 --test 에서 딕셔너리를 직접 검사할 수 있다.
+
+    FreeU / HRFix 는 inject_alwayson_scripts 에서 항상 포함된다.
+    여기서는 alwayson_scripts 를 포함하지 않아 T25 테스트 계약을 보존한다.
     """
     return {
         "prompt": prompt,
@@ -1402,6 +1405,25 @@ def build_txt2img_payload(
         "n_iter": 1,
         "cfg_scale": CFG_SCALE,
         "sampler_name": sampler_name,
+    }
+
+
+def _build_forge_scripts() -> dict[str, Any]:
+    """
+    Forge 내장 기능 스크립트를 조립한다 (순수 함수).
+
+    FreeU / HRFix 는 참조 이미지 유무와 무관하게 항상 주입한다.
+    ControlNet 은 inject_alwayson_scripts 에서 조건부로 추가된다.
+    """
+    return {
+        # ── FreeU (SDXL 최적화) ──────────────────────────────────
+        # args: [enabled, b1, b2, s1, s2]
+        # b1/b2: backbone 스케일 업 (고주파 디테일 강화)
+        # s1/s2: skip 스케일 다운 (과포화 억제)
+        "FreeU Integrated": {"args": [True, 1.3, 1.4, 0.9, 0.2]},
+        # ── Kohya HRFix (세로 해상도 신체 분리 방지) ─────────────
+        # 832x1216 같은 세로형에서 인체가 두 개로 나뉘는 문제 억제
+        "Kohya HRFix Integrated": {"args": [True]},
     }
 
 
@@ -1426,22 +1448,49 @@ def build_controlnet_unit(
     }
 
 
-def inject_controlnet(
-    payload: dict[str, Any], unit: dict[str, Any]
+def inject_alwayson_scripts(
+    payload: dict[str, Any],
+    controlnet_units: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """
-    페이로드에 ControlNet 유닛을 주입한 새 딕셔너리를 반환한다 (순수 함수).
+    페이로드의 alwayson_scripts 에 Forge 내장 기능 + ControlNet 유닛을 주입한다 (순수 함수).
 
     원본을 변경하지 않는다. 루프에서 페이로드를 재사용할 때 상태가 누적되는
     것을 막기 위한 계약이다.
 
-    참조 이미지나 spec 이 없을 때는 이 함수를 호출하지 않는다. 빈
-    alwayson_scripts 를 넣으면 WebUI 가 "ControlNet 비활성" 이 아니라
-    "인자 부족" 으로 해석할 수 있다.
+    FreeU / HRFix 는 항상 포함된다. ControlNet 은 유닛이 있을 때만 추가된다.
+
+    Multi-ControlNet 확장 구조:
+        controlnet_units = []
+
+        # IP-Adapter (참조 이미지 일관성)
+        if reference and cn_spec:
+            controlnet_units.append(build_controlnet_unit(reference, cn_spec, weight))
+
+        # Depth (향후 확장 예시 — depth_image 옵션 추가 시 여기에 append)
+        # if depth_reference and depth_spec:
+        #     controlnet_units.append(build_controlnet_unit(
+        #         depth_reference, depth_spec, depth_weight
+        #     ))
+
+        payload = inject_alwayson_scripts(payload, controlnet_units)
     """
     merged = dict(payload)
-    merged["alwayson_scripts"] = {"controlnet": {"args": [unit]}}
+    # FreeU / HRFix 는 항상 포함
+    scripts = _build_forge_scripts()
+    # ControlNet 유닛이 있을 때만 추가 (빈 args 는 WebUI 가 오해할 수 있음)
+    if controlnet_units:
+        scripts["controlnet"] = {"args": controlnet_units}
+    merged["alwayson_scripts"] = scripts
     return merged
+
+
+# 하위 호환 alias — 기존 --test 검증 코드가 inject_controlnet 을 직접 참조하므로 유지
+def inject_controlnet(
+    payload: dict[str, Any], unit: dict[str, Any]
+) -> dict[str, Any]:
+    """inject_alwayson_scripts 의 단일 유닛 래퍼. 하위 호환용."""
+    return inject_alwayson_scripts(payload, [unit])
 
 
 def match_model_name(
@@ -1783,8 +1832,20 @@ def run_batch(
                 negative_prompt=negative_prompt,
                 sampler_name=sampler_name,
             )
+            # ── Multi-ControlNet 조립 + Forge 내장 기능 주입 ──────
+            # OCP 원칙: 새 유닛(Depth 등)은 아래에 append 만 추가하면 됨
+            # FreeU / HRFix 는 유닛 유무와 무관하게 항상 포함됨
+            controlnet_units: list[dict[str, Any]] = []
+
+            # IP-Adapter: 참조 이미지 일관성
             if controlnet_unit is not None:
-                payload = inject_controlnet(payload, controlnet_unit)
+                controlnet_units.append(controlnet_unit)
+
+            # (향후 확장 예시)
+            # if depth_unit is not None:
+            #     controlnet_units.append(depth_unit)
+
+            payload = inject_alwayson_scripts(payload, controlnet_units)
 
             if mock:
                 png_bytes = make_dummy_png(prefix, code, width, entry, reference)
