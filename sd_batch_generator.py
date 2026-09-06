@@ -81,12 +81,14 @@ COMMON_NEG = (
 )
 
 POSE_DB_FILE = "pose_database.json"
-ASSETS_DIRNAME = "generated_assets"
+ASSETS_DIRNAME = "assets"
 CHARACTERS_DIRNAME = "characters"
+PROJECTS_DIRNAME = "projects"
 
 # ── 로스터 (Roster) 시스템 ──────────────────
 # 프로젝트 단위 (다크 제너럴스, 오토코노코 등)로 캐릭터와 에셋을 분리 관리.
-# OCP 원칙: 신규 로스터 추가 시 코드 수정 없이 폴더 생성만으로 자동 인식.
+# OCP 원칙: 신규 로스터 추가 시 projects/{name}/ 폴더 생성만으로 자동 인식.
+# 구조: projects/{roster}/characters/, projects/{roster}/assets/, projects/{roster}/references/
 ROSTER_ALIAS = {
     "dar": "dark_generals",
     "oto": "oto",
@@ -330,49 +332,50 @@ class RosterPathManager:
     def resolve_roster(self, name: str | None) -> RosterPaths:
         """
         로스터 이름을 실제 경로로 해석.
-        
+
         1. Alias 테이블 조회 (dar -> dark_generals)
         2. Alias에 없으면 그대로 사용 (xyz -> xyz)
-        3. characters_{roster}/ 형식으로 경로 구성
+        3. projects/{roster}/ 하위에 characters/, assets/, references/ 구성
         """
         # 1. 기본값 처리
         if name is None or name == "":
             name = ROSTER_ALIAS["default"]
-        
+
         # 2. Alias 테이블 조회
         roster_key = ROSTER_ALIAS.get(name, name)
-        
-        # 3. 경로 구성
-        characters_dir = self.base_dir / f"{CHARACTERS_DIRNAME}_{roster_key}"
-        assets_dir = self.base_dir / f"{ASSETS_DIRNAME}_{roster_key}"
-        references_dir = self.base_dir / REFERENCES_DIRNAME  # 공유
-        
+
+        # 3. 경로 구성 — projects/{roster}/ 하위
+        project_dir = self.base_dir / PROJECTS_DIRNAME / roster_key
+        characters_dir = project_dir / CHARACTERS_DIRNAME
+        assets_dir = project_dir / ASSETS_DIRNAME
+        references_dir = project_dir / REFERENCES_DIRNAME  # 작품별 참조 이미지
+
         return RosterPaths(
             roster_name=roster_key,
             characters_dir=characters_dir,
             assets_dir=assets_dir,
             references_dir=references_dir,
         )
-    
+
     def list_available_rosters(self) -> list[str]:
         """
-        현재 디렉터리에서 사용 가능한 로스터 목록 탐색.
-        
-        characters_*/ 패턴의 폴더를 찾아 로스터명 추출.
+        projects/ 하위에서 사용 가능한 로스터 목록 탐색.
+
+        projects/{roster}/characters/ 가 존재하는 것만 유효한 로스터로 인식.
         """
-        pattern = f"{CHARACTERS_DIRNAME}_*"
+        projects_dir = self.base_dir / PROJECTS_DIRNAME
+        if not projects_dir.is_dir():
+            return []
         found = []
-        for path in self.base_dir.glob(pattern):
-            if path.is_dir():
-                # "characters_dark_generals" -> "dark_generals"
-                roster_name = path.name[len(CHARACTERS_DIRNAME) + 1:]
-                found.append(roster_name)
+        for path in projects_dir.iterdir():
+            if path.is_dir() and (path / CHARACTERS_DIRNAME).is_dir():
+                found.append(path.name)
         return sorted(found)
-    
+
     def validate_roster(self, paths: RosterPaths) -> tuple[bool, str]:
         """
         로스터 경로 검증 및 안내 메시지 생성.
-        
+
         반환: (성공 여부, 에러 메시지 또는 빈 문자열)
         """
         ok, msg = paths.validate()
@@ -382,7 +385,7 @@ class RosterPathManager:
                 avail_list = ", ".join(available)
                 msg += f"\n\n사용 가능한 로스터: {avail_list}"
             else:
-                msg += f"\n\n{self.base_dir}에 characters_*/ 폴더가 없습니다."
+                msg += f"\n\n{self.base_dir / PROJECTS_DIRNAME} 에 로스터 폴더가 없습니다."
         return ok, msg
 
 
@@ -1261,9 +1264,8 @@ def load_reference(path: Path) -> ReferenceImage:
     )
 
 
-def find_reference_candidates(base_dir: Path, prefix: str) -> list[Path]:
+def find_reference_candidates(ref_dir: Path, prefix: str) -> list[Path]:
     """references/{prefix}.{ext} 를 우선순위 순서로 찾아 존재하는 것만 반환한다."""
-    ref_dir = base_dir / REFERENCES_DIRNAME
     if not ref_dir.is_dir():
         return []
     return [
@@ -1274,7 +1276,7 @@ def find_reference_candidates(base_dir: Path, prefix: str) -> list[Path]:
 
 
 def resolve_reference_image(
-    base_dir: Path,
+    ref_dir: Path,
     prefix: str,
     explicit_path: str | None = None,
     disabled: bool = False,
@@ -1296,7 +1298,7 @@ def resolve_reference_image(
     if explicit_path:
         path = Path(explicit_path).expanduser()
         if not path.is_absolute():
-            path = (base_dir / path).resolve()
+            path = (ref_dir / path).resolve()
         if path.is_dir():
             raise ConfigError(
                 f"--ref_image 에 디렉터리가 지정되었습니다: {path}",
@@ -1310,7 +1312,7 @@ def resolve_reference_image(
             )
         return load_reference(path)
 
-    candidates = find_reference_candidates(base_dir, prefix)
+    candidates = find_reference_candidates(ref_dir, prefix)
     if not candidates:
         return None
 
@@ -1644,14 +1646,16 @@ def filter_gender_tags(tags: Sequence[str]) -> tuple[list[str], list[str]]:
     return kept, removed
 
 
-def run_interrogate(base_dir: Path, image_path: str, model: str) -> int:
+def run_interrogate(image_path: str, model: str) -> int:
     """
     참조 이미지에서 태그를 역추출해 출력한다. 생성은 하지 않는다.
 
     Returns:
         종료 코드.
     """
-    reference = resolve_reference_image(base_dir, "_", explicit_path=image_path)
+    # --from_image는 roster와 무관하므로 현재 디렉터리를 ref_dir로 사용
+    ref_dir = Path.cwd()
+    reference = resolve_reference_image(ref_dir, "_", explicit_path=image_path)
     if reference is None:  # explicit_path 가 있으면 도달하지 않는 경로
         raise ConfigError(f"이미지를 찾을 수 없습니다: {image_path}")
 
@@ -2170,13 +2174,13 @@ def _temp_reference(extensions: Sequence[str] = (".png",)) -> Iterator[Path]:
 
     저장소에 테스트용 바이너리를 커밋하지 않기 위해 Pillow 로 즉석 생성한다.
     contextmanager 를 쓰면 검사 실패로 예외가 나도 임시 폴더가 정리된다.
+
+    반환: 참조 이미지가 담긴 디렉터리 (ref_dir로 사용)
     """
     tmp = Path(tempfile.mkdtemp(prefix="sdref_"))
     try:
-        refs = tmp / REFERENCES_DIRNAME
-        refs.mkdir()
         for ext in extensions:
-            Image.new("RGB", (64, 96), (128, 128, 200)).save(refs / f"t{ext}")
+            Image.new("RGB", (64, 96), (128, 128, 200)).save(tmp / f"t{ext}")
         yield tmp
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -2749,13 +2753,13 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
             print("[REF]  --no_ref 지정 - 참조 이미지 사용 안 함")
         elif args.ref_image:
             print(f"[REF]  {args.ref_image} (지정) weight {ref_weight}")
-        elif found := find_reference_candidates(base_dir, prefix):
+        elif found := find_reference_candidates(roster.references_dir, prefix):
             print(f"[REF]  {found[0].name} 발견 weight {ref_weight}")
         else:
-            print(f"[REF]  없음 ({REFERENCES_DIRNAME}/{prefix}.*) - 텍스트만 사용")
+            print(f"[REF]  없음 ({roster.references_dir}/{prefix}.*) - 텍스트만 사용")
     else:
         reference = resolve_reference_image(
-            base_dir, prefix, args.ref_image, disabled=args.no_ref
+            roster.references_dir, prefix, args.ref_image, disabled=args.no_ref
         )
         if reference is None:
             if not args.no_ref:
@@ -2874,7 +2878,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # 먼저 분기해 즉시 종료한다. prefix/char_prompt 도 요구하지 않는다.
     if args.from_image:
         try:
-            return run_interrogate(base_dir, args.from_image, args.interrogator)
+            return run_interrogate(args.from_image, args.interrogator)
         except ConfigError as e:
             print(f"[ERROR] {e}", file=sys.stderr)
             if e.hint:
