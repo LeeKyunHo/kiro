@@ -1,0 +1,7 @@
+{
+  "prefix": "har",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, warm amber eyes, healthy skin tone, (chestnut brown hair, high ponytail, messy bangs, hair clip:1.2), (large breasts, slender waist, soft curves:1.2), (school uniform, slightly unbuttoned white shirt, red necktie, loose beige cardigan, dark blue pleated skirt:1.2), bare legs",
+  "negative": "1boy, male, masculine, beard, mustache, flat chest, dark skin, glasses, heavy makeup, child, loli, animal ears, horns, sportswear, track uniform, uncensored, no censor, thin censorship",
+  "ref_weight": 0.68
+}

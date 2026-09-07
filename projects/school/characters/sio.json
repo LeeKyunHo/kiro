@@ -1,0 +1,7 @@
+{
+  "prefix": "sio",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, sharp ruby eyes, (raven black straight hair, twin tails, hime cut:1.2), (medium breasts, slim waist:1.15), (school uniform, neat white buttoned shirt, scarlet ribbon tie, fitted beige knit vest, navy pleated skirt:1.25), thin half-rim glasses",
+  "negative": "1boy, male, masculine, beard, mustache, flat chest, huge breasts, untidy clothes, scarf, sailor uniform, sailor collar, child, loli, animal ears, horns, uncensored, no censor, thin censorship",
+  "ref_weight": 0.7
+}

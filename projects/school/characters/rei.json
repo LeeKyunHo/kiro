@@ -1,0 +1,7 @@
+{
+  "prefix": "rei",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (mature female, voluptuous, very large breasts, heavy cleavage, narrow waist, wide hips:1.25), (dark purple hair, long wavy hair, deep violet tint, crimson eyes, mole under left eye:1.2), (tight white knit sweater dress, form-fitting dress, open white lab coat:1.2), bare collarbone",
+  "negative": "1boy, male, masculine, beard, mustache, flat chest, small breasts, school uniform, child, loli, animal ears, horns, wings, red background, red tint, wine color, uncensored, no censor, thin censorship",
+  "ref_weight": 0.7
+}

@@ -1,0 +1,7 @@
+{
+  "prefix": "mir",
+  "default_mode": "otokonoko",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, brat, mesugaki, young adult, mischievous amber eyes, single snaggletooth:1.1), (smug face:0.6), small breasts, (subtle bulge, tiny bulge under clothing:1.1), slender body, soft curves, (pastel pink hair, short spiky twintails, side ponytail:1.2), (oversized off-shoulder pastel hoodie, black crop top, mini pleated denim skirt:1.2), navel, choker, no glasses",
+  "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, mustache, facial hair, glasses, serious, animal ears, child, loli, chibi",
+  "ref_weight": 0.65
+}

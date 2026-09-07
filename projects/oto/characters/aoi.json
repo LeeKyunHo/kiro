@@ -1,0 +1,7 @@
+{
+  "prefix": "aoi",
+  "default_mode": "otokonoko",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, elegant, young adult, delicate feminine face, purple eyes:1.1), small breasts, (subtle bulge, tiny bulge under clothing:1.1), slender hourglass figure, soft curves, (light blue hair, long ponytail, red ribbon hair tie:1.2), (modified red and white miko priestess outfit, detached kimono sleeves, exposed shoulders, red hakama skirt:1.2), bare collarbone, no glasses",
+  "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, mustache, facial hair, glasses, animal ears, cat ears, animal tail, tan, child, loli, chibi",
+  "ref_weight": 0.68
+}

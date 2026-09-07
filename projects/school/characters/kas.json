@@ -1,0 +1,7 @@
+{
+  "prefix": "kas",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, 1girl, solo, (mature female, voluptuous, very large breasts, huge breasts, heavy cleavage, narrow waist, wide hips:1.2), (platinum blonde hair, long wavy hair, golden blonde, elegant parted bangs:1.2), purple eyes, school uniform, white collared shirt, fitted beige cardigan, navy pleated skirt, (black thighhighs, absolute territory, skintendation:1.2), no glasses",
+  "negative": "1boy, male, masculine, beard, mustache, flat chest, small breasts, gyaru, dark skin, child, loli, petite, animal ears, horns, uncensored, no censor, thin censorship",
+  "ref_weight": 0.7
+}
