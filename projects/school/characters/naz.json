@@ -1,7 +1,7 @@
 {
   "prefix": "naz",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, 1girl, solo, (youthful high school girl, slender delicate frame, slightly petite build, small breasts:1.15), (ash silver hair, soft lavender tint, layered medium length hair, hair tucked behind left ear:1.2), purple eyes, human ears, (three piercings on left ear, small silver stud earrings:1.1), school uniform, slightly oversized beige knit cardigan, unbuttoned top button of white shirt, navy pleated skirt, (black thighhighs, zettai ryouiki, subtle skintendation:1.15)",
-  "negative": "1boy, male, masculine, beard, mustache, large breasts, huge breasts, cleavage, mature face, gyaru, bright hair, short hair, bob cut, glasses, animal ears, horns, chibi, big head, deformed head, oversized head, tiny head, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (petite adult, delicate face, slender thin body, small breasts, proportional head:1.15), (raven black straight hair, very long hair down to waist, soft blunt bangs:1.2), droopy purple eyes, heavy-lidded eyes, glossy parted lips, (three ear piercings on one ear, silver ear studs:1.25), casual indoor outfit, oversized knit sweater, short skirt, (black thighhighs, zettai ryouiki:1.15), holding a small book",
+  "negative": "1boy, male, masculine, beard, mustache, child, loli, toddler, baby, large breasts, huge breasts, heavy cleavage, gyaru, bright hair, glasses, chibi, big head, deformed head, oversized head, tiny head, school uniform, sailor uniform, animal ears, horns, uncensored, no censor, thin censorship",
   "ref_weight": 0.65
 }

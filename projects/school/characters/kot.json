@@ -1,7 +1,7 @@
 {
   "prefix": "kot",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, blue eyes, single snaggletooth, (tanned skin, tan lines, bikini tan lines:1.15), (golden blonde bob cut, colorful hair clips:1.2), (huge breasts, heavy cleavage, petite waist:1.25), (school uniform, off-shoulder oversized beige cardigan, open white collared shirt, plaid mini skirt:1.25), bare shoulders, deep cleavage",
-  "negative": "1boy, male, masculine, beard, mustache, flat chest, serious face, glasses, lab coat, long skirt, child, loli, animal ears, horns, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (huge breasts, heavy cleavage, petite waist:1.2), blue eyes, single snaggletooth, (tanned skin, tan lines, bikini tan lines:1.15), (golden blonde bob cut, colorful hair clips:1.15), casual gyaru outfit, off-shoulder crop top, micro mini skirt, bare midriff",
+  "negative": "1boy, male, masculine, beard, mustache, flat chest, glasses, lab coat, child, loli, school uniform, sailor uniform, animal ears, horns, uncensored, no censor, thin censorship",
   "ref_weight": 0.65
 }
