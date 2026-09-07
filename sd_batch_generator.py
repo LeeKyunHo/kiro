@@ -68,7 +68,7 @@ MEMORY_URL = f"{API_HOST}/sdapi/v1/memory"
 MEMORY_TIMEOUT = 5
 GIB = 1024 ** 3
 
-SAMPLER_CANDIDATES = ("DPM++ 2M Karras", "DPM++ 2M", "Euler a")
+SAMPLER_CANDIDATES = ("DPM++ 2M SDE Karras", "DPM++ 2M Karras", "DPM++ 2M", "Euler a")
 
 SAMPLERS_TIMEOUT = 5
 TXT2IMG_TIMEOUT = 300
@@ -154,8 +154,8 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 
 # 실제 생성 파라미터
 IMAGE_SIZE = (832, 1216)
-STEPS = 25
-CFG_SCALE = 7
+STEPS = 18
+CFG_SCALE = 6.0
 LORA_STRING = ""  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
 WEBP_QUALITY = 90
 WEBP_METHOD = 6
