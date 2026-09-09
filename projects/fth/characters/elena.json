@@ -1,0 +1,7 @@
+{
+  "prefix": "elena",
+  "profile": "female",
+  "default_mode": "female",
+  "char_prompt": "silver long hair, sharp purple eyes, gothic aristocratic corset dress, ruffled mini skirt, lace-trimmed silk panties",
+  "custom_neg": "glasses, child"
+}

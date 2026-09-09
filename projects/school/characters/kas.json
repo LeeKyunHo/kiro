@@ -1,7 +1,7 @@
-{
+﻿{
   "prefix": "kas",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (mature female, voluptuous, very large breasts, huge breasts, heavy cleavage, narrow waist, wide hips:1.2), (platinum blonde wavy hair, long golden blonde hair:1.15), purple eyes, elegant office casual, fitted white blouse, tailored blazer, pencil skirt, (black thighhighs, absolute territory, skintendation:1.15)",
-  "negative": "1boy, male, masculine, beard, mustache, flat chest, small breasts, gyaru, dark skin, glasses, child, loli, petite, school uniform, sailor uniform, animal ears, horns, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (young adult, slender, medium breasts, natural cleavage, narrow waist, wide hips:1.15), (platinum blonde hair, side ponytail, hair over one shoulder:1.2), cool purple eyes, (shirogyaru:1.25), (fair skin, pale skin tone:1.2), (stylish pink cropped jacket, off-shoulder jacket:1.0), (white tube top:1.0), (black dolphin shorts:1.0), bare legs",
+  "negative": "tanned skin, dark skin, sun tan, tanlines, swimsuit, bikini, swimwear, monokini, flat chest, huge breasts, gigantic breasts, large breasts, skirt, pleated skirt, dress, maxi dress, long skirt, pants, jeans, leggings, thighhighs, stockings, socks, divine, holy, goddess, halo, frame, border, tattoo, body art",
   "ref_weight": 0.7
 }

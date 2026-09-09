@@ -1,7 +1,7 @@
-{
+﻿{
   "prefix": "sio",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (medium breasts, slim waist:1.15), sharp ruby eyes, (raven black straight hair, twin tails, hime cut:1.15), casual formal outfit, fitted white blouse, dark ribbon brooch, knit vest, short skirt, thin half-rim glasses, (sheer black thighhighs, skintendation:1.1)",
-  "negative": "1boy, male, masculine, beard, mustache, flat chest, huge breasts, untidy clothes, scarf, sailor uniform, school uniform, child, loli, animal ears, horns, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (medium breasts, slim waist:1.15), sharp ruby eyes, (raven black straight hair, twin tails, hime cut:1.15), thin half-rim glasses, (white cropped t-shirt, see-through fabric, visible black bra:1.0), (tight blue jeans, jeans unzipped, panties visible at waistband:1.1)",
+  "negative": "flat chest, huge breasts, dress, child, loli, uncensored, no censor, thin censorship",
   "ref_weight": 0.7
 }

@@ -1,7 +1,7 @@
-{
+﻿{
   "prefix": "har",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (large breasts, slender waist, soft curves:1.15), warm amber eyes, healthy skin tone, (chestnut brown hair, ponytail, hair clip:1.15), casual outfit, fitted white blouse, open beige jacket, short skirt, bare legs",
-  "negative": "1boy, male, masculine, beard, mustache, flat chest, dark skin, glasses, heavy makeup, child, loli, school uniform, sailor uniform, animal ears, horns, sportswear, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (large breasts, slender waist, soft curves:1.15), warm amber eyes, healthy skin tone, (dark chestnut brown hair, rich brown hair, ponytail, hair clip:1.25), (fitted white blouse:1.0), (beige jacket:1.0), (short skirt:1.0)",
+  "negative": "1boy, male, child, loli, uncensored, no censor, thin censorship, white hair, silver hair, blonde hair, platinum blonde, light hair",
   "ref_weight": 0.68
 }

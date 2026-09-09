@@ -1,0 +1,7 @@
+{
+  "prefix": "morgana",
+  "profile": "female",
+  "default_mode": "female",
+  "char_prompt": "platinum blonde braided hair, heavy eyelashes, revealing modified nun habit, high-slit pleated skirt, white silk thong",
+  "custom_neg": "flat chest, modest"
+}

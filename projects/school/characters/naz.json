@@ -1,7 +1,7 @@
 {
   "prefix": "naz",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (petite adult, delicate face, slender thin body, small breasts, proportional head:1.15), (raven black straight hair, very long hair down to waist, soft blunt bangs:1.2), droopy purple eyes, heavy-lidded eyes, glossy parted lips, (three ear piercings on one ear, silver ear studs:1.25), casual indoor outfit, oversized knit sweater, short skirt, (black thighhighs, zettai ryouiki:1.15), holding a small book",
-  "negative": "1boy, male, masculine, beard, mustache, child, loli, toddler, baby, large breasts, huge breasts, heavy cleavage, gyaru, bright hair, glasses, chibi, big head, deformed head, oversized head, tiny head, school uniform, sailor uniform, animal ears, horns, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, 1girl, solo, (petite adult, slender hourglass figure, narrow waist, subtle curves, small breasts, long slender legs, proportional head:1.2), (silver hair, very long straight hair down to waist, soft blunt bangs:1.2), droopy purple eyes, heavy-lidded eyes, glossy parted lips, (three ear piercings on one ear, silver ear studs:1.2), (fitted ribbed crop top, thin fabric:1.0), (tiny pleated skirt, loose waistband:1.0), (black thighhighs, zettai ryouiki:1.15)",
+  "negative": "1boy, male, child, loli, large breasts, huge breasts, dark hair, black hair, animal ears, cat ears, fox ears, dog ears, elf ears, pointy ears, uncensored, no censor, thin censorship",
   "ref_weight": 0.65
 }
