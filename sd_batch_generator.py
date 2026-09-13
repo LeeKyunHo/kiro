@@ -156,7 +156,7 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 IMAGE_SIZE = (832, 1216)
 STEPS = 24
 CFG_SCALE = 6.0
-LORA_STRING = "<lora:ratatatat74 style:0.8>"  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
+LORA_STRING = "<lora:ratatatat74 style:1>"  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
 WEBP_QUALITY = 90
 WEBP_METHOD = 6
 
@@ -1991,6 +1991,8 @@ def run_batch(
                 # 일반 LoRA 적용 (LORA_STRING이 설정되어 있으면 프롬프트 앞에 추가)
                 if LORA_STRING:
                     full_prompt = f"{LORA_STRING}, {full_prompt}"
+                    if code == targets[0]:  # 첫 번째 코드에서만 로그 출력
+                        print(f"[LORA] 전역 LoRA 적용: {LORA_STRING}")
             
             # 페이로드는 mock 에서도 조립한다. 조립 오류는 mock 에서 잡아야
             # 할 결함이므로 전송만 생략한다.
