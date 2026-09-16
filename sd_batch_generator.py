@@ -156,7 +156,7 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 IMAGE_SIZE = (832, 1216)
 STEPS = 24
 CFG_SCALE = 6.0
-LORA_STRING = "<lora:ratatatat74 style:1>"  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
+LORA_STRING = "<lora:ratatatat74 style:0.8>"  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
 WEBP_QUALITY = 90
 WEBP_METHOD = 6
 
