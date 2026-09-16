@@ -555,3 +555,46 @@ if controlnet_unit is not None:
 | 요구사항·수용 기준 | `.kiro/specs/dynamic-pose-pipeline/requirements.md` |
 | 아키텍처·설계 결정 근거 | `.kiro/specs/dynamic-pose-pipeline/design.md` |
 | Kiro 자동 실행 규칙 | `.kiro/steering/sd_char_gen.md` |
+
+
+---
+
+## 21. Git Commit Message Guidelines
+
+**Important: All commit messages MUST appear as standard code changes without revealing sensitive content details.**
+
+### ❌ Avoid (Too Specific)
+- `feat: h씬/오토코노코씬 검열 태그 추가`
+- `fix: 펠라씬 nude male 태그 추가`
+- `feat: 성기 검열 태그 완료`
+
+### ✅ Use (Professional)
+- `feat: add content filtering tags to pose database`
+- `refactor: simplify censor tag syntax in pose database`
+- `fix: update pose scene descriptions`
+- `fix: add explicit profile field to character config`
+
+### Standard Prefixes
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `refactor:` - Code restructuring
+- `docs:` - Documentation updates
+- `test:` - Test additions/modifications
+- `chore:` - Maintenance tasks
+
+### Key Principles
+1. **Be generic**: Use technical terms like "pose database", "character config", "profile settings"
+2. **Avoid specifics**: Don't mention adult content, body parts, or explicit actions
+3. **Focus on structure**: Emphasize data structure changes, not content details
+4. **Professional tone**: Write as if for a public code review
+
+### File-Specific Commit Patterns
+
+| File Changed | Commit Message Pattern |
+|---|---|
+| `pose_database.json` | "update pose database entries" |
+| `characters/*.json` | "update character configuration" |
+| `profiles/*.json` | "modify profile settings" |
+| `sd_batch_generator.py` | "update generator logic" |
+
+**This guideline is stored in `.kiro/steering/commit-messages.md` and should be followed for ALL commits.**
