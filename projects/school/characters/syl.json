@@ -1,0 +1,7 @@
+{
+  "prefix": "syl",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, (anime style:1.2), (1girl:1.2), solo, dark violet wavy long hair, blunt bangs, purple eyes, beauty mark under left eye, voluptuous curvy build, midnight blue off-shoulder silk blouse, black lace camisole, high-waist purple pleated miniskirt, ribbon choker",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, text, realistic, photorealistic, 3d render, hyperrealistic, 1boy, male, masculine, beard, mustache, facial hair, muscular, (headset:1.6), (headphones:1.6), (ear accessories:1.5), animal ears, cat ears, dog ears, fox ears, rabbit ears, bunny ears, kemonomimi, nekomimi, witch hat, wizard hat, hat, staff, wand, belt, potion vials, thick coat",
+  "ref_weight": 0.7
+}

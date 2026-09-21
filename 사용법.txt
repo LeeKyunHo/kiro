@@ -133,13 +133,25 @@
     Swap Location            CPU
     Clip skip                2
 
-  3-4. 모델 선택 — 놓치기 쉬움
+  3-4. 모델 선택 — 놓치기 쉬움 ★ 중요
 
     스크립트는 모델을 지정하지 않습니다.
-    WebUI 좌측 상단 Stable Diffusion checkpoint에서 직접 선택하세요.
+    WebUI 좌측 상단 Stable Diffusion checkpoint에서 반드시 선택하세요.
 
-    해상도: 832×1216 고정 (SDXL/Illustrious/Pony 계열)
-    SD1.5 쓰려면 sd_batch_generator.py에서 IMAGE_SIZE = (512, 768)로 수정
+    【현재 사용 모델】
+    Unholy Desire Mix Crimson v5.0 (NoobAI 베이스)
+    파일명: unholyDesireMixCrimson_v50.safetensors
+
+    【기술 규격】
+    - 베이스: NoobAI (SDXL 파생)
+    - 해상도: 832×1216 네이티브
+    - 특징: 밝고 화사한 애니메이션 스타일
+    - Danbooru 태그 최적화 (복잡한 POV, 감정, 검열 태그 정확)
+    - 오토코노코 표현 우수 (androgynous, flat chest, subtle bulge)
+    - CFG Scale: 5.0~7.0 권장 (7.0 초과 시 선화 태움 주의)
+
+    ★ SD1.5 비호환: 896×1280이나 512×768로 변경하려면
+      sd_batch_generator.py 내 IMAGE_SIZE 상수 수정 필요
 
 
 ==============================================================================

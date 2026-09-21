@@ -1,0 +1,7 @@
+{
+  "prefix": "syb",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, (anime style:1.2), (1girl:1.2), solo, (vibrant magenta pink messy ponytail:1.4), sharp turquoise eyes, matte black tactical sleeveless turtleneck vest, zipped neckline, black micro cargo wrap skirt, slender athletic figure, tactical holster belts on thigh",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, text, realistic, photorealistic, 3d render, hyperrealistic, (1boy:1.4), (male:1.4), (headset:1.6), (headphones:1.6), (ear accessories:1.5), animal ears, cat ears, dog ears, fox ears, bunny ears, kemonomimi, nekomimi, cyberpunk, glowing neon, mechanical parts, cyborg, (bulge:1.5), (penis:1.5), topless, undressed, naked",
+  "ref_weight": 0.7
+}

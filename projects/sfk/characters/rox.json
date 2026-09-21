@@ -1,0 +1,7 @@
+{
+  "prefix": "rox",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres, anime coloring, clean background, soft lighting BREAK 1girl, solo, (messy undercut hair, two-tone neon pink and black hair:1.2), magenta eyes, toned midriff, (mechanical prosthetic forearms:1.4), (cybernetic hands and wrists:1.3), (both arms mechanical:1.3), (normal human legs, human thighs:1.2), (orange ribbed crop tank top, black pleated micro skirt, thighhigh fishnets:1.2), (black lace bra and black panties worn underneath clothing:0.8)",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, dog ears, fox ears, bunny ears, beast ears, animal tail, kemonomimi, nekomimi, 1boy, male, masculine, beard, mustache, facial hair, muscular, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (headset:1.6), (headphones:1.6), (ear accessories:1.5), glasses, goggles, helmet, armor, (mechanical legs:1.6), (prosthetic legs:1.6), (robotic legs:1.5), (cybernetic legs:1.5), (mechanical thighs:1.5), (full body prosthetics:1.5), (cyborg body:1.4), realistic, photorealistic, 3d render, hyperrealistic, exposed bra, exposed underwear, visible bra, visible panties, clothes cutout, torn clothes",
+  "ref_weight": 0.7
+}

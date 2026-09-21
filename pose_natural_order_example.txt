@@ -1,0 +1,90 @@
+# 자연스러운 포즈 프롬프트 순서 예시
+
+## 원칙: SD가 가장 잘 이해하는 자연스러운 영문 순서
+
+1. 자세/위치 (lying on bed, standing, kneeling)
+2. 신체 배치 (legs spread, arched back, head tilted)
+3. 행위/액션 (missionary position, fellatio, fingering)
+4. 시점/앵글 (from side view, pov, third person)
+5. 파트너 (faceless male, masculine hands)
+6. 검열 태그 (censored, matte black censor...)
+7. 노출 상태 (topless, bare chest, uncensored breasts...)
+8. 의상 상태 (top riding up, skirt hiked, panties pulled aside)
+9. 표정/반응 (flushed face, heavy-lidded eyes, ahegao)
+10. 카메라/조명 (upper body, cowboy shot, soft lighting)
+
+---
+
+## 변경 전 (라벨 우선)
+
+"40": "lying on bed, legs spread wide raised, missionary position, from side view..."
+
+→ 첫 태그 없이 바로 자세부터 시작
+
+## 변경 후 (자연스러운 순서)
+
+"40": "lying on bed, legs spread wide raised, missionary position, from side view, faceless male partner, vaginal penetration, censored, (matte black censor:1.9), (painted black censorship:1.8), (solid black rubber censor:1.7), topless, bare chest, (uncensored breasts:1.5), (visible nipples:1.4), (exposed breasts:1.3), masculine hands pinning wrists, heavy-lidded pleasure eyes, flushed cheeks, panting lips parted, brows furrowed in ecstasy, bedroom setting, dim lighting, upper body to thighs"
+
+---
+
+## 더 나은 예시들
+
+### 일상 포즈 (감정)
+
+나쁨: "bashful blush, standing, red cheeks, averted gaze..."
+좋음: "standing, red cheeks, averted gaze, hands clasped in front, bashful shy expression, clean background, soft lighting, cowboy shot"
+
+→ 자세 → 시각적 요소 → 표정 이름 → 배경/조명 → 카메라
+
+### 일상 포즈 (상호작용)
+
+나쁨: "cheek stroke, pov, standing, large masculine hand..."
+좋음: "pov, standing, large masculine hand gently on cheek, eyes softly closed, leaning into hand, gentle intimate moment, clean background, soft lighting, cowboy shot"
+
+→ 시점 → 자세 → 행위 → 반응 → 분위기 → 배경/조명 → 카메라
+
+### H씬 (정상위)
+
+나쁨: "missionary position, lying on bed, legs spread..."
+좋음: "lying on bed, legs spread wide raised, missionary position, from side view, faceless male partner, vaginal penetration, censored, (matte black censor:1.9)..., topless, bare chest, (uncensored breasts:1.5)..., masculine hands pinning wrists, flushed face, heavy-lidded pleasure eyes, panting lips, bedroom setting, dim lighting, upper body to thighs"
+
+→ 자세 → 체위 → 시점 → 파트너 → 삽입 → 검열 → 노출 → 의상 → 표정 → 배경/조명 → 카메라
+
+### H씬 (펠라치오)
+
+나쁨: "fellatio, kneeling, from side view..."
+좋음: "kneeling, from side view, faceless male standing, mouth taking shaft, fellatio, censored, (matte black censor:1.9)..., topless, bare chest, (uncensored breasts:1.5)..., hands on masculine thighs, heavy-lidded submissive gaze looking up, flushed cheeks, saliva dripping, bedroom setting, soft lighting, upper body close-up"
+
+→ 자세 → 시점 → 파트너 배치 → 행위 → 행위 이름 → 검열 → 노출 → 손 위치 → 표정 → 배경/조명 → 카메라
+
+---
+
+## 장점
+
+1. **SD가 프롬프트를 앞에서부터 순차적으로 처리**
+   - 자세 먼저 → 몸 배치 → 행위 → 디테일
+   - 더 안정적이고 일관된 결과
+
+2. **영문 서술 순서와 일치**
+   - "She is lying on bed with legs spread in missionary position..."
+   - 자연스러운 문장 구조
+
+3. **가중치가 필요한 태그를 적절한 위치에**
+   - 검열/노출 태그는 중간에 (시각적으로 중요하지만 자세보다 후순위)
+   - 표정은 후반부 (디테일)
+
+4. **라벨 없이도 콘솔에서 구분 가능**
+   - 첫 2-3개 단어만 봐도 무슨 포즈인지 명확
+   - "lying on bed, legs spread..." → 알아볼 수 있음
+   - "bashful blush" 같은 인위적 라벨 불필요
+
+---
+
+## 전체 적용 시 변경할 부분
+
+1. emotions (00-20): 21개 포즈
+2. poses (21-37): 17개 포즈  
+3. h_scenes (40-75): 36개 포즈
+4. scenes_otokonoko (140-170): 31개 포즈
+
+총 105개 포즈 모두 자연스러운 순서로 재구성

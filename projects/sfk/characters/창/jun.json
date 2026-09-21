@@ -1,0 +1,7 @@
+{
+  "prefix": "jun",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, 1girl, solo, voluptuous mature korean woman, wavy long black hair, heavy-lidded sultry eyes, red lips, very large breasts, narrow waist, wide hips, voluptuous body, curvy, side-slit cyber cheongsam minidress, wide cleavage cutout, exposed collarbone, high waist garter straps, sheer thigh-high stockings, glowing neon red and black luxury silk texture",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, facial hair, muscular, animal ears, cat ears, beast ears, loose clothes, modest dress, full coat, pants, hourglass, sand timer, sandglass, clock, timepiece, holding object",
+  "ref_weight": 0.7
+}

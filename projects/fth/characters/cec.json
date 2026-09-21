@@ -1,0 +1,7 @@
+﻿{
+  "prefix": "cec",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres, anime coloring, clean background, soft lighting BREAK 1girl, solo, (platinum ash-blonde hair:1.2), (very long hair, waist-length low twin tails:1.3), delicate ribbon hair ties, vivid blue large eyes, slender petite build, (pastel sky blue off-shoulder frill dress, ribbon lace-up bodice, pleated skirt:1.3), (white lace bra and white panties worn underneath clothing:0.8), white knee socks",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, 1boy, male, masculine, beard, mustache, facial hair, short hair, medium hair, bob cut, shoulder length hair, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (headset:1.6), (headphones:1.6), headwear, tiara, crown, mature, heavy makeup, gloves, exposed bra, exposed underwear, visible bra, visible panties, clothes cutout, torn clothes",
+  "ref_weight": 0.7
+}

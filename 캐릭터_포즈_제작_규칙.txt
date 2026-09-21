@@ -1,6 +1,23 @@
 ================================================================================
   SD 배치 제너레이터 - 캐릭터 & 포즈 제작 규칙
+  Unholy Desire Mix Crimson v5.0 (NoobAI 베이스) 전용
 ================================================================================
+
+최종 업데이트: 2026년 9월 20일
+
+【주요 변경사항 R8.0】
+- 신규 공식 도입: BREAK 키워드 + NoobAI 품질 티어
+- 체크포인트 확정: Unholy Desire Mix Crimson v5.0 (NoobAI 베이스)
+- 검열 태그 표준화: Danbooru 표준 (black censor bar, censor bar:1.25)
+- 오토코노코 필수 태그: (subtle bulge, tiny bulge under clothing:1.1) 의무화
+- 모듈화 원칙 강화: 캐릭터는 외형만, 포즈는 표정/구도만
+- 금지 태그 명확화: 손 자세, 화각, 컷신 방지
+
+【이전 변경사항】
+- CLIP 토큰 최적 순서 도입: 모든 포즈를 자연스러운 영문 순서로 재구성
+- 첫 태그 라벨 강제 방식 완전 제거
+- H씬 프롬프트 표준화: 검열/노출/체액 태그 통일
+- 일상 포즈에 배경/조명 태그 추가
 
 이 문서는 sd_batch_generator.py에서 사용할 캐릭터 JSON과 pose_database.json
 포즈 프롬프트를 작성하는 규칙을 정리한 것입니다.
@@ -8,8 +25,10 @@
 외부 AI에게 캐릭터나 포즈를 만들어달라고 할 때 이 규칙을 제공하세요.
 
 ================================================================================
-  1. 캐릭터 JSON 제작 규칙
+  1. 캐릭터 JSON 제작 규칙 (신규 공식 R8.0)
 ================================================================================
+
+**★ Unholy Desire Mix Crimson v5.0 (NoobAI 베이스) 전용 공식 ★**
 
 위치: projects/{project_name}/characters/{prefix}.json
 
@@ -18,7 +37,7 @@
 --------------------------------------------------------------------------------
 
 {
-  "prefix": "jac",                    // 3-5글자 영문 소문자 (파일명 생성용)
+  "prefix": "mik",                    // 3-5글자 영문 소문자 (파일명 생성용)
   "default_mode": "otokonoko",        // "female" 또는 "otokonoko"
   "positive": "...",                  // 전체 프롬프트 (아래 규칙 참조)
   "negative": "...",                  // 네거티브 프롬프트 (아래 규칙 참조)
@@ -26,54 +45,117 @@
 }
 
 --------------------------------------------------------------------------------
-1.2 positive 프롬프트 작성 규칙
+1.2 positive 프롬프트 조립 공식 (4단계 레이어)
 --------------------------------------------------------------------------------
 
-**필수 태그 (앞에 위치):**
-- masterpiece, best quality, highly detailed
-- (1boy:1.3) 또는 (1girl:1.2) - 성별 명시, 가중치로 강조
-- solo
-- androgynous, feminine face (오토코노코인 경우)
+**★ 핵심: BREAK 키워드로 품질 티어와 캐릭터 본체 분리 ★**
 
-**외형 묘사 순서:**
-1. 얼굴/눈: soft pastel sakura pink short shaggy hair, innocent turquoise eyes
-2. 체형: slender waist, (small breasts, subtle breast shape, soft curves:1.1)
-3. 의상 (위→아래): 
-   - dark charcoal tactical crop vest, front zipper closed
-   - high-waisted pleated micro wrap skirt
-   - thigh holster strap
-4. 특이사항: (subtle bulge, tiny bulge under clothing:1.2) - 오토코노코만
+구조:
+```
+[1. 공통 품질 티어] BREAK [2. 성별/체형 기본 축], [3. 얼굴 및 신체 특징], [4. 기본 복장]
+```
 
-**필수 후미 태그:**
-- neutral calm expression
-- clean background, soft lighting
-- character portrait, cowboy shot
+**① [공통 품질 티어] (모든 캐릭터 동일 적용)**
 
-**주의사항:**
-- 가중치 사용: (태그:1.2), (여러, 태그, 나열:1.1)
-- 쉼표로 구분, 자연스러운 영문 순서
-- 1girl/1boy 외에 성별 태그 없음 (포즈에서 처리)
+NoobAI 아키텍처의 최고 화질 가중치를 타격하는 고정 문자열입니다.
+**맨 뒤에 반드시 BREAK를 붙입니다.**
+
+```
+masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres, anime coloring, clean background, soft lighting BREAK
+```
+
+**② [성별/체형 기본 축] (분기 선택)**
+
+**여성형 캐릭터:**
+```
+1girl, solo
+```
+
+**오토코노코 캐릭터:**
+```
+1boy, solo, androgynous, (otokonoko, femboy:1.2), delicate feminine face, slender build, flat chest
+```
+
+**③ [얼굴 및 신체 특징] (캐릭터 고유 속성)**
+
+헤어스타일, 눈 색상, 고유 종족/신체 특징을 **가중치(`:1.1~1.2`)와 함께 괄호로 묶어** 작성합니다.
+
+예시:
+```
+(silver hair, very long hair:1.2), purple eyes, large breasts
+(sky blue twin tails, waist length twintails:1.3), violet eyes, petite
+(mechanical forearms, robot arms from elbow:1.4), red eyes, small breasts
+```
+
+**④ [기본 복장]**
+
+항상 입고 있는 시그니처 의상을 명시합니다.
+**내의 색상도 반드시 포함 (006번 포즈에서 중요)**
+
+예시:
+```
+(black and white maid dress, long apron, white headdress:1.2), white lace bra, white panties
+white crop top, short pleated skirt, white lace bra, white panties, striped thighhigh socks
+black tank top, cargo pants, black bra, black panties
+```
 
 --------------------------------------------------------------------------------
-1.3 negative 프롬프트 작성 규칙
+1.3 negative 프롬프트 조립 공식 (3단계 방어선)
 --------------------------------------------------------------------------------
 
-**필수 품질 네거티브:**
-worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, 
-extra limbs, deformed, disfigured, watermark, text
+**구조:**
+```
+[1. 공통 기형/품질 방어선], [2. 성별 반전 방어선], [3. 캐릭터 고유 비선호 요소]
+```
 
-**성별 방지 (반대 성별 강하게):**
-- 여성 캐릭터: 1boy, male, masculine, beard, mustache, facial hair, muscular
-- 오토코노코: (1girl:1.4), (female:1.4), (female genitalia:1.3), (female anatomy:1.3)
+**① [공통 기형/품질 방어선] (기본 탑재)**
 
-**체형 방지:**
-- 여성: flat chest (원치 않는 경우만)
-- 오토코노코: (large breasts, huge breasts, heavy cleavage:1.3), hanging breasts
+```
+worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text
+```
 
-**기타:**
-- 2boys, multiple characters (중복 방지)
-- visible penis, large penis, erection, testicles (일상 포즈 방지)
-- 프로젝트별 특수 의상 방지 (cyberpunk, french maid dress 등)
+**동물귀 차단 (일반 인간형 캐릭터):**
+```
+animal ears, cat ears, fox ears, dog ears, beast ears, animal tail
+```
+
+**② [성별 반전 방어선] (성별 축에 따라 선택)**
+
+**여성형 캐릭터: 남성형 신체 및 수염 차단**
+```
+1boy, male, masculine, beard, mustache, facial hair
+```
+
+**오토코노코 캐릭터: 여캐화 및 다인화 원천 차단**
+```
+2boys, multiple characters, clone, duplicate, 1girl, female, breasts, large breasts, heavy cleavage, female anatomy, female genitalia, vagina, muscular, manly, beard, mustache, facial hair, visible penis, large penis, erection, testicles
+```
+
+**⚠️ 주의 (상충 방지):**  
+오토코노코는 포지티브에 `delicate feminine face`가 들어가므로,  
+네거티브에 단독 단어인 `feminine`을 넣으면 모순이 발생합니다.
+
+**③ [캐릭터 고유 비선호 요소]**
+
+**액체/페인트 블리딩 방지 (필수):**
+```
+paint, body paint, liquid, splatter, stains, smudge, blood, colored skin
+```
+
+**컷신/패널 레이아웃 방지 (필수):**
+```
+(multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4)
+```
+
+**의상 중복 방지:**
+```
+(duplicate clothing:1.4), (same pattern clothing:1.3), (clothing repetition:1.3)
+```
+
+**원치 않는 머리색 차단 (예: 하늘색 머리 캐릭터):**
+```
+(black hair:1.5), (dark hair:1.4), (red hair:1.5), (pink hair:1.4)
+```
 
 --------------------------------------------------------------------------------
 1.4 default_mode 선택
@@ -89,18 +171,29 @@ extra limbs, deformed, disfigured, watermark, text
 ================================================================================
 
 --------------------------------------------------------------------------------
-2.1 기본 원칙
+2.1 기본 원칙 (2026.09.20 업데이트)
 --------------------------------------------------------------------------------
 
-1. **첫 태그 = 라벨**: 쉼표 앞의 첫 태그가 콘솔 출력 라벨이 됨
-   ✅ "bashful blush, standing, red cheeks, ..."  → 라벨: bashful blush
-   ❌ "standing, red cheeks, bashful blush, ..."  → 라벨: standing (구별 불가)
+1. **CLIP 토큰 최적 순서**: SD가 자연스럽게 처리하는 순서로 프롬프트 작성
+   
+   [자세/체위] → [시점/앵글] → [파트너] → [행위/삽입] → [검열] → 
+   [노출/의상] → [체액] → [표정/반응] → [배경/조명] → [카메라 샷]
 
-2. **성별 태그 금지**: 1girl, 1boy는 프로필에서 처리, 포즈에 넣지 말 것
+   ✅ "lying on bed, legs spread, missionary position, from side view, faceless male above..."
+   ❌ "missionary position, lying on bed, legs spread..." (순서 부자연스러움)
 
-3. **카메라 구도 명시**: cowboy shot, upper body, mid-shot, close-up 등
+2. **라벨 강제 금지**: 첫 태그를 라벨용으로 억지로 넣지 말 것
+   - 자연스러운 순서가 우선
+   - 첫 2-3개 단어만으로도 포즈 구별 가능
+   ✅ "standing, red cheeks, averted gaze, hands clasped..." 
+   ❌ "bashful blush, standing, red cheeks..." (라벨 강제)
 
-4. **코드 번호 규칙**:
+3. **성별 태그 금지**: 1girl, 1boy는 캐릭터 JSON에서 처리, 포즈에 넣지 말 것
+
+4. **카메라 구도 명시**: 프롬프트 마지막에 명시
+   - cowboy shot, upper body, mid-shot, close-up 등
+
+5. **코드 번호 규칙**:
    - 문자열로 작성: "00", "07", "145"
    - 정수로 해석되어 숫자 순서로 정렬됨
    - 결번 허용 (0, 5, 7, 42 이런 식도 가능)
@@ -111,51 +204,104 @@ extra limbs, deformed, disfigured, watermark, text
 
 **감정 포즈 (00-19번):**
 
-구조: [표정 라벨], [자세], [세부 묘사], [카메라]
+구조: [자세], [시각적 요소], [표정/감정 설명], [배경/조명], [카메라]
 
 예시:
-"00": "neutral face, standing, looking at viewer, relaxed arms at sides, cowboy shot"
-"07": "bashful blush, standing, red cheeks, averted gaze, hands clasped in front, cowboy shot"
+"00": "standing, looking at viewer, neutral expression, relaxed arms at sides, calm face, clean background, soft lighting, cowboy shot"
+"07": "standing, red cheeks, averted gaze, hands clasped in front, bashful shy blush, timid expression, clean background, soft lighting, cowboy shot"
+
+**원칙:**
+- 자세(standing, sitting) 가장 먼저
+- 시각적 요소(눈, 얼굴, 손, 자세) 그 다음
+- 감정 설명어는 자연스러운 위치에
+- 배경/조명 추가 (clean background, soft lighting)
+- 카메라 샷으로 마무리
 
 **상호작용 포즈 (21-37번):**
 
+구조: [시점], [자세], [파트너 행동], [캐릭터 반응], [분위기], [배경/조명], [카메라]
+
 필수 요소:
-- pov (1인칭) 또는 third person (3인칭) 명시
+- 시점: pov (1인칭) 또는 third person/from side view (3인칭) 명시
 - 남성 손/인물 묘사: large masculine hand, faceless male, nude male torso
 - 접촉 부위: on cheek, groping breast, on waist
 - 캐릭터 반응: flushed face, eyes closed, leaning into touch
+- 분위기 설명: gentle touch, tender moment, intimate touching
 
 예시:
-"21": "cheek stroke, pov, standing, large masculine hand gently on cheek, eyes softly closed, leaning into hand, cowboy shot"
+"21": "pov, standing, large masculine hand gently on cheek, eyes softly closed, leaning into hand, gentle touch, tender moment, clean background, soft lighting, cowboy shot"
+"30": "standing, side view from third person, top pulled aside exposing bra or underwear, faceless male standing beside character, male hand slipped under top from side, character flushed face, biting lip, knees pressed together, one hand weakly gripping male wrist, surprised overwhelmed expression, groped from side, intimate touching, clean background, soft lighting, side angle cowboy shot"
 
 --------------------------------------------------------------------------------
-2.3 H씬 포즈 작성 규칙 (h_scenes, scenes_otokonoko)
+2.3 H씬 포즈 작성 규칙 (h_scenes, scenes_otokonoko) - 2026.09.20 업데이트
 --------------------------------------------------------------------------------
 
-**필수 태그 순서:**
+**CLIP 토큰 최적 순서 (필수):**
 
-1. **자세**: lying on back, on all fours, straddling seated
-2. **행위**: missionary position, doggystyle, fellatio, anal penetration
-3. **검열**: censored, (solid black censor on genitals:1.6), (black box on groin:1.5), 
-            (opaque censoring lower body:1.5), (completely blacked out crotch:1.4), 
-            (pitch black covering genital area:1.4), no genital visibility
-4. **가슴 노출**: bare breasts, exposed chest, uncensored breasts
-5. **의상 상태**: top pushed up, skirt hiked, panties pulled aside
-6. **파트너**: masculine hands, pov, faceless male
-7. **표정**: flushed face, heavy-lidded eyes, gasping lips
-8. **카메라**: upper body, mid-shot, close-up
+1. **자세/체위**: lying on bed, on all fours, straddling seated, kneeling
+2. **신체 배치**: legs spread wide, arched back, knees folded to chest
+3. **체위명**: missionary position, doggystyle position, cowgirl position
+4. **시점/앵글**: from side view, from behind angle, pov
+5. **파트너**: faceless male above, faceless male behind, faceless male below
+6. **행위/삽입**: vaginal penetration, anal penetration, fellatio oral sex
+7. **검열 (필수)**: censored, (matte black censor:1.9), (painted black censorship:1.8), 
+                 (solid black rubber censor:1.7)
+8. **노출 (필수)**: topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), 
+                 (exposed breasts:1.3)
+9. **의상 상태**: top riding up, skirt hiked, panties pulled aside/off
+10. **체액** (질내사정씬): (thick cum covering genitals:1.7), (excessive cum:1.4), 
+                        (huge cumshot:1.3), (cum overflowing:1.3)
+11. **파트너 행동**: masculine hands gripping hips, masculine hands pinning wrists
+12. **표정/반응**: flushed cheeks, heavy-lidded pleasure eyes, ahegao, panting lips
+13. **카메라 샷**: upper body, mid-shot, upper body close-up
+
+**예시 (정상위):**
+
+"40": "lying on bed, legs spread wide raised, missionary position, from side view, 
+       faceless male partner above, vaginal penetration, 
+       censored, (matte black censor:1.9), (painted black censorship:1.8), (solid black rubber censor:1.7), 
+       topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), (exposed breasts:1.3), 
+       masculine hands pinning wrists above head, 
+       flushed cheeks, heavy-lidded pleasure eyes, panting lips parted, brows furrowed in ecstasy, 
+       upper body to thighs"
+
+**예시 (후배위):**
+
+"43": "on all fours, arched back, doggystyle position, from side view, 
+       faceless male behind, vaginal penetration from behind, 
+       censored, (matte black censor:1.9), (painted black censorship:1.8), (solid black rubber censor:1.7), 
+       topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), (exposed breasts:1.3), 
+       masculine hands gripping hips hard, 
+       looking back over shoulder, pleasure-dazed expression, mouth open panting, flushed cheeks, 
+       thighs focus"
+
+**예시 (펠라치오):**
+
+"58": "kneeling, from side view, faceless male standing, 
+       fellatio oral sex, mouth wide open taking masculine shaft, own hands on shaft, 
+       censored, (matte black censor:1.9), (painted black censorship:1.8), (solid black rubber censor:1.7), 
+       topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), (exposed breasts:1.3), 
+       heavy-lidded submissive pleasure gaze looking up, flushed cheeks, saliva dripping, 
+       upper body close-up"
 
 **h_scenes (40-75번, 여성):**
 - vaginal penetration 명시
-- missionary, doggystyle, cowgirl, mating press, masturbation 등
+- missionary, doggystyle, cowgirl, mating press, fingering, fellatio 등
 
 **scenes_otokonoko (140-170번, 오토코노코):**
 - anal penetration 명시 (절대 vaginal 쓰면 안 됨!)
-- anal missionary, anal doggystyle, anal cowgirl, anal fingering 등
-- nude male, naked male torso, bare male groin (남성 명시)
+- anal missionary, anal doggystyle, anal cowgirl, anal fingering, handjob 등
+- (completely nude lower body:1.4), (naked:1.3), skirt removed, panties off 추가
 
-**검열 규칙:**
+**중요:**
+- 체위명에 "position" 붙이기 (missionary position, cowgirl position)
+- 파트너 위치 명확히 (above, behind, below, standing, seated)
+- `topless, bare chest` → `topless bare chest` (단일화)
+- 검열과 노출 태그는 항상 이 순서로
+
+**검열 규칙 (확대 적용):**
 - 하반신만 검열: on genitals, on groin, lower body, crotch, genital area
+- **검열 확대**: (oversized censor bar:1.3), (wide coverage censoring:1.3) ← 빈틈 방지
 - 가슴은 노출: bare breasts, exposed chest, uncensored breasts
 - 검은 박스로 완전 차단: solid black, black box, opaque, pitch black, no visibility
 
@@ -173,15 +319,22 @@ extra limbs, deformed, disfigured, watermark, text
 → 오토코노코는 3인칭으로 해야 남성기가 "둥둥 떠있는" 문제 방지!
 
 --------------------------------------------------------------------------------
-2.4 검열 태그 상세
+2.4 검열 태그 상세 (2026.09.20 업데이트)
 --------------------------------------------------------------------------------
 
 **포지티브 (모든 H씬 포즈에 포함):**
 
-censored, (solid black censor on genitals:1.6), (black box on groin:1.5), 
-(opaque censoring lower body:1.5), (completely blacked out crotch:1.4), 
-(pitch black covering genital area:1.4), no genital visibility, 
-bare breasts, exposed chest, uncensored breasts
+censored, (matte black censor:1.9), (painted black censorship:1.8), 
+(solid black rubber censor:1.7)
+
+topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), 
+(exposed breasts:1.3)
+
+**질내사정/사정 씬 추가 태그:**
+
+(thick cum covering genitals:1.7), (semen obscuring penetration:1.6), 
+(excessive cum:1.4), (huge cumshot:1.3), (cum overflowing:1.3), 
+cum on stomach/thighs/back, cum dripping
 
 **네거티브 (_profiles에서 전역 적용):**
 
@@ -190,8 +343,13 @@ censored bar, black bar, mosaic, pixelated, transparent censor,
 semi-transparent, see-through censor, censored breasts, covered breasts, 
 censored chest, black bar on breasts
 
-→ 막대/선/모자이크 방지, 검은 박스만 허용
-→ 가슴 검열 방지
+→ 막대/선/모자이크 방지, 무광 검정 박스만 허용
+→ 가슴 검열 절대 방지
+
+**변경 사항:**
+- 검은 박스 스타일로 통일 (matte black, painted black, solid black rubber)
+- "solid black censor on genitals" 같은 긴 표현 → 간결하게 변경
+- 가슴은 항상 노출 (topless bare chest, uncensored breasts)
 
 --------------------------------------------------------------------------------
 2.5 의상 상태 표현
@@ -371,30 +529,35 @@ male_otokonoko:  오토코노코 (여성스러운 남성)
 □ negative: (female genitalia:1.3) 포함 (오토코노코만)
 
 **포즈 프롬프트 제작 시:**
-□ 첫 태그가 구별되는 라벨
+□ 첫 태그가 자연스러운 순서 (자세/체위 먼저)
+□ 라벨 강제 없음 (bashful blush, cheek stroke 같은 라벨 제거)
 □ 성별 태그(1girl/1boy) 없음
+□ H씬: CLIP 토큰 최적 순서 준수
 □ H씬: anal penetration (오토코노코) / vaginal penetration (여성)
-□ H씨: 검열 태그 6개 라인 포함
-□ H씬: bare breasts, uncensored breasts 포함
-□ 펠라(오토코노코): from side view, third person
+□ H씬: 검열 태그 3개 라인 포함 (matte black, painted black, solid black rubber)
+□ H씬: topless bare chest, uncensored breasts 포함
+□ H씬: 체위명에 "position" 붙이기
+□ H씬: 파트너 위치 명확히 (above, behind, below)
+□ 일상 포즈: clean background, soft lighting 포함
 □ 카메라 구도 명시 (cowboy shot, upper body 등)
 
 **검열 확인:**
-□ 하반신만: on genitals, on groin, lower body
-□ 검은 박스: solid black, black box, pitch black
-□ 가슴 노출: bare breasts, uncensored breasts
+□ 검열 태그: (matte black censor:1.9), (painted black censorship:1.8), (solid black rubber censor:1.7)
+□ 가슴 노출: topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), (exposed breasts:1.3)
 □ 네거티브: bar censor, mosaic, censored breasts 방지
 
 ================================================================================
-  6. 금지 사항
+  6. 금지 사항 (2026.09.20 업데이트)
 ================================================================================
 
 ❌ 포즈에 1girl, 1boy 태그 넣기
+❌ 포즈 첫 태그를 라벨용으로 강제하기 (bashful blush, cheek stroke 등)
 ❌ 오토코노코에 vaginal penetration 사용
-❌ 오토코노코 펠라에 POV 사용 (3인칭 측면만!)
-❌ 검열 태그에 bar censor, mosaic 사용
+❌ 검열 태그에 bar censor, mosaic 사용 (matte black만 허용)
 ❌ 가슴에 검열 적용 (censored breasts 금지)
-❌ 포즈 첫 태그가 standing, sitting 같은 일반 동작
+❌ H씬에서 CLIP 최적 순서 무시하기
+❌ 체위명에 "position" 빼먹기 (missionary → missionary position)
+❌ 파트너 위치 불명확 (faceless male → faceless male above/behind/below)
 ❌ 캐릭터 JSON에 한글 prefix 사용
 
 ================================================================================
@@ -417,3 +580,213 @@ male_otokonoko:  오토코노코 (여성스러운 남성)
 
 이 규칙서를 외부 AI에게 제공하면 일관된 형식의 캐릭터와 포즈를 
 생성할 수 있습니다.
+
+
+================================================================================
+  8. 모듈화 원칙 및 검열 확대 (2026.09 업데이트)
+================================================================================
+
+--------------------------------------------------------------------------------
+8.1 모듈화 원칙: 캐릭터와 포즈 영역 분리
+--------------------------------------------------------------------------------
+
+**문제:**
+캐릭터 JSON에 표정/조명/구도가 있으면 포즈 DB의 설정과 충돌함
+
+**해결: 완전 분리**
+
+캐릭터 JSON (외형만):
+✅ 머리색, 눈색, 체형
+✅ 의상 (상의, 하의, 액세서리)
+✅ 성별 태그: (1boy:1.3), solo
+✅ 오토코노코 특징: (subtle bulge:1.2)
+
+❌ 표정: neutral expression, smirk, smile
+❌ 조명: soft lighting, dramatic lighting
+❌ 구도: cowboy shot, close-up
+❌ 배경: clean background
+
+포즈 DB (표정/구도만):
+✅ 표정: neutral face, smirk, bashful blush
+✅ 자세: standing, sitting, lying on back
+✅ 구도: cowboy shot, upper body, mid-shot
+✅ 조명: soft lighting (필요 시)
+✅ 배경: clean background
+
+**예시 (잭 - 오토코노코):**
+
+```json
+{
+  "prefix": "jac",
+  "positive": "masterpiece, best quality, highly detailed, (1boy:1.3), solo, 
+               soft pastel sakura pink short shaggy hair, innocent turquoise eyes, 
+               dark charcoal tactical crop vest, slender waist, 
+               (small breasts, subtle breast shape:1.1), 
+               (subtle bulge, tiny bulge under clothing:1.2), 
+               high-waisted pleated micro wrap skirt",
+  "negative": "..."
+}
+```
+
+→ 표정/구도 제거됨. 포즈 DB에서 처리.
+
+--------------------------------------------------------------------------------
+8.2 검열 영역 확대 (빈틈 방지)
+--------------------------------------------------------------------------------
+
+**문제:**
+검열이 정확히 성기 부위만 가려서 경계선이 보임
+
+**해결: 과장 확대**
+
+```
+censored, 
+(black censor only on crotch area:1.7), 
+(censor limited to groin:1.6), 
+(lower body black box:1.5), 
+(genitals completely covered:1.5), 
+(groin obscured:1.4), 
+(oversized censor bar:1.3), ← 새로 추가
+(wide coverage censoring:1.3), ← 새로 추가
+topless, bare chest, 
+(uncensored breasts:1.5), 
+(visible nipples:1.4), 
+(exposed breasts:1.3)
+```
+
+**새 태그 설명:**
+- `(oversized censor bar:1.3)` - 과장되게 큰 검열 박스
+- `(wide coverage censoring:1.3)` - 넓은 영역 덮기
+
+→ 검열 박스가 필요 이상으로 커져서 빈틈 없음
+
+--------------------------------------------------------------------------------
+8.3 체크리스트 업데이트 (2026.09.20)
+--------------------------------------------------------------------------------
+
+**캐릭터 JSON 제작 시:**
+□ prefix 3-5글자 영문 소문자
+□ default_mode: "otokonoko" (오토코노코인 경우)
+□ positive: (1boy:1.3) 또는 (1girl:1.2) 포함
+□ positive: (subtle bulge:1.2) 포함 (오토코노코만)
+□ ❌ 표정, 조명, 구도, 배경 태그 제거 (포즈 DB에서 처리)
+□ negative: 반대 성별 강하게 방지 (1.4 가중치)
+
+**포즈 프롬프트 제작 시:**
+□ CLIP 토큰 최적 순서 준수
+□ 라벨 강제 없음 (자연스러운 순서 우선)
+□ 표정/자세/구도 명시
+□ H씬: 체위명 + "position" (missionary position)
+□ H씬: (matte black censor:1.9), (painted black censorship:1.8), (solid black rubber censor:1.7)
+□ H씬: topless bare chest, (uncensored breasts:1.5), (visible nipples:1.4), (exposed breasts:1.3)
+□ 일상 포즈: clean background, soft lighting 추가
+
+================================================================================
+
+
+================================================================================
+  9. 신규 공식 적용 체크리스트 (R8.0)
+================================================================================
+
+**캐릭터 JSON 작성 시 필수 확인:**
+
+□ ✅ 공통 품질 티어 포함 (`masterpiece, best quality, good quality, amazing quality...`)
+□ ✅ `BREAK` 키워드 포함 (품질 티어와 캐릭터 본체 분리)
+□ ✅ 성별/체형 기본 축 명시 (`1girl, solo` 또는 `1boy, solo, androgynous...`)
+□ ✅ 머리스타일 + 색상 가중치 (`[헤어스타일, 색상:1.2]`)
+□ ✅ 눈 색상 명시
+□ ✅ 기본 복장 명시 (브라/팬티 색상 포함)
+□ ✅ **오토코노코 필수**: `(subtle bulge, tiny bulge under clothing:1.1)` 포함
+□ ❌ 화각 태그 없음 (`cowboy shot`, `upper body`, `character portrait` 등)
+□ ❌ 표정 태그 없음 (`neutral expression`, `smile` 등)
+□ ❌ 손 자세 태그 없음 (`empty hands`, `relaxed open palms` 등)
+
+**negative 프롬프트 필수 확인:**
+
+□ ✅ 공통 기형/품질 방어선 포함
+□ ✅ 성별 반전 방어선 포함
+□ ✅ 액체/페인트 블리딩 방지 포함 (`paint, body paint, liquid...`)
+□ ✅ 컷신 방지 포함 (`(multiple views:1.5), (comic:1.5), (panel layout:1.4)...`)
+□ ❌ 자세 억제 태그 없음 (`squatting`, `crouching` 등)
+□ ❌ 의상 억제 태그 없음 (`panties`, `bottomless` 등)
+□ ❌ 발 관련 태그 없음 (`bare feet`, `toes` 등)
+
+**파라미터 확인:**
+
+□ ✅ `ref_weight`: 0.65~0.70 범위
+□ ✅ `default_mode`: `"female"` 또는 `"otokonoko"`
+□ ✅ CFG Scale: 5.0 (sd_batch_generator.py에서 설정)
+□ ✅ IMAGE_SIZE: (832, 1216) (sd_batch_generator.py에서 설정)
+
+**검증:**
+
+□ ✅ `python sd_batch_generator.py --test` 실행
+□ ✅ `[PASS]` 45개 이상 확인
+□ ✅ 경고 메시지 없음 확인
+
+================================================================================
+  10. 금지 사항 (R8.0 업데이트)
+================================================================================
+
+❌ 포즈에 1girl, 1boy 태그 넣기
+❌ 포즈 첫 태그를 라벨용으로 강제하기 (bashful blush, cheek stroke 등)
+❌ 캐릭터 JSON에 표정/손 자세/화각/구도 태그 넣기
+❌ 캐릭터 JSON에서 BREAK 키워드 빼먹기
+❌ 오토코노코 캐릭터에서 (subtle bulge:1.1) 빼먹기
+❌ 오토코노코에 vaginal penetration 사용
+❌ negative에 자세/의상/발 억제 태그 넣기
+❌ negative에서 컷신 방지 태그 빼먹기
+❌ H씬에서 CLIP 최적 순서 무시하기
+❌ 체위명에 "position" 빼먹기 (missionary → missionary position)
+❌ 파트너 위치 불명확 (faceless male → faceless male above/behind/below)
+❌ 캐릭터 JSON에 한글 prefix 사용
+❌ CFG Scale 7.0 이상 사용 (피부 액체 번짐 발생)
+
+================================================================================
+  11. 트러블슈팅 (신규 공식 적용 후)
+================================================================================
+
+**문제: H씬에서 표정이 안 바뀜**
+**원인:** positive에 `neutral expression` 같은 표정 태그가 고정되어 있음  
+**해결:** 캐릭터 JSON에서 모든 표정 태그 제거
+
+**문제: 키스 씬에서 몸이 찌그러짐**
+**원인:** positive에 `cowboy shot`이나 `upper body` 같은 화각 태그가 있음  
+**해결:** 모든 화각/카메라 태그 제거
+
+**문제: 000번(일상 스탠딩)에서 성기 노출**
+**원인:** positive에 `(tiny penis)`, `erection` 같은 태그가 있음  
+**해결:** 모든 성기/체위 태그 제거
+
+**문제: 오토코노코가 여자로 나옴**
+**원인 1:** positive에 `1boy, androgynous, flat chest`가 누락됨  
+**원인 2:** positive에 `(subtle bulge:1.1)` 누락됨  
+**원인 3:** negative에 `1girl, female, breasts` 차단이 누락됨  
+**해결:** 오토코노코 템플릿 그대로 사용
+
+**문제: 피부에 검은/붉은 액체가 묻어남**
+**원인 1:** CFG Scale이 7.0 이상  
+**원인 2:** negative에 `paint, body paint, liquid` 차단이 없음  
+**해결 1:** `sd_batch_generator.py`에서 `CFG_SCALE = 5.0` 설정  
+**해결 2:** negative에 액체 방지 태그 추가
+
+**문제: 컷신/패널처럼 여러 장면이 한 이미지에**
+**원인:** negative에 컷신 방지 태그가 없음  
+**해결:** negative에 `(multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (split screen:1.4)` 추가
+
+**문제: 손을 앞으로 모으는 자세가 계속 나옴**
+**원인:** positive에 `empty hands, relaxed open palms, fingers relaxed` 같은 손 자세 태그가 있음  
+**해결:** 모든 손 자세 강제 태그 제거
+
+**문제: --test에서 "모순 태그" 경고**
+**원인:** positive와 negative에 유사 단어가 충돌  
+**예:** positive에 `delicate feminine face`, negative에 `feminine`  
+**해결:** negative에서 복합어에 포함된 단독 단어 제거
+
+**문제: 머리색이 계속 바뀜**
+**원인:** 머리색 가중치가 낮음 또는 반복이 부족  
+**해결:** 머리색을 2-3번 반복하고 가중치 1.3-1.4 적용  
+**예:** `(sky blue hair:1.4), (sky blue twin tails:1.4), (light blue hair:1.3)`
+
+================================================================================
+

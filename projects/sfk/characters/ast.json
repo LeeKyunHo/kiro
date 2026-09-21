@@ -1,0 +1,7 @@
+{
+  "prefix": "ast",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres, anime coloring, clean background, soft lighting BREAK 1girl, solo, (cybernetic silver bob hair, glowing cyan inner highlights:1.2), amber glowing eyes, pale synth skin, sleek slender build, (white cropped techwear top, neon teal accents, white pleated cyber miniskirt, thighhigh socks:1.2), (white bra and white panties worn underneath clothing:0.8)",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, dog ears, fox ears, bunny ears, beast ears, animal tail, kemonomimi, nekomimi, 1boy, male, masculine, beard, mustache, facial hair, muscular, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (headset:1.6), (headphones:1.6), (ear accessories:1.5), plugsuit, jumpsuit, bodysuit, helmet, mask, robotic face, mechanical face, armor, realistic, photorealistic, 3d render, hyperrealistic, exposed bra, exposed underwear, visible bra, visible panties, clothes cutout, torn clothes",
+  "ref_weight": 0.7
+}

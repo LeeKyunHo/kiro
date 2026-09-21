@@ -1,0 +1,7 @@
+{
+  "prefix": "mir",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, 1girl, solo, mature female, long sleek black hair, cold sharp eyes, large breasts, voluptuous body, high-leg cyber leotard suit, low-rise tactical micro miniskirt, open front tactical short jacket, thigh holster, dark techwear aesthetic, sleek black and neon blue accents",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, facial hair, muscular, animal ears, cat ears, beast ears, full armor, pants, long skirt, jeans",
+  "ref_weight": 0.7
+}

@@ -1,0 +1,7 @@
+{
+  "prefix": "sha",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, 1girl, solo, young chinese genius girl, bright yellow hair, blonde twin tails, dynamic twin tails, cybernetic glowing neck implants, mechanical goggles worn on head, fitted tech crop top, unbuttoned low-rise denim micro shorts, oversized tech jacket worn off shoulders, tool pouches on thighs, cyber teal accents",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, facial hair, muscular, animal ears, cat ears, beast ears, long pants, full jumpsuit, thick winter clothes, black hair, dark hair, brown hair, red hair, green hair, purple hair, blue hair",
+  "ref_weight": 0.7
+}

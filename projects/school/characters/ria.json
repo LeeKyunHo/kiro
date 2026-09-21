@@ -1,0 +1,7 @@
+{
+  "prefix": "ria",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, (anime style:1.2), (1girl:1.2), solo, pastel pink hair, (side ponytail:1.3), (side tail:1.2), hair scrunchie, (large emerald eyes:1.2), mascara, makeup, small earrings, innocent cute face, (teenage girl:1.2), (young woman:1.2), (huge breasts:1.4), (large breasts:1.3), (voluptuous chest:1.3), slender waist, open white cropped shirt, tied shirt, exposed midriff, lingerie visible, micro pleated skirt, fishnet pantyhose, thigh straps, choker",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, text, realistic, photorealistic, 3d render, hyperrealistic, 1boy, male, masculine, androgynous, (flat chest:1.5), (small breasts:1.5), (medium breasts:1.3), (bulge:1.5), (penis:1.5), beard, mustache, facial hair, muscular, (child:1.5), (loli:1.5), (petite child:1.4), mature, old, (headset:1.6), (headphones:1.6), (ear accessories:1.5), animal ears, cat ears, dog ears, fox ears, bunny ears, kemonomimi, nekomimi, shorts, pants",
+  "ref_weight": 0.7
+}

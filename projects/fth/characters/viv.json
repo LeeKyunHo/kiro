@@ -1,0 +1,7 @@
+﻿{
+  "prefix": "viv",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres BREAK 1girl, solo, (pitch-black wavy long hair:1.2), warm amber eyes, (large breasts, deep cleavage, voluptuous curves:1.2), (subtle nipple outline:1.1), (slight protrusion through fabric:1.0), (emerald green silk belly dancer fitted cropped top, gold trim borders, exposed midriff, sheer emerald open wrap skirt, golden armlets:1.2), green silk bra, green silk panties",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, 1boy, male, masculine, beard, mustache, facial hair, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), flat chest, heavy coat, winter clothes, jeans",
+  "ref_weight": 0.7
+}

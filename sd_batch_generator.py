@@ -153,15 +153,15 @@ _BRACKET_TABLE = str.maketrans("", "", BRACKET_CHARS)
 WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 
 # 실제 생성 파라미터
-IMAGE_SIZE = (832, 1216)
-STEPS = 24
-CFG_SCALE = 6.0
+IMAGE_SIZE = (832, 1216)  # SDXL/Illustrious 최적 해상도 (LuminarQMix v7.1 e-Pred)
+STEPS = 28  # 고품질: 24 → 28 (부드러운 디테일)
+CFG_SCALE = 5  # (프롬프트 충실도 향상)
 LORA_STRING = ""  # LoRA 사용 시: "<lora:모델명:0.8>" (프롬프트 앞에 자동 추가)
-WEBP_QUALITY = 90
+WEBP_QUALITY = 95  # 고품질: 90 → 95 (거의 무손실)
 WEBP_METHOD = 6
 
 # 모의 생성 (실제의 1/4, 종횡비 동일 — R7.5)
-MOCK_SIZE = (208, 304)
+MOCK_SIZE = (208, 304)  # 832÷4=208, 1216÷4=304
 MOCK_TEXT_X = 12
 MOCK_TEXT_TOP = 24
 MOCK_TEXT_COLOR = (30, 30, 30)
@@ -2115,13 +2115,12 @@ def build_genit_block(
 ) -> str:
     """
     젠잇 복사용 마크다운 블록을 조립해 문자열로 반환한다.
-
-    출력이 아니라 반환으로 둔 이유: --test 에서 stdout 캡처 없이
-    라인 수와 리터럴 포함 여부를 직접 검사할 수 있어야 한다 (R8.7).
+    - 젠잇 순정 호출 규격 반영: ![image](...) 제거 -> {{url}}prefix/prefix_NNN.webp 단독 줄 출력
     """
     urls = [f"{URL_PLACEHOLDER}{prefix}/{asset_filename(prefix, c, width)}" for c in codes]
 
-    calls = "\n".join(f"![image]({url})" for url in urls)
+    # [수정] ![image]({url}) -> {url} 단독 줄 호출로 변경
+    calls = "\n".join(url for url in urls)
     files = "\n".join(
         f"- `{url}` ({db.entries[code].label})" for code, url in zip(codes, urls)
     )
@@ -2132,7 +2131,7 @@ def build_genit_block(
 
     return f"""
 {SEPARATOR}
-  젠잇(Genit) 복사용 에셋 블록 | {prefix}   (총 {len(codes)}개){badge}
+  젠잇(ZenIt) 복사용 에셋 블록 | {prefix}   (총 {len(codes)}개){badge}
 {SEPARATOR}
 
 ### {prefix} 이미지 호출 코드

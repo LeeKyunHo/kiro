@@ -1,0 +1,7 @@
+{
+  "prefix": "han",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, cowboy shot, 1girl, solo, young noble woman, short sleek bob hair, dark brown eyes, confident aura, slender and curvy, cyberpunk renaissance style, cyber haori jacket, open chest corset top, high-waist pleated micro miniskirt, thigh-high socks, ornate katana sheathed at waist, gold and cherry blossom cyber patterns",
+  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, signature, text, jpeg artifacts, cropped, 1boy, male, masculine, beard, mustache, facial hair, muscular, animal ears, cat ears, beast ears, heavy armor, pants, long skirt, kimono pants",
+  "ref_weight": 0.7
+}

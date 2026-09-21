@@ -1,7 +1,7 @@
-{
+﻿{
   "prefix": "val",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, highly detailed, 1girl, solo, crimson wine-red wavy long hair, sharp golden eyes, healthy warm skin tone, (huge breasts, heavy cleavage:1.15), narrow waist, wide hips, voluptuous body, glossy obsidian black leather bodycon dress, sweetheart neckline, high thigh-slit skirt, seductive dominant smirk, clean background, soft lighting, character portrait, cowboy shot",
-  "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, extra fingers, extra limbs, deformed, disfigured, watermark, text, 1boy, male, flat chest, loose dress, ballgown, pale skin, blue-tinted skin, grey skin, tanned skin, sagging breasts, drooping breasts, topless, undressed, naked, visible bra, visible panties, lifted skirt, hourglass, clock, time glass, sand timer, timer",
+  "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres BREAK 1girl, solo, (crimson wine-red wavy long hair:1.3), (deep red hair:1.2), sharp golden eyes, (huge breasts, heavy cleavage, voluptuous body:1.2), narrow waist, wide hips, (subtle nipple outline:1.1), (slight protrusion through fabric:1.0), (glossy obsidian black leather bodycon dress, sweetheart neckline, high thigh-slit skirt:1.2), black lace bra, black panties",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, 1boy, male, masculine, beard, mustache, facial hair, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), flat chest, (black hair:1.6), (dark hair:1.5), (brown hair:1.4), (blonde hair:1.3), (white hair:1.3), (red liquid on breasts:1.6), (red paint on chest:1.6), (wine color liquid:1.5), (red splatter:1.5)",
   "ref_weight": 0.7
 }

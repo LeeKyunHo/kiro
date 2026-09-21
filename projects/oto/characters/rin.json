@@ -1,0 +1,7 @@
+{
+  "prefix": "rin",
+  "default_mode": "otokonoko",
+  "positive": "masterpiece, best quality, highly detailed, clean background, soft lighting, character portrait, (otokonoko, femboy, intelligent gentle face, young adult, calm turquoise eyes:1.1), (silver white straight bob hair, neat bangs:1.2), (small-medium breasts, soft breast shape:1.1), slender waist, soft curves, (subtle bulge, tiny bulge under clothing:1.1), (classic dark navy vest, white button-up collared shirt, long sleeves:1.2), (pleated midi skirt:1.2), bare shoulders, no glasses",
+  "negative": "1girl, female, large breasts, heavy cleavage, female anatomy, muscular, manly, beard, mustache, facial hair, glasses, animal ears, child, loli, chibi",
+  "ref_weight": 0.7
+}
