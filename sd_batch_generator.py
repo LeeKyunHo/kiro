@@ -22,13 +22,8 @@ from generator.config import (
     DEFAULT_HOST,
     DEFAULT_PROFILE,
     FALLBACK_PROFILE,
-    GENDER_TAGS,
     GIB,
     IMAGE_SIZE,
-    INTERROGATE_DEFAULT,
-    INTERROGATE_TIMEOUT,
-    INTERROGATE_URL,
-    INTERROGATORS,
     IP_ADAPTER_MODEL_PATTERNS,
     IP_ADAPTER_MODULE_PATTERNS,
     LORA_STRING,
@@ -39,7 +34,6 @@ from generator.config import (
     MOCK_SIZE,
     POS_BASE,
     POSE_DB_FILE,
-    PROFILES_KEY,
     PROJECTS_DIRNAME,
     REF_WEIGHT_DEFAULT,
     REF_WEIGHT_MAX,
@@ -64,7 +58,6 @@ from generator.models import (
     BatchResult,
     CharacterConfig,
     ControlNetSpec,
-    InterrogateResult,
     PoseDatabase,
     PoseEntry,
     Profile,
@@ -120,18 +113,15 @@ from generator.roster import (
 )
 from generator.runner import execute, run_all_chars, run_batch
 from generator.webui_client import (
-    build_interrogate_payload,
     build_txt2img_payload,
     extract_vram_peak,
     fetch_vram_peak,
-    filter_gender_tags,
     generate_image,
     get_session,
     inject_alwayson_scripts,
     inject_controlnet,
     make_dummy_png,
     resolve_sampler,
-    run_interrogate,
     save_as_webp,
 )
 
@@ -261,15 +251,6 @@ def build_parser(
         help="Lightning LoRA 파일명 (기본 sdxl_lightning_2step_lora)",
     )
 
-    interrogate = parser.add_argument_group("태그 역추출")
-    interrogate.add_argument(
-        "--from_image", default=None,
-        help="이미지에서 태그를 추출해 출력하고 종료 (생성하지 않음)",
-    )
-    interrogate.add_argument(
-        "--interrogator", default=INTERROGATE_DEFAULT, choices=INTERROGATORS,
-        help=f"추출 모델 (기본 {INTERROGATE_DEFAULT})",
-    )
     parser.add_argument(
         "--dry-run", dest="dry_run", action="store_true",
         help="파일 쓰기 없이 대상·파일명·마크다운만 출력",
@@ -334,15 +315,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             lightning_cfg=args.lightning_cfg,
             lightning_lora_name=args.lightning_lora_name,
         )
-
-    if args.from_image:
-        try:
-            return run_interrogate(args.from_image, args.interrogator)
-        except ConfigError as e:
-            print(f"[ERROR] {e}", file=sys.stderr)
-            if e.hint:
-                print(f"        {e.hint}", file=sys.stderr)
-            return 1
 
     if args.char:
         try:

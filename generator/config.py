@@ -16,7 +16,6 @@ DEFAULT_HOST = "http://127.0.0.1:7860"
 API_HOST = DEFAULT_HOST
 API_URL = f"{API_HOST}/sdapi/v1/txt2img"
 SAMPLERS_URL = f"{API_HOST}/sdapi/v1/samplers"
-INTERROGATE_URL = f"{API_HOST}/sdapi/v1/interrogate"
 
 CN_MODULES_URL = f"{API_HOST}/controlnet/module_list"
 CN_MODELS_URL = f"{API_HOST}/controlnet/model_list"
@@ -30,7 +29,6 @@ SAMPLER_CANDIDATES = ("Euler a", "Euler", "DPM++ 2M SDE Karras", "DPM++ 2M Karra
 SAMPLERS_TIMEOUT = 5
 TXT2IMG_TIMEOUT = 300
 CONTROLNET_LIST_TIMEOUT = 10
-INTERROGATE_TIMEOUT = 120
 
 # ─────────────────────────────────────────────
 # 2. 프롬프트 및 파일 기본값
@@ -53,6 +51,7 @@ PROJECTS_DIRNAME = "projects"
 
 ROSTER_ALIAS = {
     "dar": "dark_generals",
+    "sea": "sea",
     "oto": "oto",
     "default": "dark_generals",
 }
@@ -66,20 +65,6 @@ REF_WEIGHT_MAX = 2.0
 
 IP_ADAPTER_MODULE_PATTERNS = ("ip-adapter", "ipadapter")
 IP_ADAPTER_MODEL_PATTERNS = ("ip-adapter", "ipadapter")
-
-INTERROGATORS = ("deepdanbooru", "clip")
-INTERROGATE_DEFAULT = "deepdanbooru"
-
-GENDER_TAGS = frozenset({
-    "1girl", "2girls", "3girls", "multiple girls", "girl",
-    "1boy", "2boys", "3boys", "multiple boys", "boy",
-    "male", "female", "male focus", "female focus",
-    "solo", "solo focus",
-})
-
-PROFILES_KEY = "_profiles"
-PROFILE_POSITIVE_KEY = "base_positive"
-PROFILE_NEGATIVE_KEY = "base_negative"
 
 DEFAULT_PROFILE = "female"
 FALLBACK_PROFILE = "(built-in)"

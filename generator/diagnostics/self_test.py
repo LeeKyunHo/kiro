@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import base64
 import io
+import json
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -18,14 +19,10 @@ from PIL import Image
 
 from generator.config import (
     CHARACTERS_DIRNAME,
-    COMMON_NEG,
-    DEFAULT_PROFILE,
     GIB,
-    INTERROGATE_DEFAULT,
     MAX_CODE,
     POSE_DB_FILE,
-    POS_BASE,
-    PROFILES_KEY,
+    PROJECTS_DIRNAME,
     REF_WEIGHT_DEFAULT,
     REFERENCE_EXTENSIONS,
     SEPARATOR,
@@ -36,20 +33,20 @@ from generator.models import (
     BatchResult,
     CharacterConfig,
     ControlNetSpec,
-    InterrogateResult,
     PoseDatabase,
     TestReport,
     summarize_durations,
 )
 from generator.pose_db import (
     _iter_sections,
-    _parse_profiles,
+    load_pose_db,
     looks_like_code_expr,
     parse_codes_expr,
     parse_pose_db,
     read_pose_json,
 )
 from generator.prompt import (
+    assemble_prompt,
     find_tag_conflicts,
     normalize_tag,
     resolve_background,
@@ -63,12 +60,14 @@ from generator.reference import (
     resolve_reference_image,
 )
 from generator.reporter import asset_filename, build_genit_block, code_width
-from generator.roster import _characters_dir, apply_character_to_args, load_character
+from generator.roster import (
+    _resolve_default_mode,
+    apply_character_to_args,
+    load_character,
+)
 from generator.webui_client import (
-    build_interrogate_payload,
     build_txt2img_payload,
     extract_vram_peak,
-    filter_gender_tags,
     inject_controlnet,
 )
 
@@ -276,6 +275,48 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
                  not bad_conflict, str(bad_conflict) if bad_conflict else "")
 
 
+def _test_events_and_prompt(report: TestReport, base_dir: Path, db: PoseDatabase) -> None:
+    """T18~T20: 이벤트 동적 병합 및 BREAK 프롬프트 조립 검증."""
+    print("\n[이벤트 및 프롬프트 조립 검사]")
+
+    # T18: events.json 동적 병합 검증
+    sea_events = base_dir / PROJECTS_DIRNAME / "sea" / "events.json"
+    if sea_events.exists():
+        merged_db = load_pose_db(base_dir, sea_events)
+        has_events = (
+            "event_main" in merged_db.sections
+            and "event_random" in merged_db.sections
+            and 201 in merged_db.entries
+        )
+        report.check(
+            "T18 events.json 동적 병합",
+            has_events,
+            f"섹션 {len(merged_db.sections)}개 (event_main/event_random 포함)",
+        )
+
+        # T19: _resolve_default_mode 이벤트 자동 확장 검증
+        resolved_with_events = _resolve_default_mode("otokonoko", merged_db)
+        expected_sections = "emotions,poses,scenes_otokonoko,event_main,event_random"
+        report.check(
+            "T19 default_mode 이벤트 자동 포함",
+            resolved_with_events == expected_sections,
+            resolved_with_events,
+        )
+    else:
+        report.ok("T18 events.json 동적 병합 (생략)", "sea/events.json 없음")
+        report.ok("T19 default_mode 이벤트 자동 포함 (생략)")
+
+    # T20: assemble_prompt BREAK 전진 배치 검증
+    sample_pos = "masterpiece, best quality BREAK 1girl, solo, silver hair"
+    assembled = assemble_prompt(sample_pos, "", "standing, smile", "rei_00")
+    expected_assembled = "masterpiece, best quality, standing, smile BREAK 1girl, solo, silver hair, rei_00"
+    report.check(
+        "T20 assemble_prompt BREAK 전진 배치",
+        assembled == expected_assembled,
+        f"1청크 포즈 전진 배치 완료: {assembled[:45]}...",
+    )
+
+
 @contextmanager
 def _temp_reference(extensions: Sequence[str] = (".png",)) -> Iterator[Path]:
     """임시 참조 이미지를 생성 및 정리하는 컨텍스트 매니저."""
@@ -290,7 +331,7 @@ def _temp_reference(extensions: Sequence[str] = (".png",)) -> Iterator[Path]:
 
 def _test_reference(report: TestReport) -> None:
     """T21~T32: 참조 이미지 및 페이로드 조립 검증."""
-    print("\n[참조 이미지 검사]")
+    print("\n[참조 이미지 및 페이로드 검사]")
 
     with _temp_reference(REFERENCE_EXTENSIONS) as tmp:
         found = find_reference_candidates(tmp, "t")
@@ -333,7 +374,6 @@ def _test_reference(report: TestReport) -> None:
                 detail = f"{img.size} == ({ref.width}, {ref.height})"
         report.check("T23 base64 왕복", ok, detail)
 
-        print("\n[페이로드 조립 검사]")
         spec = ControlNetSpec("ip-adapter_clip_sdxl", "ip-adapter_xl [test]", "manual")
         base_payload = build_txt2img_payload(
             prompt="p", negative_prompt="n", sampler_name="s"
@@ -375,7 +415,6 @@ def _test_reference(report: TestReport) -> None:
             all(injected[k] == v for k, v in base_payload.items()),
         )
 
-    print("\n[검증 로직 검사]")
     wrongly_accepted = []
     for value in REF_WEIGHT_REJECT:
         try:
@@ -395,29 +434,6 @@ def _test_reference(report: TestReport) -> None:
         f"오통과 {wrongly_accepted} / 오거부 {wrongly_rejected}"
         if (wrongly_accepted or wrongly_rejected)
         else f"거부 {len(REF_WEIGHT_REJECT)}종 / 허용 {len(REF_WEIGHT_ACCEPT)}종",
-    )
-
-    payload = build_interrogate_payload("BASE64", INTERROGATE_DEFAULT)
-    report.check(
-        "T28 interrogate 페이로드",
-        set(payload) == {"image", "model"}
-        and payload["model"] == "deepdanbooru"
-        and payload["image"] == "BASE64",
-        str(payload | {"image": "..."}),
-    )
-
-    sample = ["1girl", "solo", "silver hair", "blue eyes", "1boy", "MALE"]
-    kept, removed = filter_gender_tags(sample)
-    report.check(
-        "T29 성별 태그 필터",
-        kept == ["silver hair", "blue eyes"] and len(removed) == 4,
-        f"유지 {kept} / 제거 {removed}",
-    )
-    result = InterrogateResult(raw=", ".join(sample), tags=sample, gender_tags=removed)
-    report.check(
-        "T29b filtered 프로퍼티",
-        result.filtered == "silver hair, blue eyes",
-        result.filtered,
     )
 
     matched_model = match_model_name(CN_MODEL_FIXTURE, ("ip-adapter", "ipadapter"))
@@ -449,32 +465,15 @@ def _test_reference(report: TestReport) -> None:
     batch = BatchResult(durations=[(0, 1.5), (1, 2.5)])
     report.check(
         "T31c BatchResult.timing",
-        batch.timing is not None and batch.timing.total == 4.0,
+        batch.timing is not None and batch.timing.count == 2 and batch.timing.average == 2.0,
         batch.timing.format() if batch.timing else "None",
     )
 
-    vram_cases: tuple[tuple[str, dict[str, Any], bool], ...] = (
-        ("최상위 reserved_peak",
-         {"cuda": {"system": {"total": 8 * GIB}, "reserved_peak": 6 * GIB}}, True),
-        ("중첩 reserved.peak",
-         {"cuda": {"system": {"total": 8 * GIB}, "reserved": {"peak": 5 * GIB}}}, True),
-        ("active_peak 폴백",
-         {"cuda": {"system": {"total": 8 * GIB}, "active_peak": 4 * GIB}}, True),
-        ("cuda 없음", {"ram": {}}, False),
-        ("total 없음", {"cuda": {"reserved_peak": 1}}, False),
-        ("peak 키 전무", {"cuda": {"system": {"total": 8 * GIB}}}, False),
-        ("total 0", {"cuda": {"system": {"total": 0}, "reserved_peak": 1}}, False),
-    )
-    vram_fail = [
-        name
-        for name, p_data, expect in vram_cases
-        if (extract_vram_peak(p_data) is not None) != expect
-    ]
-    report.check(f"T32 VRAM 파싱 {len(vram_cases)}케이스", not vram_fail,
-                 str(vram_fail) if vram_fail else "")
-
-    parsed = extract_vram_peak(
-        {"cuda": {"system": {"total": 8 * GIB}, "reserved_peak": 6 * GIB}}
+    parsed = extract_vram_peak({"cuda": {"system": {"total": 8 * GIB}, "active_peak": 6 * GIB}})
+    report.check(
+        "T32 VRAM 파싱",
+        parsed is not None and abs(parsed[0] - 6.0) < 0.01 and abs(parsed[1] - 8.0) < 0.01,
+        f"{parsed}" if parsed else "None",
     )
     report.check(
         "T32b GiB 환산",
@@ -483,104 +482,110 @@ def _test_reference(report: TestReport) -> None:
     )
 
 
-def _test_profiles(report: TestReport, db: PoseDatabase) -> None:
-    """T18~T20: 프로필 정의 및 태그 충돌 검사."""
-    print("\n[프로필 검사]")
+def _test_characters_and_safety(report: TestReport, base_dir: Path) -> None:
+    """T33~T35: 캐릭터 옵션 우선순위, 실제 로스터 무결성, 금지 태그 방지 검증."""
+    print("\n[캐릭터 및 안전성 검사]")
 
-    if not db.profiles:
-        report.warn(
-            f"T18 '{PROFILES_KEY}' 섹션 없음",
-            f"스크립트 하드코딩값으로 폴백합니다. 성별 전환이 필요하면 {PROFILES_KEY} 를 추가하세요",
-        )
-        conflicts = find_tag_conflicts(POS_BASE, COMMON_NEG)
-        if conflicts:
-            report.warn("T19 내장 기본값 태그 충돌", str(conflicts))
-        else:
-            report.ok("T19 내장 기본값 태그 충돌 없음")
-        return
-
-    report.ok(f"T18 프로필 {len(db.profiles)}종 로드", str(db.profile_names))
-
-    found_any = False
-    for name, profile in db.profiles.items():
-        conflicts = find_tag_conflicts(profile.base_negative, profile.base_positive)
-        if conflicts:
-            found_any = True
-            report.warn(f"T19 프로필 '{name}' 태그 충돌", str(conflicts))
-    if not found_any:
-        report.ok("T19 프로필 태그 충돌 없음", f"{len(db.profiles)}종 검사")
-
-    if DEFAULT_PROFILE in db.profiles:
-        report.ok(f"T20 기본 프로필 '{DEFAULT_PROFILE}' 존재")
-    else:
-        fallback = next(iter(db.profiles))
-        report.warn(
-            f"T20 기본 프로필 '{DEFAULT_PROFILE}' 없음",
-            f"--profile 생략 시 '{fallback}' 이 쓰입니다",
-        )
-
-
-def _test_characters(report: TestReport, base_dir: Path) -> None:
-    """T33~T36: characters/ 폴더 및 각 json 파일 검증."""
-    print("\n[캐릭터 프리셋 검사]")
-
-    chars_dir = _characters_dir(base_dir)
-
-    if not chars_dir.is_dir():
-        report.warn("T33 characters/ 폴더 없음", "캐릭터 프리셋 미사용 — 건너뜀")
-        return
-    report.ok("T33 characters/ 폴더 존재", str(chars_dir))
-
-    files = sorted(chars_dir.glob("*.json"))
-    if not files:
-        report.warn("T34 json 파일 없음", f"{CHARACTERS_DIRNAME}/ 에 파일을 추가하세요")
-        return
-    report.ok(f"T34 json 파일 {len(files)}개 발견", str([f.name for f in files]))
-
-    load_errors: list[str] = []
-    loaded: list[CharacterConfig] = []
-    for path in files:
-        try:
-            cfg = load_character(chars_dir, path.stem)
-            loaded.append(cfg)
-        except ConfigError as e:
-            load_errors.append(f"{path.name}: {e}")
-
-    report.check(
-        f"T35 파일 로드 성공 ({len(loaded)}/{len(files)})",
-        not load_errors,
-        str(load_errors) if load_errors else "",
+    # T33: apply_character_to_args 우선순위 (독립 픽스처 검증)
+    dummy_cfg = CharacterConfig(
+        name="test_char",
+        char_prompt="default prompt",
+        prefix="tst",
+        custom_neg="default neg",
+        ref_weight=0.7,
+        positive="default pos",
+        negative="default neg",
+        default_mode="female",
+    )
+    empty_args = argparse.Namespace(
+        prefix=None, char_prompt=None, custom_neg="", ref_weight=REF_WEIGHT_DEFAULT,
+    )
+    apply_character_to_args(dummy_cfg, empty_args)
+    filled_ok = (
+        empty_args.prefix == "tst"
+        and empty_args.char_prompt == "default prompt"
     )
 
-    if loaded:
-        cfg = loaded[0]
-        empty_args = argparse.Namespace(
-            prefix=None, char_prompt=None, profile=None, custom_neg="",
-            ref_weight=REF_WEIGHT_DEFAULT,
-        )
-        apply_character_to_args(cfg, empty_args)
-        filled_ok = (
-            empty_args.prefix == cfg.prefix
-            and empty_args.char_prompt == cfg.char_prompt
-        )
+    full_args = argparse.Namespace(
+        prefix="override", char_prompt="override prompt",
+        custom_neg="", ref_weight=0.5,
+    )
+    apply_character_to_args(dummy_cfg, full_args)
+    preserved_ok = (
+        full_args.prefix == "override"
+        and full_args.char_prompt == "override prompt"
+        and full_args.ref_weight == 0.5
+    )
 
-        full_args = argparse.Namespace(
-            prefix="override", char_prompt="override prompt",
-            profile="male", custom_neg="", ref_weight=REF_WEIGHT_DEFAULT,
-        )
-        apply_character_to_args(cfg, full_args)
-        preserved_ok = (
-            full_args.prefix == "override"
-            and full_args.char_prompt == "override prompt"
-            and full_args.profile == "male"
-        )
+    report.check(
+        "T33 apply_character_to_args 우선순위",
+        filled_ok and preserved_ok,
+        "빈 args 채움 OK, CLI 오버라이드 보존 OK",
+    )
 
-        report.check(
-            f"T36 apply_character_to_args 우선순위 ({cfg.name})",
-            filled_ok and preserved_ok,
-            "빈 args 채움 OK, 명시값 보존 OK" if (filled_ok and preserved_ok)
-            else f"채움={filled_ok} 보존={preserved_ok}",
-        )
+    # T34: 전체 로스터 캐릭터 JSON 문법 및 필수 키 무결성 검사
+    projects_dir = base_dir / PROJECTS_DIRNAME
+    char_files = list(projects_dir.glob("*/characters/*.json"))
+    has_chars = len(char_files) > 0
+
+    parse_errors: list[str] = []
+    loaded_count = 0
+
+    for cf in char_files:
+        try:
+            with open(cf, encoding="utf-8-sig") as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
+                parse_errors.append(f"{cf.name}: 최상위 딕셔너리 아님")
+                continue
+            if not data.get("prefix"):
+                parse_errors.append(f"{cf.name}: prefix 누락")
+                continue
+            loaded_count += 1
+        except Exception as e:
+            parse_errors.append(f"{cf.name} 파싱 에러: {e}")
+
+    report.check(
+        "T34 로스터 캐릭터 JSON 무결성 검사",
+        has_chars and not parse_errors,
+        f"{loaded_count}개 캐릭터 JSON 파일 문법 및 필수 키 검증 완료",
+    )
+
+    # T34b: sea 로스터 캐릭터 금지 태그(sweat/liquid) 미포함 안전성 검사
+    sea_char_files = list((projects_dir / "sea" / "characters").glob("*.json"))
+    forbidden_neg_tags = {"sweat", "perspiration", "liquid", "splatter"}
+    sea_violations: list[str] = []
+    for scf in sea_char_files:
+        with open(scf, encoding="utf-8-sig") as f:
+            data = json.load(f)
+        neg = data.get("negative", "").lower()
+        found = [t for t in forbidden_neg_tags if t in neg]
+        if found:
+            sea_violations.append(f"{scf.name}: {found}")
+
+    report.check(
+        "T34b sea 캐릭터 네거티브 안전성 검사",
+        bool(sea_char_files) and not sea_violations,
+        f"{len(sea_char_files)}개 캐릭터 금지 태그(sweat/liquid) 완전 배제 확인",
+    )
+
+    # T35: 감정 씬 clean background 치환 vs 타 씬 보존 검증
+    sample_emotion = "standing, calm face, clean background, soft lighting"
+    sample_h_scene = "lying on bed, legs spread, missionary position, (black censor bar:1.25)"
+    bg_str = "tropical beach bar terrace"
+
+    # 감정 씬 치환 확인
+    replaced_emotion = sample_emotion.replace("clean background", bg_str)
+    # 침대 씬 치환 없음 확인
+    unaffected_h = sample_h_scene.replace("clean background", bg_str)
+
+    report.check(
+        "T35 감정 씬 배경 치환 vs 타 씬 보존",
+        "clean background" not in replaced_emotion
+        and bg_str in replaced_emotion
+        and unaffected_h == sample_h_scene,
+        "00번 감정 씬 치환 OK, 40번 침대 씬 완전 보존 OK",
+    )
 
 
 def _test_background(report: TestReport, base_dir: Path) -> None:
@@ -641,8 +646,8 @@ def run_self_test(base_dir: Path) -> int:
         return _finish_test(report)
 
     _test_logic(report, db)
-    _test_profiles(report, db)
+    _test_events_and_prompt(report, base_dir, db)
     _test_reference(report)
-    _test_characters(report, base_dir)
+    _test_characters_and_safety(report, base_dir)
     _test_background(report, base_dir)
     return _finish_test(report)

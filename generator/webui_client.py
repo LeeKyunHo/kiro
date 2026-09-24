@@ -20,11 +20,8 @@ from PIL import Image, ImageDraw, ImageFont
 from generator.config import (
     API_URL,
     CFG_SCALE,
-    GENDER_TAGS,
     GIB,
     IMAGE_SIZE,
-    INTERROGATE_TIMEOUT,
-    INTERROGATE_URL,
     MEMORY_TIMEOUT,
     MEMORY_URL,
     MOCK_FONT_BIG_SIZE,
@@ -48,9 +45,7 @@ from generator.config import (
     ConfigError,
     FontLike,
 )
-from generator.models import InterrogateResult, PoseEntry, ReferenceImage
-from generator.prompt import normalize_tag
-from generator.reference import resolve_reference_image
+from generator.models import PoseEntry, ReferenceImage
 
 
 @lru_cache(maxsize=1)
@@ -264,73 +259,6 @@ def generate_image(payload: dict[str, Any]) -> bytes:
         raise RuntimeError("API 응답에 images 가 없습니다")
 
     return base64.b64decode(images[0])
-
-
-def build_interrogate_payload(b64: str, model: str) -> dict[str, str]:
-    """interrogate 페이로드를 조립한다."""
-    return {"image": b64, "model": model}
-
-
-def filter_gender_tags(tags: Sequence[str]) -> tuple[list[str], list[str]]:
-    """성별·인원 태그를 분리한다 (순수 함수)."""
-    kept: list[str] = []
-    removed: list[str] = []
-    for tag in tags:
-        (removed if normalize_tag(tag) in GENDER_TAGS else kept).append(tag)
-    return kept, removed
-
-
-def run_interrogate(image_path: str, model: str) -> int:
-    """참조 이미지에서 태그를 역추출해 출력한다."""
-    ref_dir = Path.cwd()
-    reference = resolve_reference_image(ref_dir, "_", explicit_path=image_path)
-    if reference is None:
-        raise ConfigError(f"이미지를 찾을 수 없습니다: {image_path}")
-
-    payload = build_interrogate_payload(reference.b64, model)
-
-    print(f"\n{SEPARATOR}")
-    print(f"  태그 추출 | {reference.label} | 모델: {model}")
-    print(SEPARATOR)
-
-    try:
-        response = get_session().post(
-            INTERROGATE_URL, json=payload, timeout=INTERROGATE_TIMEOUT
-        )
-        response.raise_for_status()
-    except requests.exceptions.ConnectionError:
-        print("\n[ERROR] WebUI 에 연결할 수 없습니다.", file=sys.stderr)
-        print("        webui-user.bat 에 --api 를 넣고 실행했는지 확인하세요.", file=sys.stderr)
-        return 1
-    except Exception as e:
-        print(f"\n[ERROR] interrogate 실패: {e}", file=sys.stderr)
-        if model == "deepdanbooru":
-            print("        DeepBooru 모델이 없으면 --interrogator clip 을 시도하세요.", file=sys.stderr)
-        return 1
-
-    raw = (response.json().get("caption") or "").strip()
-    if not raw:
-        print("\n[ERROR] 추출된 태그가 없습니다.", file=sys.stderr)
-        return 1
-
-    tags = [t.strip() for t in raw.split(",") if t.strip()]
-    kept, removed = filter_gender_tags(tags)
-    result = InterrogateResult(raw=raw, tags=tags, gender_tags=removed)
-
-    print(f"\n[원본] ({len(tags)}개 태그)")
-    print(f"{result.raw}")
-
-    if removed:
-        print(f"\n[WARN] 성별·인원 태그가 감지되었습니다: {removed}")
-        print("       프로필(_profiles)에서 이미 다루므로 --char_prompt 에는 넣지 마세요.")
-
-    print(f"\n[권장] ({len(kept)}개 태그)")
-    print(f"{result.filtered}")
-
-    print("\n[그대로 실행하려면]")
-    print(f'python sd_batch_generator.py --prefix PREFIX --char_prompt "{result.filtered}"')
-    print(f"{SEPARATOR}\n")
-    return 0
 
 
 def _hue_color(code: int) -> tuple[int, int, int]:

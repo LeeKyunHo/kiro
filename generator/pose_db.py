@@ -17,9 +17,6 @@ from generator.config import (
     MAX_CODE,
     POSE_DB_FILE,
     POS_BASE,
-    PROFILE_NEGATIVE_KEY,
-    PROFILE_POSITIVE_KEY,
-    PROFILES_KEY,
     SECTION_COMMENT_PREFIX,
     ConfigError,
 )
@@ -33,42 +30,9 @@ def _iter_sections(raw: dict[str, Any]) -> Iterable[tuple[str, Any]]:
             yield name, body
 
 
-def _parse_profiles(raw: dict[str, Any], warnings: list[str]) -> dict[str, Profile]:
-    """_profiles 섹션을 Profile 매핑으로 변환한다."""
-    section = raw.get(PROFILES_KEY)
-    if section is None:
-        return {}
-    if not isinstance(section, dict):
-        warnings.append(f"'{PROFILES_KEY}' 가 딕셔너리가 아님 - 프로필 무시")
-        return {}
-
-    profiles: dict[str, Profile] = {}
-    for name, body in section.items():
-        if not isinstance(body, dict):
-            warnings.append(f"프로필 '{name}' 이 딕셔너리가 아님 - 무시")
-            continue
-
-        positive = body.get(PROFILE_POSITIVE_KEY)
-        negative = body.get(PROFILE_NEGATIVE_KEY, "")
-
-        if not isinstance(positive, str) or not positive.strip():
-            warnings.append(
-                f"프로필 '{name}' 에 {PROFILE_POSITIVE_KEY} 가 없거나 비어 있음 - 무시"
-            )
-            continue
-        if not isinstance(negative, str):
-            warnings.append(f"프로필 '{name}' 의 {PROFILE_NEGATIVE_KEY} 가 문자열이 아님 - 빈 값 사용")
-            negative = ""
-
-        profiles[name] = Profile(name, positive.strip(), negative.strip())
-
-    return profiles
-
-
 def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
     """최상위 섹션 딕셔너리를 PoseDatabase 로 정규화한다 (순수 함수)."""
     db = PoseDatabase()
-    db.profiles = _parse_profiles(raw, db.warnings)
 
     for section, body in _iter_sections(raw):
         if not isinstance(body, dict):
@@ -191,8 +155,7 @@ def peek_choices(base_dir: Path) -> tuple[list[str], list[str]]:
         return [], []
 
     sections = [name for name, body in _iter_sections(raw) if isinstance(body, dict)]
-    profiles = list(_parse_profiles(raw, []))
-    return sections, profiles
+    return sections, []
 
 
 def print_warnings(db: PoseDatabase) -> None:
@@ -205,28 +168,8 @@ def print_warnings(db: PoseDatabase) -> None:
 
 
 def resolve_profile(db: PoseDatabase, requested: str | None) -> Profile:
-    """--profile 값을 Profile 로 해석한다."""
-    if not db.profiles:
-        if requested:
-            raise ConfigError(
-                f"프로필 '{requested}' 을 쓸 수 없습니다. "
-                f"{POSE_DB_FILE} 에 '{PROFILES_KEY}' 섹션이 없습니다.",
-                f"'{PROFILES_KEY}' 를 추가하거나 --profile 을 생략하세요.",
-            )
-        return Profile(FALLBACK_PROFILE, POS_BASE, COMMON_NEG)
-
-    if requested:
-        if requested not in db.profiles:
-            raise ConfigError(
-                f"알 수 없는 프로필 '{requested}'. 사용 가능: {db.profile_names}",
-                f"{POSE_DB_FILE} 의 '{PROFILES_KEY}' 섹션을 확인하세요.",
-            )
-        return db.profiles[requested]
-
-    if DEFAULT_PROFILE in db.profiles:
-        return db.profiles[DEFAULT_PROFILE]
-
-    return next(iter(db.profiles.values()))
+    """기본 프로필(FALLBACK_PROFILE)을 반환한다."""
+    return Profile(FALLBACK_PROFILE, POS_BASE, COMMON_NEG)
 
 
 def _parse_code_token(token: str) -> Iterable[int]:

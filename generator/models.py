@@ -139,21 +139,6 @@ class ControlNetSpec:
 
 
 @dataclass(frozen=True, slots=True)
-class InterrogateResult:
-    """태그 역추출 결과."""
-
-    raw: str
-    tags: list[str]
-    gender_tags: list[str]
-
-    @property
-    def filtered(self) -> str:
-        """성별·인원 태그를 제거한 프롬프트 문자열."""
-        excluded = set(self.gender_tags)
-        return ", ".join(tag for tag in self.tags if tag not in excluded)
-
-
-@dataclass(frozen=True, slots=True)
 class TimingStats:
     """생성 시간 집계."""
 

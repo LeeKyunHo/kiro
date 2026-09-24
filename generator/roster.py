@@ -200,20 +200,20 @@ def apply_character_to_args(
     cfg: CharacterConfig, args: argparse.Namespace, db: PoseDatabase | None = None
 ) -> None:
     """CharacterConfig 값을 args 에 채운다. 커맨드라인 명시값이 있으면 건드리지 않는다."""
-    if not args.prefix:
+    if not getattr(args, "prefix", None):
         args.prefix = cfg.prefix
 
-    if not args.char_prompt:
+    if not getattr(args, "char_prompt", None):
         args.char_prompt = cfg.char_prompt
 
-    if args.profile is None and cfg.profile:
+    if getattr(args, "profile", None) is None and cfg.profile:
         args.profile = cfg.profile
 
     if cfg.custom_neg:
-        existing = (args.custom_neg or "").strip()
+        existing = (getattr(args, "custom_neg", "") or "").strip()
         args.custom_neg = join_tags(existing, cfg.custom_neg) if existing else cfg.custom_neg
 
-    if cfg.ref_weight is not None and args.ref_weight == REF_WEIGHT_DEFAULT:
+    if cfg.ref_weight is not None and getattr(args, "ref_weight", REF_WEIGHT_DEFAULT) == REF_WEIGHT_DEFAULT:
         args.ref_weight = cfg.ref_weight
 
     if cfg.positive and not getattr(args, "positive", None):
