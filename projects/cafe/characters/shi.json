@@ -1,0 +1,7 @@
+{
+  "prefix": "shi",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres, anime coloring, clean background, soft lighting BREAK 1girl, solo, pale skin, (vibrant red straight long hair, crimson hair, straight bangs, long sidelocks:1.3), (red hair ribbons, red ribbon accents:1.3), sharp blue eyes, cool beauty, tall slender build, flat chest, small breasts, narrow waist, unbuttoned white collared shirt, rolled up sleeves, deep cleavage, red lanyard, id badge lanyard, black lace bra visible, tight high-waisted black micro pencil skirt, high side slit, black lace panties, garter straps, fishnet pantyhose",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, 1boy, male, masculine, beard, mustache, facial hair, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (duplicate clothing:1.4), (same pattern clothing:1.3), (clothing repetition:1.3), (black hair:1.5), (blonde hair:1.5), (pink hair:1.4), (brown hair:1.4), glasses, eyewear, sunglasses, rimless glasses, braids, braided hair, twin braids, large breasts, huge breasts, school uniform, blazer, serafuku, sailor uniform, t-shirt, crop top, denim",
+  "ref_weight": 0.7
+}
