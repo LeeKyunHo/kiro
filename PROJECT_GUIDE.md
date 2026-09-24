@@ -24,7 +24,7 @@
 11. [10. 파일 저장 및 원자적 I/O 규칙](#10-저장-규칙)
 12. [11. 4가지 실행 모드 (기본, mock, dry-run, test)](#11-4가지-실행-모드)
 13. [12. 리소스 및 시간 측정 기능 (VRAM/속도)](#12-측정-기능)
-14. [13. --test 자체 진단 검사 항목 (51개)](#13---test-검사-항목-51개)
+14. [13. --test 자체 진단 검사 항목 (52개)](#13---test-검사-항목-52개)
 15. [14. 태그 충돌 감지 알고리즘](#14-태그-충돌-감지)
 16. [15. 보안 제약 및 검증](#15-보안-제약)
 17. [16. 프로세스 종료 코드 (Exit Codes)](#16-종료-코드)
@@ -65,7 +65,7 @@ kiro/
 │   ├── runner.py                단일/다중 캐릭터 배치 실행 파이프라인
 │   └── diagnostics/             자체 검증 테스트 모듈
 │       ├── __init__.py
-│       └── self_test.py         51개 항목 단위 검증 스위트 (T1~T37e)
+│       └── self_test.py         52개 항목 단위 검증 스위트 (T1~T37e)
 │
 ├── pose_database.json           공용 프롬프트 DB (모든 로스터 공유 — 감정, 포즈, H씬)
 ├── PROJECT_GUIDE.md             [이 문서] 시스템 아키텍처 및 내부 모듈 구조 (개발자용)
@@ -99,7 +99,7 @@ kiro/
 | `generator.webui_client` | WebUI API 통신, WebP 변환 | `generate_image()`, `save_as_webp()`, `build_txt2img_payload()` |
 | `generator.reporter` | 콘솔 요약 보고서 및 젠잇 마크다운 생성 | `print_summary()`, `build_genit_block()`, `build_section_guide()`, `asset_filename()` |
 | `generator.runner` | 배치 실행 오케스트레이터 | `execute()`, `run_batch()`, `run_all_chars()`, `_setup_prompt()`, `_setup_reference()`, `_setup_sampler()` |
-| `generator.diagnostics` | 자체 테스트 러너 (51개 항목) | `run_self_test()` |
+| `generator.diagnostics` | 자체 테스트 러너 (52개 항목) | `run_self_test()` |
 
 ---
 
@@ -189,16 +189,24 @@ RosterPathManager(roster_name)
 | 코드 키 | 문자열이지만 정수로 해석·정렬. `"00"`, `"7"`, `"105"` 모두 유효 |
 | 범위 | 0 ~ 9999 |
 | 결번 허용 | `0, 1, 5, 42`만 있으면 그 4개만 순회 |
-| **첫 태그 = 라벨** | 쉼표 전까지가 콘솔 출력·상태 매핑 가이드의 라벨 |
-| 성별 태그 금지 | `1girl`/`1boy`는 포즈에 넣지 않음. 성별은 프로필 축 |
+| **명시적 label** | `{"label": "한국어", "prompt": "..."}` 딕셔너리 지원 (최우선 표시 라벨) |
+| **첫 태그 = 폴백** | `label` 필드 부재 시 쉼표 전까지가 콘솔 출력·상태 매핑 가이드의 폴백 라벨 |
+| 성별 태그 금지 | `1girl`/`1boy`는 포즈에 넣지 않음. 성별은 캐릭터 축 |
 | 섹션명 | 숫자만으로 짓지 말 것 (코드 표현식으로 오인됨) |
 
-**첫 태그가 라벨이라는 점이 실무에서 가장 중요하다.**
+**포즈 라벨 표시 규칙:**
+
+포즈 항목은 문자열(`"00": "standing, smile..."`)과 딕셔너리(`"00": {"label": "평상", "prompt": "standing, smile..."}`) 두 가지 형식을 모두 지원한다.
+`label` 필드가 명시되어 있으면 콘솔 로그 및 젠잇 상태 매핑 가이드에 해당 한국어 라벨이 직관적으로 출력된다.
 
 ```json
-"00": "neutral face, standing, front view"   ← 라벨: neutral face  (올바름)
-"00": "standing, front view, neutral face"   ← 라벨: standing      (구분 불가)
+"00": {
+  "label": "평상",
+  "prompt": "standing, looking at viewer, neutral expression, calm face..."
+}
 ```
+
+※ `label` 필드가 생략된 경우, 기존처럼 프롬프트의 첫 번째 태그(쉼표 전)가 폴백 라벨로 사용된다.
 
 ### 4.3 `_profiles` 스펙
 
@@ -467,12 +475,12 @@ projects/{roster}/assets/{prefix}/{prefix}_{코드}.webp
 
 ---
 
-## 13. `--test` 검사 항목 (51개)
+## 13. `--test` 검사 항목 (52개)
 
 | 그룹 | 항목 |
 |---|---|
 | 데이터 (T1~T7) | JSON 파일 실존/문법/섹션 타입/비정수 키 없음/빈 프롬프트 없음/중복 코드 없음/유효 엔트리 확인 |
-| 로직 (T8~T17) | 정수 정렬/code_width/코드 파싱/파일명 조립/마크다운 줄 수/`{{url}}`/prefix 보안/태그 정규화/충돌 감지 |
+| 로직 (T8~T17) | 정수 정렬/code_width/코드 파싱/파일명 조립/마크다운 줄 수/`{{url}}`/PoseEntry.label 명시적 라벨 및 폴백(T13b)/prefix 보안/태그 정규화/충돌 감지 |
 | 이벤트·프롬프트 (T18~T20) | events.json 동적 병합/default_mode 이벤트 자동 포함/assemble_prompt BREAK 전진 배치 |
 | 참조·측정 (T21~T32) | 참조 확장자 우선순위/base64 왕복/페이로드 조립/원본 불변성/ref_weight 범위/모델명 매칭/시간 집계/VRAM 파싱 |
 | 캐릭터·안전성 (T33~T35) | apply_character_to_args 우선순위/전체 로스터 JSON 무결성/전체 로스터 금지 태그(sweat/liquid) 배제(T34b)/감정 씬 배경 치환 및 침대 씬 보존 |

@@ -98,7 +98,7 @@
   3-1. 파이썬 및 필수 패키지 설치
     - Python 3.10 이상 설치
     - 패키지 설치: `pip install requests pillow`
-    - 테스트: `python sd_batch_generator.py --test` (51 PASS / 0 WARN 확인)
+    - 테스트: `python sd_batch_generator.py --test` (52 PASS / 0 WARN 확인)
 
   3-2. SD WebUI 필수 세팅 (매우 중요 ★)
     1) WebUI 실행 bat 파일에 `--api` 추가:

@@ -3,18 +3,51 @@
     "description": "sea project-specific events (201-217)"
   },
   "event_main": {
-    "201": "standing, at bar counter, holding cocktail glass with one hand, offering drink, warm golden hour ambient lighting, looking at viewer, tender inviting smile, soft shaded skin, highly detailed beautiful face, blurry shelf background, cowboy shot",
-    "202": "standing, closed beach bar indoor, closed metal shutters background, heavy tropical rain outside window, dim warm lighting, wet skin glistening, top slightly sliding down, clinging wet fabric, looking at viewer, intense romantic atmosphere, cowboy shot",
-    "203": "sitting on wooden bar table, spinning an empty rum bottle, legs crossed, leaning forward, heavy-lidded seductive eyes, flushed cheeks, dim neon bar lighting, midnight pub background, playful teasing pose, cowboy shot",
-    "204": "sitting on VIP sofa, leaning back slightly, seductive parted lips, half-closed bedroom eyes, flushed cheeks, hoodie completely open falling behind, bare shoulders, soft ambient indoor lighting, upper body shot"
+    "201": {
+      "label": "칵테일건네기",
+      "prompt": "standing, at bar counter, holding cocktail glass with one hand, offering drink, warm golden hour ambient lighting, looking at viewer, tender inviting smile, soft shaded skin, highly detailed beautiful face, blurry shelf background, cowboy shot"
+    },
+    "202": {
+      "label": "비내리는바",
+      "prompt": "standing, closed beach bar indoor, closed metal shutters background, heavy tropical rain outside window, dim warm lighting, wet skin glistening, top slightly sliding down, clinging wet fabric, looking at viewer, intense romantic atmosphere, cowboy shot"
+    },
+    "203": {
+      "label": "럼주병돌리기",
+      "prompt": "sitting on wooden bar table, spinning an empty rum bottle, legs crossed, leaning forward, heavy-lidded seductive eyes, flushed cheeks, dim neon bar lighting, midnight pub background, playful teasing pose, cowboy shot"
+    },
+    "204": {
+      "label": "VIP소파유혹",
+      "prompt": "sitting on VIP sofa, leaning back slightly, seductive parted lips, half-closed bedroom eyes, flushed cheeks, hoodie completely open falling behind, bare shoulders, soft ambient indoor lighting, upper body shot"
+    }
   },
   "event_random": {
-    "211": "falling forward toward viewer, ice cubes scattering in air, panicked wide eyes, flushed face, arms reaching out, slipping near ice machine, beach bar kitchen background, dynamic action angle, cowboy shot",
-    "212": "standing, looking back over shoulder, untied bikini neck strap in hand, bare back exposed, flushed embarrassed blush, asking viewer for help, wooden bar partition background, warm afternoon sun, cowboy shot from behind",
-    "213": "sitting on sunbed, holding a sunscreen bottle, applying lotion to bare thigh and collarbone, glistening oily skin, seductive upward gaze, beach patio background, bright sunny lighting, cowboy shot",
-    "214": "standing close to viewer, holding a cocktail glass with straw, offering straw to viewer lips, finger on own glossy lips, playful wink, neon bar counter background, close-up upper body",
-    "215": "standing pressed against wall in narrow wooden storage room, stacked rum crates around, facing viewer very close, hands placed on viewer chest, flustered breathing, flushed face, dim storage room lighting, close-up cowboy shot",
-    "216": "standing playfully, hands reaching behind viewer, mischievous grin, teasing expression, beach bar outdoor terrace background, afternoon breeze, dynamic interaction, cowboy shot",
-    "217": "pov, ((looking back over shoulder, looking up at viewer, face turned to viewer:1.3)), ((topless, bare back, bare shoulders, completely bare upper body, unclothed upper body:1.45)), (lying on stomach on beach towel:1.25), mat on sandy beach, ((untied bikini top lying on towel beside character, discarded clothes on ground:1.3)), sunny outdoors, bright daylight, blue sky, beach background, ocean and waves, glistening oily skin, masculine hands applying lotion on character back, flushed cheeks, biting lip, alluring expression, cowboy shot from behind"
+    "211": {
+      "label": "얼음넘어짐",
+      "prompt": "falling forward toward viewer, ice cubes scattering in air, panicked wide eyes, flushed face, arms reaching out, slipping near ice machine, beach bar kitchen background, dynamic action angle, cowboy shot"
+    },
+    "212": {
+      "label": "비키니끈풀림",
+      "prompt": "standing, looking back over shoulder, untied bikini neck strap in hand, bare back exposed, flushed embarrassed blush, asking viewer for help, wooden bar partition background, warm afternoon sun, cowboy shot from behind"
+    },
+    "213": {
+      "label": "선크림바르기",
+      "prompt": "sitting on sunbed, holding a sunscreen bottle, applying lotion to bare thigh and collarbone, glistening oily skin, seductive upward gaze, beach patio background, bright sunny lighting, cowboy shot"
+    },
+    "214": {
+      "label": "빨대건네기",
+      "prompt": "standing close to viewer, holding a cocktail glass with straw, offering straw to viewer lips, finger on own glossy lips, playful wink, neon bar counter background, close-up upper body"
+    },
+    "215": {
+      "label": "창고밀착",
+      "prompt": "standing pressed against wall in narrow wooden storage room, stacked rum crates around, facing viewer very close, hands placed on viewer chest, flustered breathing, flushed face, dim storage room lighting, close-up cowboy shot"
+    },
+    "216": {
+      "label": "뒤에서장난",
+      "prompt": "standing playfully, hands reaching behind viewer, mischievous grin, teasing expression, beach bar outdoor terrace background, afternoon breeze, dynamic interaction, cowboy shot"
+    },
+    "217": {
+      "label": "해변오일(POV)",
+      "prompt": "pov, ((looking back over shoulder, looking up at viewer, face turned to viewer:1.3)), ((topless, bare back, bare shoulders, completely bare upper body, unclothed upper body:1.45)), (lying on stomach on beach towel:1.25), mat on sandy beach, ((untied bikini top lying on towel beside character, discarded clothes on ground:1.3)), sunny outdoors, bright daylight, blue sky, beach background, ocean and waves, glistening oily skin, masculine hands applying lotion on character back, flushed cheeks, biting lip, alluring expression, cowboy shot from behind"
+    }
   }
 }

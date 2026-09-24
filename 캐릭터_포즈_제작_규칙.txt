@@ -56,8 +56,9 @@
   1.2 포즈 DB (동작, 표정, 구도만 담당)
     - 자세(standing, lying), 표정(gentle smile, crying), 신체 각도, 카메라 구도, 조명만 서술.
     - ❌ 절대 금지: 성별 태그(1girl, 1boy), 캐릭터 외형 속성(silver hair, twintails).
-    - 첫 태그 원칙: 쉼표(,) 앞의 첫 번째 태그가 콘솔 진행 로그와 젠잇 마크다운 상태 매핑 가이드의
-                   '이름표(라벨)'가 됩니다. 구별 가능한 대표 키워드를 맨 앞에 두세요.
+    - 명시적 label 권장: 각 항목을 `{"label": "한국어명칭", "prompt": "..."}` 딕셔너리로 작성하면
+                         콘솔 진행 로그 및 젠잇 마크다운 상태 매핑 가이드에 해당 한국어 라벨이 정확히 표시됩니다.
+                         (생략 시 프롬프트 쉼표 전 첫 번째 태그가 폴백으로 사용됨)
 
   1.3 프로젝트 전용 배경 및 이벤트 (작품 분위기 격리)
     - 감정(emotions, 00~20) 씬의 단색 배경(`clean background`)은 `background.json`을 통해
@@ -174,17 +175,17 @@
   [자세/체위] → [시점/앵글] → [상호작용/파트너] → [행위/삽입] → [검열] → [노출/의상] → [체액/땀] → [표정/반응] → [배경/조명] → [카메라 샷]
 
 3.3 감정 씬 (00~20) 작성 요령
-  - 구조: `[자세], [표정 키워드], [세부 안면 반응], [배경], [조명], [카메라]`
+  - 구조: `{"label": "한국어라벨", "prompt": "[자세], [표정 키워드], [세부 안면 반응], [배경], [조명], [카메라]"}`
   - 예시:
-    "00": "standing, neutral face, calm gaze, looking at viewer, clean background, afternoon sunlight, cowboy shot"
-    "07": "standing, blushing face, averted gaze, timid shy expression, clean background, afternoon sunlight, cowboy shot"
-    "19": "sitting, comfortable posture, slight smile, clean background, afternoon sunlight, cowboy shot"
+    "00": {"label": "평상", "prompt": "standing, neutral face, calm gaze, looking at viewer, clean background, afternoon sunlight, cowboy shot"}
+    "07": {"label": "수줍음", "prompt": "standing, blushing face, averted gaze, timid shy expression, clean background, afternoon sunlight, cowboy shot"}
+    "19": {"label": "나른", "prompt": "sitting, comfortable posture, slight smile, clean background, afternoon sunlight, cowboy shot"}
 
 3.4 상호작용 씬 (21~37) 작성 요령
-  - 구조: `[시점(POV)], [자세], [상대방 신체 묘사], [접촉 부위], [캐릭터 반응], [조명], [카메라]`
+  - 구조: `{"label": "한국어라벨", "prompt": "[시점(POV)], [자세], [상대방 신체 묘사], [접촉 부위], [캐릭터 반응], [조명], [카메라]"}`
   - 예시:
-    "21": "pov, standing, large masculine hand gently touching cheek, leaning into touch, blushing, gentle eyes, soft lighting, cowboy shot"
-    "26": "standing, being embraced from behind, masculine arms around waist, surprised blush, soft lighting, cowboy shot"
+    "21": {"label": "뺨쓰다듬기", "prompt": "pov, standing, large masculine hand gently touching cheek, leaning into touch, blushing, gentle eyes, soft lighting, cowboy shot"}
+    "26": {"label": "어깨탈의", "prompt": "standing, being embraced from behind, masculine arms around waist, surprised blush, soft lighting, cowboy shot"}
 
 3.5 H씬 작성 요령
   - 검열 태그 표준: `(black censor bar, censor bar:1.25)`
@@ -213,12 +214,24 @@
   ```json
   {
     "event_main": {
-      "201": "standing, holding tropical cocktail glass, serving drink, smiling, bar interior, cowboy shot",
-      "203": "sitting on wooden bar table, legs swinging playfully, leaning back, bar interior, cowboy shot"
+      "201": {
+        "label": "칵테일건네기",
+        "prompt": "standing, holding tropical cocktail glass, serving drink, smiling, bar interior, cowboy shot"
+      },
+      "203": {
+        "label": "럼병돌리기",
+        "prompt": "sitting on wooden bar table, legs swinging playfully, leaning back, bar interior, cowboy shot"
+      }
     },
     "event_random": {
-      "211": "falling forward toward viewer, accidental stumble, blushing face, hands reaching out, bar interior, cowboy shot",
-      "215": "standing pressed against wall in narrow wooden storage room, close intimate distance, flushed cheeks, storage room interior, cowboy shot"
+      "211": {
+        "label": "얼음넘어짐",
+        "prompt": "falling forward toward viewer, accidental stumble, blushing face, hands reaching out, bar interior, cowboy shot"
+      },
+      "215": {
+        "label": "창고밀착",
+        "prompt": "standing pressed against wall in narrow wooden storage room, close intimate distance, flushed cheeks, storage room interior, cowboy shot"
+      }
     }
   }
   ```
@@ -258,7 +271,7 @@
   □ default_mode가 올바르게 지정되었는가? ("female" 또는 "otokonoko")
 
   [포즈 및 이벤트 DB 검사]
-  □ 쉼표 앞의 첫 번째 태그가 명확한 라벨/서술어인가?
+  □ 각 엔트리에 명확한 한국어 label 필드(예: "label": "평상")가 명시되어 있는가?
   □ 포즈 프롬프트 안에 1girl, 1boy 등 성별 태그가 없는가?
   □ H씬에서 체위명 뒤에 "position"이 붙어있는가?
   □ 오토코노코 H씬에 vaginal 관련 태그가 전혀 없는가?

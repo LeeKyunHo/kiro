@@ -49,12 +49,18 @@ class PoseEntry:
     code: int
     prompt: str
     section: str
-    width: int | None = None  # 동적 해상도 오버라이드 (optional)
+    width: int | None = None   # 동적 해상도 오버라이드 (optional)
     height: int | None = None
+    label_override: str | None = None  # pose_database.json 의 "label" 필드 (optional)
 
     @property
     def label(self) -> str:
-        """프롬프트 첫 태그를 사람이 읽을 라벨로 사용."""
+        """표시용 라벨.
+        pose_database.json 에 'label' 필드가 있으면 그것을 우선 사용하고,
+        없으면 프롬프트의 첫 태그를 폴백으로 반환한다.
+        """
+        if self.label_override:
+            return self.label_override
         return self.prompt.split(",")[0].strip()
 
 

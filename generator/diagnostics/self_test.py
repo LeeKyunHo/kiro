@@ -163,9 +163,19 @@ def _audit_data_quality(report: TestReport, raw: dict[str, Any]) -> None:
             except (TypeError, ValueError):
                 bad_keys.append(f"{section}/{key}")
                 continue
-            if not isinstance(value, str) or not value.strip():
+            if isinstance(value, dict):
+                prompt = value.get("prompt", "")
+                if not isinstance(prompt, str) or not prompt.strip():
+                    empty_values.append(f"{section}/{key}")
+                    continue
+            elif isinstance(value, str):
+                if not value.strip():
+                    empty_values.append(f"{section}/{key}")
+                    continue
+            else:
                 empty_values.append(f"{section}/{key}")
                 continue
+
             if code in seen:
                 duplicates.append(f"{code}({seen[code]}->{section})")
             seen[code] = section
@@ -233,6 +243,21 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
     report.check("T12 마크다운 라인 수 == 대상 수", len(calls) == len(codes),
                  f"{len(calls)}/{len(codes)}")
     report.check("T13 {{url}} 리터럴 포함", URL_PLACEHOLDER in block)
+
+    from generator.models import PoseEntry
+    entry_with_label = PoseEntry(1, "standing, smile", "emotions", label_override="미소")
+    entry_without_label = PoseEntry(2, "standing, angry glare", "emotions")
+    real_0_label = db.entries[0].label if 0 in db.entries else ""
+    label_ok = (
+        entry_with_label.label == "미소"
+        and entry_without_label.label == "standing"
+        and real_0_label == "평상"
+    )
+    report.check(
+        "T13b PoseEntry.label 명시적 라벨 및 폴백",
+        label_ok,
+        f"지정: {entry_with_label.label}, 폴백: {entry_without_label.label}, DB실제: {real_0_label}",
+    )
 
     rejected = []
     for unsafe in UNSAFE_PREFIXES:
