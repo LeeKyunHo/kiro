@@ -1,290 +1,154 @@
 ==============================================================================
-  에파 (sd_batch_generator.py) — 사용법
-  사람이 읽는 설치 · 실행 가이드
+  에파 (sd_batch_generator.py) — 사용자 가이드 & 치트시트
+  사람이 읽고 바로 실행하는 간편 매뉴얼
 ==============================================================================
 
-  [문서 안내]
-    사용법.txt          이 문서. 설치·실행 절차 (사람용)
-    에파_기능명세.md     기능 전체 명세 (AI 개선 작업용)
-    PROJECT_GUIDE.md    내부 아키텍처·확장 방법 (개발자/AI 에이전트용)
+  [문서 가이드]
+  - 사용법.txt                  [이 문서] 설치, 자주 쓰는 실행 명령어, 트러블슈팅
+  - 캐릭터_포즈_제작_규칙.txt    캐릭터 JSON, 외형 태그, Danbooru 프롬프트 작성 가이드
+  - 에파_기능명세.md             전체 CLI 옵션, JSON 스키마, 파이프라인 기술 규격
+  - PROJECT_GUIDE.md            내부 아키텍처, 패키지 구조, 개발자용 확장 가이드
 
 
 ==============================================================================
-  ★ 빠른 명령어 참조
+  1. 가장 많이 쓰는 명령어 (치트시트)
 ==============================================================================
 
-  ── 로스터(프로젝트) ──────────────────────────────────────────────────
-  dar    = projects/dark_generals/   흑막사천왕
-  oto    = projects/oto/             오토코노코
-  school = projects/school/          학원물
-  fth    = projects/fth/             판타지 하렘
+  ★ 주의: 터미널 출력 잘림을 방지하기 위해 항상 `python -u` 로 실행하세요.
 
-  ── 전체 캐릭터 일괄 생성 ─────────────────────────────────────────────
-  python -u sd_batch_generator.py --all-chars -r dar
-  python -u sd_batch_generator.py --all-chars -r oto
-  python -u sd_batch_generator.py --all-chars -r school
+  ── [원클릭] 작품 전체 캐릭터 생성 (감정+배경+포즈+H씬+이벤트 전부) ──
+  python -u sd_batch_generator.py --all-chars -r sea        # 바다/비치 바
+  python -u sd_batch_generator.py --all-chars -r dar        # 흑막사천왕
+  python -u sd_batch_generator.py --all-chars -r oto        # 오토코노코
+  python -u sd_batch_generator.py --all-chars -r school     # 학원물
 
-  ── 단일 캐릭터 ───────────────────────────────────────────────────────
-  python -u sd_batch_generator.py --char rog -r dar          # 전 포즈
-  python -u sd_batch_generator.py --char rog -r dar --codes "0,1,2,3"   # 특정 번호
-  python -u sd_batch_generator.py --char rog -r dar --codes "140-170"   # 범위
+  ── 단일 캐릭터 생성 ───────────────────────────────────────────────────────
+  python -u sd_batch_generator.py --char ren -r sea          # 렌 전체 에셋 생성
+  python -u sd_batch_generator.py --char rog -r dar          # 로그 전체 에셋 생성
 
-  ── 재생성 ────────────────────────────────────────────────────────────
-  Remove-Item "projects\dar\assets\rog\rog_020.webp"
-  python -u sd_batch_generator.py --char rog -r dar --codes "20"
+  ── 특정 번호만 골라서 생성 ───────────────────────────────────────────────
+  python -u sd_batch_generator.py --char ren -r sea --codes "0,1,2,3"   # 감정만
+  python -u sd_batch_generator.py --char ren -r sea --codes "201-204"   # 메인 이벤트만
+  python -u sd_batch_generator.py --char ren -r sea --codes "140-170"   # H씬만
 
-  ── 목록 확인 ─────────────────────────────────────────────────────────
-  python -u sd_batch_generator.py --list -r dar
+  ── 배경 분위기 변경 (감정 씬 00~20 대상) ──────────────────────────────────
+  python -u sd_batch_generator.py --char ren -r sea --bg-preset night
+  python -u sd_batch_generator.py --char ren -r sea --bg "sunset beach bar background"
 
-  ── 진단 (WebUI 불필요) ───────────────────────────────────────────────
+  ── 특정 파일 1개만 다시 만들기 (재생성) ──────────────────────────────────
+  # 1. 다시 만들고 싶은 webp 파일을 삭제합니다:
+  Remove-Item "projects\sea\assets\ren\ren_000.webp"
+  # 2. 해당 번호를 실행하면 삭제된 파일만 새로 생성됩니다:
+  python -u sd_batch_generator.py --char ren -r sea --codes "0"
+
+  ── 실행 전 미리보기 (WebUI 없이 계획만 확인) ─────────────────────────────
+  python sd_batch_generator.py --char ren -r sea --dry-run
+
+  ── 파이프라인 정상 동작 자체 점검 ─────────────────────────────────────────
   python sd_batch_generator.py --test
 
-  ── 고급 옵션 ─────────────────────────────────────────────────────────
-  --enable-lightning --lightning-steps 4 --lightning-cfg 1.5   SDXL Lightning
-  --enable-freeu                                               FreeU 활성화
-  --enable-adetailer                                           얼굴 보정
-  --bg-preset night                                            배경 프리셋 전환 (default, night 등)
-  --bg "beach cafe background, sunny day"                      감정 씬 배경 프롬프트 직접 지정
 
-  ── 규칙 ─────────────────────────────────────────────────────────────
-  ★ 기존 파일이 있으면 자동 건너뜀 (삭제 후 재실행하면 해당 파일만 재생성)
-  ★ WebUI가 켜져 있어야 생성 가능 (http://127.0.0.1:7860)
-  ★ 중단돼도 재실행하면 이어서 생성됨
-  ★ 번호 범위: 00-20 감정, 21-39 포즈, 40-75 여성H씬, 140-170 오토코노코H씬
-  ★ python -u 플래그 권장 (PowerShell 출력 버퍼링 방지)
+==============================================================================
+  2. 주요 로스터 (작품 프로젝트) 안내
+==============================================================================
+
+  로스터는 `projects/` 폴더 안의 개별 작품입니다.
+  작품에 `events.json`이 있으면 이벤트 씬(200번대)까지 한 번에 자동 생성됩니다!
+
+  | 별칭    | 폴더 위치                  | 작품 설명 및 특징                         |
+  |---------|----------------------------|--------------------------------------------|
+  | `sea`   | `projects/sea/`            | 바다/비치 바 (배경 치환 + 이벤트 씬 완비)  |
+  | `dar`   | `projects/dark_generals/`  | 흑막사천왕                                 |
+  | `oto`   | `projects/oto/`            | 오토코노코 전문                            |
+  | `school`| `projects/school/`         | 학원물                                     |
+  | `fth`   | `projects/fth/`            | 판타지 하렘                                |
+
+  * 신규 작품 추가: `projects/{원하는이름}/` 폴더를 만들고 그 안에 `characters/`를
+    넣으면 `--roster {원하는이름}`으로 코드 수정 없이 즉시 작동합니다.
 
 
 ==============================================================================
-  0. 이 도구는 무엇인가
+  3. 최초 1회 설치 및 WebUI 필수 세팅
 ==============================================================================
 
-  로컬 Stable Diffusion WebUI에 명령을 보내서
-  캐릭터 챗봇용 표정·포즈 이미지를 한 번에 여러 장 자동 생성하는 CLI 도구.
+  3-1. 파이썬 및 필수 패키지 설치
+    - Python 3.10 이상 설치
+    - 패키지 설치: `pip install requests pillow`
+    - 테스트: `python sd_batch_generator.py --test` (48 PASS 확인)
 
-  생성이 끝나면
-    - 이미지가 projects/{로스터}/assets/{캐릭터}/ 폴더에 저장되고
-    - 윈도우 탐색기가 자동으로 열리고
-    - 젠잇(Genit)에 붙여넣을 마크다운 호출 코드가 출력됩니다.
-
-  핵심: JSON 파일에 항목을 늘리면 코드 수정 없이 생성 장수가 늘어납니다.
-
-
-==============================================================================
-  1. 폴더 구성
-==============================================================================
-
-  kiro\
-   ├─ sd_batch_generator.py     실행 파일
-   ├─ pose_database.json         프롬프트 DB (모든 로스터 공유)
-   ├─ 사용법.txt                  이 문서
-   ├─ 에파_기능명세.md             기능 명세 (AI용)
-   ├─ PROJECT_GUIDE.md            기술 명세 (개발자/AI 에이전트용)
-   │
-   └─ projects\
-       ├─ dark_generals\          흑막사천왕 로스터 (별칭: dar)
-       │   ├─ characters\         캐릭터 JSON
-       │   ├─ references\         IP-Adapter 참조 이미지
-       │   └─ assets\             생성 결과 (git 제외)
-       │       └─ {캐릭터}\{캐릭터}_{번호}.webp
-       ├─ oto\                    오토코노코 로스터 (별칭: oto)
-       ├─ school\                 학원물 로스터 (별칭: school)
-       └─ fth\                    판타지 하렘 로스터 (별칭: fth)
-
-  새 로스터 추가: projects\{이름}\characters\, references\, assets\ 폴더 만들면
-  --roster {이름} 으로 자동 인식됩니다. (선택: events.json, background.json)
-  코드 수정 불필요.
+  3-2. SD WebUI 필수 세팅 (매우 중요 ★)
+    1) WebUI 실행 bat 파일에 `--api` 추가:
+       `set COMMANDLINE_ARGS=--api --medvram-sdxl --xformers`
+    2) WebUI 웹 화면 > [Settings] > [Saving images/grids]:
+       `Images filename pattern` 칸을 **완전히 빈칸**으로 비우고 [Apply settings] 클릭!
+       (여기에 값이 들어있으면 에셋이 0KB로 저장되거나 에러가 납니다)
+    3) 체크포인트 모델 선택:
+       WebUI 좌측 상단에서 `Unholy Desire Mix Crimson v5.0` (또는 원하는 모델)을
+       직접 선택해 두어야 합니다. (스크립트는 모델을 강제로 바꾸지 않습니다)
 
 
 ==============================================================================
-  2. 설치 (최초 1회)
+  4. 배경 시스템과 이벤트 씬 활용법
 ==============================================================================
 
-  2-1. 파이썬 확인
-    python --version   →  3.10 이상이면 OK
+  4-1. 감정 씬(00~20) 배경 자동 치환
+    - 기본 상태에서 감정 씬은 단색 배경(`clean background`)이지만,
+      `projects/{roster}/background.json`이 있으면 작품 분위기 배경으로 자동 변경됩니다.
+    - 예: `sea` 로스터는 감정 씬이 자동으로 "트로피컬 비치 바 테라스"로 생성됩니다.
+    - 밤 분위기로 바꾸고 싶다면: `--bg-preset night`
+    - 일회성 배경을 주고 싶다면: `--bg "rainy cafe background"`
+    ★ 침대/욕실/벽 등 고유 장소가 있는 포즈나 H씬은 배경이 절대 섞이지 않습니다.
 
-  2-2. 패키지 설치
-    pip install requests pillow
-
-  2-3. 설치 확인
-    python sd_batch_generator.py --test
-    → [PASS] 45개 나오면 정상 (WebUI 없이도 동작)
-
-
-==============================================================================
-  3. WebUI 세팅 (최초 1회)
-==============================================================================
-
-  3-1. webui-user.bat 수정 (필수)
-
-    set COMMANDLINE_ARGS=--api
-
-    VRAM 8GB 권장 추가 옵션:
-    set COMMANDLINE_ARGS=--api --medvram-sdxl --xformers
-
-    ★ --xformers 와 --opt-sdp-attention 동시 사용 금지
-    ★ 변경 후 콘솔 창 완전히 닫고 재실행해야 적용됨
-
-  3-2. WebUI Settings 탭 (필수)
-
-    Saving images/grids → Images filename pattern 완전히 비우기 → Apply
-    (값이 남아있으면 [WinError 87] 에러 발생, 파일이 0KB로 저장됨)
-
-  3-3. Forge 사용 시 권장값 (RTX 4060 Ti 8GB 기준)
-
-    Diffusion with Low Bits  Auto
-    Swap Method              Queue
-    Swap Location            CPU
-    Clip skip                2
-
-  3-4. 모델 선택 — 놓치기 쉬움 ★ 중요
-
-    스크립트는 모델을 지정하지 않습니다.
-    WebUI 좌측 상단 Stable Diffusion checkpoint에서 반드시 선택하세요.
-
-    【현재 사용 모델】
-    Unholy Desire Mix Crimson v5.0 (NoobAI 베이스)
-    파일명: unholyDesireMixCrimson_v50.safetensors
-
-    【기술 규격】
-    - 베이스: NoobAI (SDXL 파생)
-    - 해상도: 832×1216 네이티브
-    - 특징: 밝고 화사한 애니메이션 스타일
-    - Danbooru 태그 최적화 (복잡한 POV, 감정, 검열 태그 정확)
-    - 오토코노코 표현 우수 (androgynous, flat chest, subtle bulge)
-    - CFG Scale: 5.0~7.0 권장 (7.0 초과 시 선화 태움 주의)
-
-    ★ SD1.5 비호환: 896×1280이나 512×768로 변경하려면
-      sd_batch_generator.py 내 IMAGE_SIZE 상수 수정 필요
+  4-2. 이벤트 씬(200번대) 자동 포함
+    - `projects/{roster}/events.json`에 정의된 메인/랜덤 이벤트는
+      `--all-chars`나 단일 캐릭터 실행 시 자동으로 감지되어 함께 출력됩니다.
 
 
 ==============================================================================
-  4. 캐릭터 JSON 추가 방법
+  5. 참조 이미지(IP-Adapter)로 캐릭터 일관성 유지하기
 ==============================================================================
 
-  projects\{로스터}\characters\{이름}.json 파일 생성.
-
-  최소 형식 (positive 방식 — 권장):
-
-    {
-      "prefix": "mika",
-      "default_mode": "female",
-      "positive": "masterpiece, best quality, ..., 1girl, solo, silver hair, blue eyes, ...",
-      "negative": "1boy, male, child, loli, uncensored, no censor, thin censorship",
-      "ref_weight": 0.7,
-      "background": "classroom background, window view"
-    }
-
-  레거시 형식 (char_prompt 방식):
-
-    {
-      "prefix": "mika",
-      "profile": "female",
-      "default_mode": "female",
-      "char_prompt": "silver hair, blue eyes, school uniform",
-      "custom_neg": "glasses"
-    }
-
-  default_mode 값:
-    "female"     → emotions, poses, h_scenes (00-20, 21-39, 40-75)
-    "otokonoko"  → emotions, poses, scenes_otokonoko (00-20, 21-39, 140-170)
+  캐릭터 얼굴/체형을 완벽히 유지하고 싶다면:
+  1. 먼저 0번(기본 표정)을 1장 생성합니다:
+     `python -u sd_batch_generator.py --char ren -r sea --codes "0"`
+  2. 마음에 드는 결과물을 `projects/sea/references/ren.webp` 로 복사합니다.
+  3. 이제 전체 생성을 돌리면 ControlNet IP-Adapter가 자동으로 활성화되어
+     모든 포즈와 씬에서 동일한 얼굴과 외형으로 생성됩니다!
 
 
 ==============================================================================
-  5. pose_database.json 편집
+  6. 젠잇(Genit)에 에셋 등록하기
 ==============================================================================
 
-  이 파일이 도구의 심장. 여기에 적은 만큼 이미지가 나옵니다.
+  생성이 끝나면 터미널 맨 아래에 `젠잇(ZenIt) 복사용 에셋 블록`이 자동 출력됩니다.
+  동시에 결과물이 저장된 윈도우 탐색기 폴더가 자동으로 열립니다.
 
-  ★ 첫 태그가 이름표가 됩니다 (가장 중요)
-
-    [나쁜 예]  "00": "standing, front view, neutral expression"  → 라벨: standing
-    [좋은 예]  "00": "neutral expression, standing, front view"  → 라벨: neutral expression
-
-  ★ 포즈에 성별 태그(1girl/1boy) 넣지 마세요. 프로필 축에서 처리합니다.
-
-  편집 후 항상 검사:
-    python sd_batch_generator.py --test
+  터미널에 출력된 아래 3가지를 복사해서 젠잇 봇 제작창에 붙여넣으세요:
+  1) `이미지 호출 코드`: {{url}}ren/ren_000.webp
+  2) `상태 매핑 가이드`: 어떤 감정/포즈가 몇 번 파일인지 목록
+  3) `상태창 템플릿`: 챗봇 메시지에 붙여넣을 템플릿 문구
 
 
 ==============================================================================
-  6. 참조 이미지 (IP-Adapter) — 캐릭터 일관성
+  7. 문제 해결 (FAQ & Troubleshooting)
 ==============================================================================
 
-  projects\{로스터}\references\{prefix}.webp 에 이미지를 넣으면 자동 적용됩니다.
-  없어도 됩니다 (경고만 출력하고 텍스트만으로 생성).
+  Q. "WebUI 연결 불가" 오류가 납니다.
+  A. SD WebUI가 실행 중인지 확인하고, `webui-user.bat`에 `--api` 옵션이 들어가
+     있는지 확인하세요. 주소는 `http://127.0.0.1:7860` 이어야 합니다.
 
-  강도 조절:
-    ref_weight: 0.5~0.8  실무 범위 (기본 0.7)
-    1.0 이상             포즈까지 참조에 고정됨 (권장 안 함)
+  Q. 이미지가 0KB이거나 파일 생성 오류가 발생합니다.
+  A. WebUI [Settings] -> [Saving images/grids] -> `Images filename pattern` 칸이
+     비어있는지 확인하세요. 빈칸으로 만들고 [Apply settings]를 눌러야 합니다.
 
-  부트스트랩 워크플로우 (자체 생성물 참조):
-    1. python -u sd_batch_generator.py --char mika -r school --codes "0"
-    2. Copy-Item "projects\school\assets\mika\mika_000.webp" "projects\school\references\mika.webp"
-    3. (나머지 생성 — 참조 자동 적용)
+  Q. 실행했는데 "이미 존재 (건너뜀)" 라면서 전부 스킵됩니다.
+  A. 에파는 이미 성공적으로 만든 파일은 다시 만들지 않습니다.
+     다시 만들고 싶다면 해당 `.webp` 파일을 삭제하고 다시 실행하세요.
 
+  Q. 파워셸 터미널에서 생성이 멈춘 것처럼 보입니다.
+  A. 파이썬 버퍼링 때문일 수 있습니다. 명령어에 반드시 `-u` 플래그를 붙여서
+     `python -u sd_batch_generator.py ...` 형태로 실행하세요.
 
-==============================================================================
-  7. 배경 시스템 (프로젝트별 분위기 통합)
-==============================================================================
-
-  감정(emotions) 씬(00~20)의 기본 "clean background"를 프로젝트나 캐릭터 분위기에
-  맞는 고유 배경으로 자동 치환합니다.
-
-  ★ 침대, 욕실, 샤워, 벽 등 고유 환경이 설정된 포즈 및 H씬은 절대 건드리지 않습니다.
-
-  1) 프로젝트 배경 프리셋: projects/{로스터}/background.json
-     {
-       "default": "tropical beach bar terrace background, ocean view through window, afternoon sunlight",
-       "night": "dimly lit beach bar interior, warm lamp lighting, dark night ocean outside window"
-     }
-
-  2) 캐릭터별 개별 지정: characters/{캐릭터}.json 내 "background" 필드
-
-  3) 우선순위:
-     커맨드라인 --bg > 캐릭터 JSON "background" > background.json 프리셋 > clean background(기본값)
-
-  4) 커맨드라인 활용:
-     # 프리셋 전환
-     python -u sd_batch_generator.py --char ren -r sea --bg-preset night
-     # 즉석 배경 지정
-     python -u sd_batch_generator.py --char ren -r sea --bg "modern cafe background"
-
-
-==============================================================================
-  8. 실행 예시
-==============================================================================
-
-  # dar 로스터 rog 캐릭터 전체
-  python -u sd_batch_generator.py --char rog -r dar
-
-  # school 로스터 전 캐릭터 000~003번
-  python -u sd_batch_generator.py --all-chars -r school --codes "0,1,2,3"
-
-  # Lightning 가속 모드 (초고속)
-  python -u sd_batch_generator.py --char rei -r school --codes "0" --enable-lightning --lightning-steps 4 --lightning-cfg 1.5
-
-  # 계획만 확인 (WebUI 불필요)
-  python -u sd_batch_generator.py --char rog -r dar --dry-run
-
-  # WebUI 없이 더미 이미지로 파이프라인 테스트
-  python -u sd_batch_generator.py --char rog -r dar --mock
-
-
-==============================================================================
-  9. 문제 해결
-==============================================================================
-
-  증상                            원인 / 대응
-  ----------------------------    ------------------------------------------
-  WebUI 연결 불가                  --api 누락, WebUI 콘솔 종료
-  파일이 0KB / [WinError 87]       Images filename pattern 비우고 Apply
-  전부 건너뜀                      이미 파일 존재. 삭제 후 재실행
-  출력이 중간에 잘림                python -u 옵션 추가
-  SyntaxError (한글 입력됨)         에디터 포커스 문제. 파일 직접 수정 시
-                                   에디터 본문 클릭 후 입력
-  BOM 오류 (JSON 파싱 실패)         메모장으로 저장 시 발생. Python으로 저장하거나
-                                   PowerShell: [System.IO.File]::WriteAllText(
-                                     $path, $content,
-                                     [System.Text.UTF8Encoding]::new($false))
-  남캐인데 여성으로 나옴             profile 설정 확인
-  화풍이 예상과 다름                WebUI 체크포인트 확인 (스크립트는 모델 미지정)
+  Q. 캐릭터를 새로 등록하고 싶어요.
+  A. `projects/{roster}/characters/` 폴더에 `{캐릭터약칭}.json` 파일을 만드세요.
+     상세한 태그 작성 요령은 `캐릭터_포즈_제작_규칙.txt`를 참고하세요.

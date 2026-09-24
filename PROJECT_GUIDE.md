@@ -1,116 +1,139 @@
 # SD 캐릭터 에셋 배치 생성 파이프라인 — 프로젝트 가이드
 
-> AI 에이전트 및 개발자용 단일 참조 문서.
-> 코드를 읽지 않고도 정확히 조작할 수 있도록 실제 구현값을 기준으로 작성.
+> AI 에이전트 및 개발자용 아키텍처 및 내부 구조 참조 문서.
+> 코드를 읽지 않고도 패키지 구조와 핵심 로직을 파악할 수 있도록 실제 구현을 기준으로 기술.
 >
-> 설치·실행 절차 → `사용법.txt`
-> 기능 명세 압축 참조 → `에파_기능명세.md`
+> - 사람/사용자용 설치 및 CLI 실행법 → `사용법.txt`
+> - AI 도구용 전체 파라미터/JSON/API 명세 → `에파_기능명세.md`
+> - 프롬프트/태그/BREAK/캐릭터 제작 규칙 → `캐릭터_포즈_제작_규칙.txt`
 
 ---
 
 ## 0. 한 줄 요약
 
 로컬 SD WebUI API를 호출해 캐릭터 챗봇용 이미지 에셋을 일괄 생성하고,
-젠잇(Genit) 플랫폼에 붙여넣을 마크다운 호출 코드를 자동 조립하는 CLI 도구.
+젠잇(Genit) 플랫폼에 붙여넣을 마크다운 호출 코드를 자동 조립하는 모듈화 CLI 도구.
 
-**핵심 설계 원칙: 프롬프트 데이터는 JSON에, 로직은 Python에.**
+**핵심 설계 원칙: 프롬프트 데이터는 JSON에, 파이프라인 로직은 Python 패키지(`generator/`)에 격리.**
 
 ---
 
-## 1. 파일 구성
+## 1. 디렉터리 및 패키지 구성
 
 작업 루트: `C:\Users\rbsgh\kiro`
 
 ```
 kiro/
-├── sd_batch_generator.py        메인 실행 스크립트
-├── pose_database.json           프롬프트 DB (공용 — 모든 로스터 공유)
-├── PROJECT_GUIDE.md             이 문서 (개발자/AI 에이전트용)
-├── 에파_기능명세.md               기능 명세 압축 (외부 AI 개선용)
-├── 사용법.txt                    설치·사용 가이드 (사람용)
-├── .gitignore / .gitattributes
+├── sd_batch_generator.py        경량 CLI 엔트리포인트 (인자 파싱 및 실행 위임)
+├── generator/                   ★ 파이프라인 핵심 모듈 패키지
+│   ├── __init__.py              패키지 초기화 및 외부 호환 심볼 re-export
+│   ├── config.py                상수(해상도, 스텝, CFG 등), 엔드포인트, 예외 정의
+│   ├── models.py                불변 데이터클래스 (PoseEntry, Profile, PoseDatabase 등)
+│   ├── prompt.py                태그 정규화, 충돌 감지, BREAK 전진 배치 조립, 배경 해석
+│   ├── reference.py             참조 이미지 탐색(IP-Adapter) 및 ControlNet 유닛 조립
+│   ├── pose_db.py               pose_database.json & events.json 파싱, 대상 코드 해석
+│   ├── roster.py                RosterPathManager, 캐릭터 프리셋 로딩, 이벤트 자동 병합
+│   ├── webui_client.py          WebUI API 클라이언트, Forge 스크립트, WebP 원자적 저장
+│   ├── reporter.py              포맷팅, 콘솔 결과 요약, 젠잇 마크다운 블록 조립
+│   ├── runner.py                단일/다중 캐릭터 배치 실행 파이프라인
+│   └── diagnostics/             자체 검증 테스트 모듈
+│       ├── __init__.py
+│       └── self_test.py         48개 항목 단위 검증 스위트 (T1~T37e)
 │
-└── projects/                    ★ 로스터별 프로젝트 루트
+├── pose_database.json           공용 프롬프트 DB (모든 로스터 공유 — 감정, 포즈, H씬)
+├── PROJECT_GUIDE.md             [이 문서] 시스템 아키텍처 및 내부 모듈 구조 (개발자용)
+├── 에파_기능명세.md               완전한 기능/CLI/JSON 규격 명세 (AI/도구용)
+├── 사용법.txt                    설치, 빠른 명령어, 실행 및 트러블슈팅 (사용자용)
+├── 캐릭터_포즈_제작_규칙.txt     프롬프트 태그, BREAK 문법, JSON 작성 규칙 (제작자용)
+│
+└── projects/                    ★ 로스터(작품)별 격리 루트
     ├── dark_generals/           흑막사천왕 (별칭: dar)
-    │   ├── characters/          캐릭터 JSON
-    │   ├── references/          IP-Adapter 참조 이미지
-    │   ├── events.json          [선택] 작품별 전용 이벤트 포즈 DB (200번대 등 자동 병합)
-    │   └── assets/              생성 결과 (git 제외: projects/*/assets/)
-    │       └── {prefix}/{prefix}_{NNN}.webp
+    ├── sea/                     바다/비치 바 (별칭: sea)
     ├── oto/                     오토코노코 (별칭: oto)
     ├── school/                  학원물 (별칭: school)
     └── fth/                     판타지 하렘 (별칭: fth)
+        ├── characters/          캐릭터 프리셋 JSON (*.json)
+        ├── references/          IP-Adapter 참조 이미지 (*.webp, *.png 등)
+        ├── assets/              생성된 이미지 에셋 (git 제외: {prefix}_{NNN}.webp)
+        ├── events.json          [선택] 작품 전용 이벤트 포즈 DB (200번대 등 자동 병합)
+        └── background.json      [선택] 작품 감정(emotions) 씬 전용 배경 프리셋
 ```
 
-### 로스터 (Roster) 시스템
+### 모듈별 책임 및 인터페이스
 
-| 별칭 | 폴더 | 설명 |
+| 모듈 | 주요 역할 | 핵심 함수 / 클래스 |
 |---|---|---|
-| `dar` | `projects/dark_generals/` | 흑막사천왕 |
-| `oto` | `projects/oto/` | 오토코노코 |
-| `school` | `projects/school/` | 학원물 |
-| `fth` | `projects/fth/` | 판타지 하렘 |
-
-OCP 원칙: `projects/xyz/` 폴더를 만들면 `--roster xyz`가 코드 수정 없이 인식됨.
-`pose_database.json`과 `references/`는 루트에서 모든 로스터가 공유.
-
-### 파일별 역할
-
-| 파일 | 역할 | 수정 빈도 |
-|---|---|---|
-| `sd_batch_generator.py` | 전체 로직. API 호출·WebP 변환·마크다운 조립·자체 검증 | 낮음 |
-| `pose_database.json` | 프로필·포즈·표정 프롬프트. **일상 편집 대상** | 높음 |
-| `projects/{roster}/characters/*.json` | 캐릭터별 프리셋 | 중간 |
-| `.kiro/steering/sd_char_gen.md` | Kiro 자동 실행 트리거 규칙 | 낮음 |
+| `generator.config` | 전역 기본값, HTTP 타임아웃, 예외 | `ConfigError`, `IMAGE_SIZE`, `DEFAULT_PROFILE` |
+| `generator.models` | 슬롯 데이터클래스 정의 | `PoseEntry`, `PoseDatabase`, `CharacterConfig`, `BatchResult` |
+| `generator.prompt` | 프롬프트 정규화, 충돌 분석, 배경 결합 | `assemble_prompt()`, `resolve_background()`, `find_tag_conflicts()` |
+| `generator.reference` | IP-Adapter 참조 이미지 및 유닛 생성 | `find_reference_image()`, `build_controlnet_unit()` |
+| `generator.pose_db` | JSON 파싱 및 타겟 코드 계산 | `load_pose_db()`, `resolve_targets()`, `parse_codes_expr()` |
+| `generator.roster` | 프로젝트 탐색, 프리셋 로드, 이벤트 병합 | `RosterPathManager`, `load_character()`, `apply_character_to_args()` |
+| `generator.webui_client` | WebUI API 통신, WebP 변환 | `generate_image()`, `save_as_webp()`, `build_txt2img_payload()` |
+| `generator.reporter` | 콘솔 요약 보고서 및 젠잇 마크다운 생성 | `print_summary()`, `build_genit_block()`, `asset_filename()` |
+| `generator.runner` | 배치 실행 루프 및 라이트닝/FreeU 조율 | `execute()`, `run_batch()`, `run_all_chars()` |
+| `generator.diagnostics` | 자체 테스트 러너 (48개 항목) | `run_self_test()` |
 
 ---
 
 ## 2. 의존성 및 실행 환경
 
-| 항목 | 값 |
-|---|---|
-| Python | 3.10+ (`slots=True` dataclass, 검증 환경 3.12) |
-| 필수 패키지 | `requests`, `Pillow` |
-| OS | Windows 전제 (탐색기 자동 오픈). 다른 OS에서도 생성은 동작 |
-| 외부 서비스 | SD WebUI (A1111 또는 Forge), `--api` 옵션 필수 |
+| 항목 | 값 | 비고 |
+|---|---|---|
+| Python | 3.10+ | `slots=True` dataclass, 3.12 검증 완료 |
+| 필수 패키지 | `requests`, `Pillow` | 표준 라이브러리 외 최소화 |
+| OS | Windows 전제 | `os.startfile()` 탐색기 자동 오픈 |
+| 외부 서비스 | SD WebUI (A1111 / Forge) | `--api` 옵션 필수, 기본 `http://127.0.0.1:7860` |
 
 ---
 
-## 3. 데이터 흐름
+## 3. 데이터 흐름 (Data Flow)
 
 ```
-pose_database.json
-        │  read_pose_json() → parse_pose_db()
-        ▼
-   PoseDatabase(entries, sections, profiles, warnings)
-        │
-        ├─ resolve_profile()   → Profile(base_positive, base_negative)
-        ├─ resolve_targets()   → 대상 코드 리스트
-        └─ code_width()        → 파일명 패딩 폭
-        │
-        ▼
-   execute(args, roster)
-        │  Lightning 모드 활성화 시:
-        │    steps/cfg/sampler/scheduler 오버라이드
-        │    LoRA 태그 프롬프트 자동 주입
-        │    FreeU 충돌 시 자동 비활성화
-        ▼
-   run_batch()
-        │  dry_run  → planned 기록만
-        │  mock     → make_dummy_png() ─┐
-        │  기본     → generate_image() ─┴→ save_as_webp() → .webp
-        │
-        │  Graceful Fallback:
-        │    422/500 HTTPError → 순정 페이로드 자동 재시도
-        ▼
-   BatchResult(success, skipped, failed, planned, durations)
-        │
-        ├─ print_summary()
-        ├─ open_in_explorer()       (Windows, dry-run 제외)
-        └─ build_genit_block()      → 젠잇 마크다운 출력
+[CLI 인자] → build_parser() / main()
+       │
+       ▼
+RosterPathManager(roster_name)
+       │
+       ├─ load_pose_db() ── pose_database.json + (선택) events.json
+       │      │  (프로젝트 내 events.json 발견 시 이벤트 섹션 자동 병합)
+       │      ▼
+       │   PoseDatabase
+       │
+       ├─ load_character() ── characters/{name}.json
+       │      │
+       │      ▼
+       │   apply_character_to_args()
+       │      │  (default_mode 에 이벤트 섹션(event_*) 자동 결합)
+       │      ▼
+       └─ resolve_targets() ── 최종 생성 대상 코드 목록 결정
+              │
+              ▼
+       runner.execute(args, roster)
+              │
+              ├─ find_reference_image() → ControlNet 유닛 준비
+              ├─ resolve_background()  → background.json / CLI 배경 해석
+              │
+              ▼
+       runner.run_batch()
+              │
+              │  [코드별 순회 루프]
+              ├─ 기존 파일 존재 여부 확인 (있으면 건너뜀)
+              ├─ assemble_prompt() (BREAK 기준 포즈/품질 1청크 + 외형 2청크)
+              ├─ 감정 씬(00~20)이면 clean background → 배경 프롬프트 치환
+              ├─ WebUI API 호출 (/sdapi/v1/txt2img)
+              │    (422/500 에러 시 순정 페이로드로 Graceful Fallback)
+              └─ save_as_webp() (원자적 .part 파일 교체 저장)
+              │
+              ▼
+       BatchResult(success, skipped, failed, planned, durations)
+              │
+              ├─ print_summary()       (성공/건너뜀/소요시간/VRAM 출력)
+              ├─ open_in_explorer()    (Windows 탐색기 열기)
+              └─ build_genit_block()   (젠잇 복사용 4종 마크다운 블록 출력)
 ```
 
-`--test`는 이 파이프라인을 타지 않고 `run_self_test()`로 별도 분기.
+`--test` 플래그는 위 배치 흐름을 타지 않고 `generator.diagnostics.self_test.run_self_test()`로 분기합니다.
 
 ---
 
@@ -417,7 +440,7 @@ projects/{roster}/assets/{prefix}/{prefix}_{코드}.webp
 
 ---
 
-## 13. `--test` 검사 항목 (45개)
+## 13. `--test` 검사 항목 (48개)
 
 | 그룹 | 항목 |
 |---|---|
@@ -425,8 +448,9 @@ projects/{roster}/assets/{prefix}/{prefix}_{코드}.webp
 | 로직 (T8~T17) | 정수 정렬/code_width/코드 파싱/파일명 조립/마크다운 줄 수/`{{url}}`/prefix 화이트리스트/태그 정규화/충돌 감지 |
 | 프로필 (T18~T20) | 프로필 로드 수/태그 충돌/기본 프로필 `female` 존재 |
 | 참조·측정 (T21~T32) | 참조 탐색/base64 왕복/페이로드 조립/원본 불변성/ref_weight/interrogate/성별 태그 필터/모델명 매칭/시간 집계/VRAM 파싱 |
+| 배경 시스템 (T37a~T37e) | CLI 배경 우선/파일 부재 시 None/sea default 배경 로드/sea night 로드/미등록 프리셋 default 폴백 |
 
-검사는 **실제 구현 함수를 직접 호출**한다. 구현이 바뀌면 검사도 함께 따라감.
+검사는 **실제 구현 모듈 함수를 직접 호출**한다. 구현이 바뀌면 검사도 함께 따라감.
 
 ---
 
