@@ -227,8 +227,137 @@ def run_batch(
     return result
 
 
+def _setup_prompt(
+    args: argparse.Namespace,
+    db: PoseDatabase,
+    char_prompt: str,
+) -> tuple[str, str, str, str]:
+    """포지티브/네거티브 프롬프트를 결정하고 Forge 기능 사용을 로깅한다.
+
+    Returns:
+        base_positive   : 조립된 포지티브 프롬프트
+        negative_prompt : 조립된 네거티브 프롬프트
+        effective_char  : run_batch 에 전달할 char_prompt
+                          (positive 방식이면 빈 문자열)
+        profile_label   : 요약 출력용 레이블 ("전용" 또는 프로필명)
+    """
+    raw_positive: str | None = getattr(args, "positive", None)
+    raw_negative: str | None = getattr(args, "negative", None)
+
+    if raw_positive:
+        base_positive = raw_positive
+        negative_prompt = raw_negative or ""
+        print("[POSITIVE] 캐릭터 전용 프롬프트 사용")
+        if raw_negative:
+            print("[NEGATIVE] 캐릭터 전용 네거티브 사용")
+        else:
+            print("[WARN] 'negative' 미지정 - 네거티브 없이 생성합니다")
+        profile_label = "전용"
+        effective_char = ""
+    else:
+        profile = resolve_profile(db, args.profile)
+        if args.profile:
+            print(f"[PROFILE] '{profile.name}' 적용")
+        else:
+            print(f"[PROFILE] 미지정 - 기본값 '{profile.name}' 적용")
+        base_positive = join_tags(profile.base_positive, char_prompt)
+        negative_prompt = join_tags(profile.base_negative, args.custom_neg)
+        profile_label = profile.name
+        effective_char = char_prompt
+
+    if conflicts := find_tag_conflicts(base_positive, negative_prompt):
+        print(f"[WARN] 태그 충돌: {conflicts} 가 포지티브와 네거티브에 동시 존재")
+
+    if args.enable_freeu:
+        print(
+            f"[FORGE] FreeU 활성화 (b1={args.freeu_b1}, b2={args.freeu_b2}, "
+            f"s1={args.freeu_s1}, s2={args.freeu_s2})"
+        )
+    if args.enable_adetailer:
+        print("[FORGE] ADetailer 활성화 (face_yolov8n.pt)")
+
+    if args.enable_lightning:
+        lora_tag = f"<lora:{args.lightning_lora_name}:1.0>"
+        print(
+            f"[LIGHTNING] Mode Enabled: {args.lightning_steps} Steps | "
+            f"CFG {args.lightning_cfg} | Sampler: DPM++ SDE Karras | LoRA: {lora_tag}"
+        )
+        if args.enable_freeu:
+            print("[LIGHTNING] FreeU 자동 비활성화 (Lightning과 충돌 방지)")
+
+    return base_positive, negative_prompt, effective_char, profile_label
+
+
+def _setup_reference(
+    args: argparse.Namespace,
+    roster: RosterPaths,
+    prefix: str,
+    ref_weight: float,
+    dry_run: bool,
+    mock: bool,
+) -> tuple[ReferenceImage | None, ControlNetSpec | None]:
+    """참조 이미지를 해석하고 ControlNet 스펙을 결정한다."""
+    if dry_run:
+        # dry-run 에서는 실제 로드 없이 로그만 출력
+        if args.no_ref:
+            print("[REF]  --no_ref 지정 - 참조 이미지 사용 안 함")
+        elif args.ref_image:
+            print(f"[REF]  {args.ref_image} (지정) weight {ref_weight}")
+        elif found := find_reference_candidates(roster.references_dir, prefix):
+            print(f"[REF]  {found[0].name} 발견 weight {ref_weight}")
+        else:
+            print(f"[REF]  없음 ({roster.references_dir}/{prefix}.*) - 텍스트만 사용")
+        return None, None
+
+    reference = resolve_reference_image(
+        roster.references_dir, prefix, args.ref_image, disabled=args.no_ref
+    )
+
+    if reference is None:
+        if not args.no_ref:
+            print(
+                f"[WARN] 참조 이미지 없음 ({REFERENCES_DIRNAME}/{prefix}.*) "
+                "- 텍스트 프롬프트만 사용"
+            )
+        return None, None
+
+    # 참조 이미지가 있을 때 ControlNet 스펙 해석
+    if mock:
+        # mock 모드: cn_module/model 수동 지정이 있으면 사용, 없으면 None (API 호출 없음)
+        cn_spec: ControlNetSpec | None = (
+            ControlNetSpec(args.cn_module, args.cn_model, "manual")
+            if args.cn_module and args.cn_model
+            else None
+        )
+    else:
+        cn_spec = resolve_controlnet_spec(args.cn_module, args.cn_model)
+
+    if cn_spec:
+        print(f"[REF]  {reference.label} weight {ref_weight}")
+        print(f"[CN]   {cn_spec.module} / {cn_spec.model} ({cn_spec.source})")
+    else:
+        print(f"[REF]  {reference.label} - ControlNet 미해석, 텍스트만 사용")
+
+    return reference, cn_spec
+
+
+def _setup_sampler(
+    args: argparse.Namespace,
+    dry_run: bool,
+    mock: bool,
+) -> str:
+    """샘플러 이름을 결정한다 (mock/dry-run/Lightning/일반 순으로 판단)."""
+    if mock or dry_run:
+        return "(mock)"
+    if args.enable_lightning:
+        # Lightning 모드는 전용 샘플러를 강제 사용
+        print("[SAMPLER] Lightning 모드 → 'DPM++ SDE' 고정")
+        return "DPM++ SDE"
+    return resolve_sampler()
+
+
 def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
-    """생성 파이프라인 본체. ConfigError 는 호출자가 처리한다."""
+    """생성 파이프라인 오케스트레이터. ConfigError 는 호출자가 처리한다."""
     dry_run: bool = args.dry_run
     mock: bool = args.mock and not dry_run
     if args.mock and dry_run:
@@ -241,42 +370,12 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     db = load_pose_db(base_dir, roster.events_file)
     print_warnings(db)
 
-    raw_positive: str | None = getattr(args, "positive", None)
-    raw_negative: str | None = getattr(args, "negative", None)
+    # ── 프롬프트 결정 ──────────────────────────────
+    base_positive, negative_prompt, effective_char, profile_label = _setup_prompt(
+        args, db, char_prompt
+    )
 
-    if raw_positive:
-        base_positive = raw_positive
-        negative_prompt = raw_negative or ""
-        print(f"[POSITIVE] 캐릭터 전용 프롬프트 사용")
-        if raw_negative:
-            print(f"[NEGATIVE] 캐릭터 전용 네거티브 사용")
-        else:
-            print(f"[WARN] 'negative' 미지정 - 네거티브 없이 생성합니다")
-    else:
-        profile = resolve_profile(db, args.profile)
-        if args.profile:
-            print(f"[PROFILE] '{profile.name}' 적용")
-        else:
-            print(f"[PROFILE] 미지정 - 기본값 '{profile.name}' 적용")
-        base_positive = join_tags(profile.base_positive, char_prompt)
-        negative_prompt = join_tags(profile.base_negative, args.custom_neg)
-
-    if conflicts := find_tag_conflicts(base_positive, negative_prompt):
-        print(f"[WARN] 태그 충돌: {conflicts} 가 포지티브와 네거티브에 동시 존재")
-
-    if args.enable_freeu:
-        print(f"[FORGE] FreeU 활성화 (b1={args.freeu_b1}, b2={args.freeu_b2}, "
-              f"s1={args.freeu_s1}, s2={args.freeu_s2})")
-    if args.enable_adetailer:
-        print(f"[FORGE] ADetailer 활성화 (face_yolov8n.pt)")
-
-    if args.enable_lightning:
-        lora_tag = f"<lora:{args.lightning_lora_name}:1.0>"
-        print(f"[LIGHTNING] Mode Enabled: {args.lightning_steps} Steps | "
-              f"CFG {args.lightning_cfg} | Sampler: DPM++ SDE Karras | LoRA: {lora_tag}")
-        if args.enable_freeu:
-            print(f"[LIGHTNING] FreeU 자동 비활성화 (Lightning과 충돌 방지)")
-
+    # ── 대상 코드 / 저장 경로 ──────────────────────
     targets = resolve_targets(db, args.mode, args.codes)
     if not targets:
         raise ConfigError(
@@ -288,57 +387,18 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     if not dry_run:
         save_dir.mkdir(parents=True, exist_ok=True)
 
+    # ── 참조 이미지 / 샘플러 ───────────────────────
     ref_weight = validate_ref_weight(args.ref_weight)
-    reference: ReferenceImage | None = None
-    cn_spec: ControlNetSpec | None = None
-
-    if dry_run:
-        if args.no_ref:
-            print("[REF]  --no_ref 지정 - 참조 이미지 사용 안 함")
-        elif args.ref_image:
-            print(f"[REF]  {args.ref_image} (지정) weight {ref_weight}")
-        elif found := find_reference_candidates(roster.references_dir, prefix):
-            print(f"[REF]  {found[0].name} 발견 weight {ref_weight}")
-        else:
-            print(f"[REF]  없음 ({roster.references_dir}/{prefix}.*) - 텍스트만 사용")
-    else:
-        reference = resolve_reference_image(
-            roster.references_dir, prefix, args.ref_image, disabled=args.no_ref
-        )
-        if reference is None:
-            if not args.no_ref:
-                print(f"[WARN] 참조 이미지 없음 ({REFERENCES_DIRNAME}/{prefix}.*) "
-                      "- 텍스트 프롬프트만 사용")
-        else:
-            if mock:
-                cn_spec = (
-                    ControlNetSpec(args.cn_module, args.cn_model, "manual")
-                    if args.cn_module and args.cn_model
-                    else None
-                )
-            else:
-                cn_spec = resolve_controlnet_spec(args.cn_module, args.cn_model)
-
-            if cn_spec:
-                print(f"[REF]  {reference.label} weight {ref_weight}")
-                print(f"[CN]   {cn_spec.module} / {cn_spec.model} ({cn_spec.source})")
-            else:
-                print(f"[REF]  {reference.label} - ControlNet 미해석, 텍스트만 사용")
-
-    if mock or dry_run:
-        sampler_name = "(mock)"
-    elif args.enable_lightning:
-        sampler_name = "DPM++ SDE"
-        print(f"[SAMPLER] Lightning 모드 → 'DPM++ SDE' 고정")
-    else:
-        sampler_name = resolve_sampler()
+    reference, cn_spec = _setup_reference(args, roster, prefix, ref_weight, dry_run, mock)
+    sampler_name = _setup_sampler(args, dry_run, mock)
     badge = mode_badge(dry_run, mock)
 
+    # ── 배경 ──────────────────────────────────────
     cli_bg: str | None = getattr(args, "bg", None)
     bg_preset: str = getattr(args, "bg_preset", "default")
     active_bg = resolve_background(cli_bg, roster.background_file, bg_preset)
 
-    profile_label = "전용" if raw_positive else profile.name
+    # ── 작업 요약 출력 ─────────────────────────────
     print(
         f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile_label} | "
         f"모드: {args.mode} ({len(targets)}장) | 폭: {width}"
@@ -349,10 +409,11 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     print(f"[POS]  {base_positive}")
     print(f"[NEG]  {negative_prompt}\n")
 
+    # ── 배치 생성 ─────────────────────────────────
     result = run_batch(
         prefix=prefix,
         base_positive=base_positive,
-        char_prompt="" if raw_positive else char_prompt,
+        char_prompt=effective_char,
         negative_prompt=negative_prompt,
         targets=targets,
         db=db,

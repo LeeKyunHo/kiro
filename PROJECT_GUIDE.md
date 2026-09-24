@@ -65,7 +65,7 @@ kiro/
 │   ├── runner.py                단일/다중 캐릭터 배치 실행 파이프라인
 │   └── diagnostics/             자체 검증 테스트 모듈
 │       ├── __init__.py
-│       └── self_test.py         48개 항목 단위 검증 스위트 (T1~T37e)
+│       └── self_test.py         51개 항목 단위 검증 스위트 (T1~T37e)
 │
 ├── pose_database.json           공용 프롬프트 DB (모든 로스터 공유 — 감정, 포즈, H씬)
 ├── PROJECT_GUIDE.md             [이 문서] 시스템 아키텍처 및 내부 모듈 구조 (개발자용)
@@ -91,15 +91,15 @@ kiro/
 | 모듈 | 주요 역할 | 핵심 함수 / 클래스 |
 |---|---|---|
 | `generator.config` | 전역 기본값, HTTP 타임아웃, 예외 | `ConfigError`, `IMAGE_SIZE`, `DEFAULT_PROFILE` |
-| `generator.models` | 슬롯 데이터클래스 정의 | `PoseEntry`, `PoseDatabase`, `CharacterConfig`, `BatchResult` |
-| `generator.prompt` | 프롬프트 정규화, 충돌 분석, 배경 결합 | `assemble_prompt()`, `resolve_background()`, `find_tag_conflicts()` |
-| `generator.reference` | IP-Adapter 참조 이미지 및 유닛 생성 | `find_reference_image()`, `build_controlnet_unit()` |
-| `generator.pose_db` | JSON 파싱 및 타겟 코드 계산 | `load_pose_db()`, `resolve_targets()`, `parse_codes_expr()` |
+| `generator.models` | 슬롯 데이터클래스 정의 | `PoseEntry`, `PoseDatabase`, `CharacterConfig`, `BatchResult`, `TimingStats` |
+| `generator.prompt` | 프롬프트 정규화, 충돌 분석, 배경 결합 | `assemble_prompt()`, `resolve_background()`, `find_tag_conflicts()`, `join_tags()` |
+| `generator.reference` | IP-Adapter 참조 이미지 및 유닛 생성 | `resolve_reference_image()`, `build_controlnet_unit()` |
+| `generator.pose_db` | JSON 파싱 및 타겟 코드 계산 | `load_pose_db()`, `resolve_targets()`, `parse_codes_expr()`, `print_warnings()` |
 | `generator.roster` | 프로젝트 탐색, 프리셋 로드, 이벤트 병합 | `RosterPathManager`, `load_character()`, `apply_character_to_args()` |
 | `generator.webui_client` | WebUI API 통신, WebP 변환 | `generate_image()`, `save_as_webp()`, `build_txt2img_payload()` |
-| `generator.reporter` | 콘솔 요약 보고서 및 젠잇 마크다운 생성 | `print_summary()`, `build_genit_block()`, `asset_filename()` |
-| `generator.runner` | 배치 실행 루프 및 라이트닝/FreeU 조율 | `execute()`, `run_batch()`, `run_all_chars()` |
-| `generator.diagnostics` | 자체 테스트 러너 (48개 항목) | `run_self_test()` |
+| `generator.reporter` | 콘솔 요약 보고서 및 젠잇 마크다운 생성 | `print_summary()`, `build_genit_block()`, `build_section_guide()`, `asset_filename()` |
+| `generator.runner` | 배치 실행 오케스트레이터 | `execute()`, `run_batch()`, `run_all_chars()`, `_setup_prompt()`, `_setup_reference()`, `_setup_sampler()` |
+| `generator.diagnostics` | 자체 테스트 러너 (51개 항목) | `run_self_test()` |
 
 ---
 
@@ -475,7 +475,7 @@ projects/{roster}/assets/{prefix}/{prefix}_{코드}.webp
 | 로직 (T8~T17) | 정수 정렬/code_width/코드 파싱/파일명 조립/마크다운 줄 수/`{{url}}`/prefix 보안/태그 정규화/충돌 감지 |
 | 이벤트·프롬프트 (T18~T20) | events.json 동적 병합/default_mode 이벤트 자동 포함/assemble_prompt BREAK 전진 배치 |
 | 참조·측정 (T21~T32) | 참조 확장자 우선순위/base64 왕복/페이로드 조립/원본 불변성/ref_weight 범위/모델명 매칭/시간 집계/VRAM 파싱 |
-| 캐릭터·안전성 (T33~T35) | apply_character_to_args 우선순위/전체 로스터 JSON 무결성/sea 로스터 금지 태그(sweat/liquid) 배제/감정 씬 배경 치환 및 침대 씬 보존 |
+| 캐릭터·안전성 (T33~T35) | apply_character_to_args 우선순위/전체 로스터 JSON 무결성/전체 로스터 금지 태그(sweat/liquid) 배제(T34b)/감정 씬 배경 치환 및 침대 씬 보존 |
 | 배경 시스템 (T37a~T37e) | CLI 배경 우선/파일 부재 시 None/sea default 배경 로드/sea night 로드/미등록 프리셋 default 폴백 |
 
 검사는 **실제 구현 모듈 함수를 직접 호출**한다. 구현이 바뀌면 검사도 함께 따라감.

@@ -551,22 +551,32 @@ def _test_characters_and_safety(report: TestReport, base_dir: Path) -> None:
         f"{loaded_count}개 캐릭터 JSON 파일 문법 및 필수 키 검증 완료",
     )
 
-    # T34b: sea 로스터 캐릭터 금지 태그(sweat/liquid) 미포함 안전성 검사
-    sea_char_files = list((projects_dir / "sea" / "characters").glob("*.json"))
-    forbidden_neg_tags = {"sweat", "perspiration", "liquid", "splatter"}
-    sea_violations: list[str] = []
-    for scf in sea_char_files:
-        with open(scf, encoding="utf-8-sig") as f:
-            data = json.load(f)
-        neg = data.get("negative", "").lower()
-        found = [t for t in forbidden_neg_tags if t in neg]
+    # T34b: 전체 로스터 캐릭터 금지 태그(sweat/liquid 등) 미포함 안전성 검사
+    # 이 태그들이 negative 에 있으면 땀·체액 연출이 강제로 지워지는 치명적 버그 발생
+    FORBIDDEN_NEG_TAGS = {"sweat", "perspiration", "liquid", "splatter"}
+    all_char_files = list(projects_dir.glob("*/characters/*.json"))
+    all_violations: list[str] = []
+
+    for acf in all_char_files:
+        try:
+            with open(acf, encoding="utf-8-sig") as f:
+                data = json.load(f)
+        except Exception:
+            continue
+        neg = str(data.get("negative", "") or "").lower()
+        custom = str(data.get("custom_neg", "") or "").lower()
+        combined = neg + ", " + custom
+        found = [t for t in FORBIDDEN_NEG_TAGS if t in combined]
         if found:
-            sea_violations.append(f"{scf.name}: {found}")
+            roster_name = acf.parent.parent.name
+            all_violations.append(f"{roster_name}/{acf.name}: {found}")
 
     report.check(
-        "T34b sea 캐릭터 네거티브 안전성 검사",
-        bool(sea_char_files) and not sea_violations,
-        f"{len(sea_char_files)}개 캐릭터 금지 태그(sweat/liquid) 완전 배제 확인",
+        "T34b 전체 로스터 캐릭터 네거티브 안전성 검사",
+        bool(all_char_files) and not all_violations,
+        f"{len(all_char_files)}개 캐릭터 금지 태그(sweat/liquid) 완전 배제 확인"
+        if not all_violations
+        else f"위반 발견: {all_violations}",
     )
 
     # T35: 감정 씬 clean background 치환 vs 타 씬 보존 검증

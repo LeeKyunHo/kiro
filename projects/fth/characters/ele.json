@@ -1,7 +1,7 @@
-﻿{
+{
   "prefix": "ele",
   "default_mode": "female",
   "positive": "masterpiece, best quality, good quality, amazing quality, very aesthetic, newest, absurdres BREAK 1girl, solo, (pure silver hair, straight long hair:1.2), sharp purple eyes, (large breasts, prominent cleavage, curvy hips:1.2), (subtle nipple outline:1.1), (slight protrusion through fabric:1.0), (gothic dark underbust corset, white fitted off-shoulder silk blouse, black velvet ruffled micro wrap skirt, aristocratic choker:1.2), black lace bra, black panties",
-  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, 1boy, male, masculine, beard, mustache, facial hair, paint, body paint, liquid, splatter, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), child, loli, flat chest, giant hips, unnatural body proportions, glasses, (purple hair:1.5), (black hair:1.5), (dark hair:1.4), (blonde hair:1.4)",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, 1boy, male, masculine, beard, mustache, facial hair, paint, body paint, stains, smudge, blood, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), child, loli, flat chest, giant hips, unnatural body proportions, glasses, (purple hair:1.5), (black hair:1.5), (dark hair:1.4), (blonde hair:1.4)",
   "ref_weight": 0.7
 }
