@@ -3,15 +3,16 @@
   Unholy Desire Mix Crimson v5.0 (NoobAI 베이스) 전용
 ================================================================================
 
-최종 업데이트: 2026년 9월 20일
+최종 업데이트: 2026년 9월 24일
 
-【주요 변경사항 R8.0】
-- 신규 공식 도입: BREAK 키워드 + NoobAI 품질 티어
+【주요 변경사항 R8.1】
+- 포즈 태그 전진 배치 공식 도입: [품질, 포즈/구도] BREAK [캐릭터 외형, 복장]
+- 품질 티어 슬림화: 중복 태그(good quality, amazing quality 등) 제거로 토큰 다이어트
+- 네거티브 상충 태그(sweat, liquid, splatter 등) 절대 금지 규정 추가 (H씬 효과 보존)
 - 체크포인트 확정: Unholy Desire Mix Crimson v5.0 (NoobAI 베이스)
 - 검열 태그 표준화: Danbooru 표준 (black censor bar, censor bar:1.25)
 - 오토코노코 필수 태그: (subtle bulge, tiny bulge under clothing:1.1) 의무화
 - 모듈화 원칙 강화: 캐릭터는 외형만, 포즈는 표정/구도만
-- 금지 태그 명확화: 손 자세, 화각, 컷신 방지
 
 【이전 변경사항】
 - CLIP 토큰 최적 순서 도입: 모든 포즈를 자연스러운 영문 순서로 재구성

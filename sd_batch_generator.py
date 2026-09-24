@@ -245,6 +245,16 @@ class RosterPaths:
     assets_dir: Path
     references_dir: Path  # 모든 로스터가 공유하는 참조 이미지 폴더
     
+    @property
+    def events_file(self) -> Path:
+        """로스터 전용 이벤트 포즈 파일 (projects/{roster}/events.json)"""
+        return self.characters_dir.parent / "events.json"
+
+    @property
+    def background_file(self) -> Path:
+        """로스터 전용 배경 설정 파일 (projects/{roster}/background.json)"""
+        return self.characters_dir.parent / "background.json"
+
     def validate(self) -> tuple[bool, str]:
         """경로 존재 여부 검증. 반환: (성공 여부, 에러 메시지)"""
         if not self.characters_dir.exists():
@@ -269,28 +279,6 @@ class PoseEntry:
         """프롬프트 첫 태그를 사람이 읽을 라벨로 사용."""
         return self.prompt.split(",")[0].strip()
 
-
-
-@dataclass(frozen=True, slots=True)
-class RosterPaths:
-    """
-    로스터별 경로 캡슐화 (SSOT - Single Source of Truth).
-    
-    신규 프로젝트가 추가되어도 이 클래스만 생성하면 전체 파이프라인이
-    자동으로 해당 경로를 참조한다.
-    """
-    roster_name: str
-    characters_dir: Path
-    assets_dir: Path
-    references_dir: Path  # 모든 로스터가 공유하는 참조 이미지 폴더
-    
-    def validate(self) -> tuple[bool, str]:
-        """경로 존재 여부 검증. 반환: (성공 여부, 에러 메시지)"""
-        if not self.characters_dir.exists():
-            return False, f"캐릭터 폴더가 존재하지 않습니다: {self.characters_dir}"
-        if not self.characters_dir.is_dir():
-            return False, f"캐릭터 경로가 디렉터리가 아닙니다: {self.characters_dir}"
-        return True, ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -430,6 +418,7 @@ class CharacterConfig:
     # "otokonoko" -> emotions, poses_otokonoko, scenes_otokonoko (00-09, 30-39, 40-49)
     # None        -> "all" (기존 동작 유지)
     default_mode: str | None = None
+    background: str | None = None  # 캐릭터별 고유 배경 (emotions 씬 치환용)
 
 
 @dataclass(frozen=True, slots=True)
@@ -622,6 +611,65 @@ def join_tags(*parts: str) -> str:
     return ", ".join(part.strip() for part in parts if part and part.strip())
 
 
+def assemble_prompt(
+    base_positive: str,
+    char_prompt: str,
+    pose_prompt: str,
+    trigger_tag: str = "",
+) -> str:
+    """
+    포즈와 캐릭터 프롬프트를 최적의 CLIP 순서로 결합한다.
+    base_positive 에 ' BREAK '가 포함되어 있으면:
+      [품질 태그], [포즈 태그] BREAK [캐릭터 외형 태그], [트리거 태그]
+    순으로 조립하여 포즈/구도가 긴 외형 묘사에 밀려 후순위 청크로 넘어가는 것을 방지한다.
+    ' BREAK '가 없으면 기존 방식(base_positive, char_prompt, pose_prompt, trigger_tag)을 유지한다.
+    """
+    if " BREAK " in base_positive:
+        quality_part, char_part = base_positive.split(" BREAK ", 1)
+        first_chunk = join_tags(quality_part, pose_prompt)
+        second_chunk = join_tags(char_part, char_prompt, trigger_tag)
+        return f"{first_chunk} BREAK {second_chunk}"
+    return join_tags(base_positive, char_prompt, pose_prompt, trigger_tag)
+
+
+def resolve_background(
+    cli_bg: str | None,
+    bg_file: Path,
+    preset: str = "default",
+) -> str | None:
+    """
+    감정(emotions) 씬에 적용할 배경 프롬프트를 해석한다.
+
+    1. CLI 또는 캐릭터 JSON에서 전달된 cli_bg 가 있으면 최우선 반환.
+    2. bg_file (projects/{roster}/background.json) 이 존재하면:
+       JSON 내에서 preset(기본 "default")에 해당하는 문자열 반환.
+    3. 일치하는 프리셋이 없거나 파일이 없으면 None 반환 (기존 clean background 유지).
+    """
+    if cli_bg and cli_bg.strip():
+        return cli_bg.strip()
+
+    if bg_file.exists():
+        try:
+            with open(bg_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                bg_val = data.get(preset)
+                if isinstance(bg_val, str) and bg_val.strip():
+                    return bg_val.strip()
+                if preset != "default" and "default" in data:
+                    print(
+                        f"[WARN] 배경 프리셋 '{preset}' 이(가) 없어 'default' 프리셋으로 폴백합니다."
+                    )
+                    default_val = data.get("default")
+                    if isinstance(default_val, str) and default_val.strip():
+                        return default_val.strip()
+        except Exception as e:
+            print(f"[WARN] 배경 설정 파일 로드 실패 ({bg_file}): {e}", file=sys.stderr)
+
+    return None
+
+
+
 # ─────────────────────────────────────────────
 # 4. 입력 검증
 # ─────────────────────────────────────────────
@@ -732,6 +780,7 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
         positive=positive,
         negative=negative,
         default_mode=str(raw["default_mode"]).strip() or None if "default_mode" in raw else None,
+        background=str(raw["background"]).strip() or None if "background" in raw and isinstance(raw["background"], str) else None,
     )
 
 
@@ -777,6 +826,7 @@ def list_characters(chars_dir: Path) -> int:
 
 def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
                   dry_run: bool, mock: bool,
+                  cli_bg: str | None = None, bg_preset: str = "default",
                   enable_freeu: bool = False, freeu_b1: float = 1.1, freeu_b2: float = 1.2,
                   freeu_s1: float = 0.9, freeu_s2: float = 0.2,
                   enable_adetailer: bool = False,
@@ -834,6 +884,8 @@ def run_all_chars(roster: RosterPaths, mode: str, codes_expr: str | None,
             negative=cfg.negative,
             mode=_resolve_default_mode(cfg.default_mode) if (cfg.default_mode and mode == "all") else mode,
             codes=codes_expr,
+            bg=cli_bg or cfg.background,
+            bg_preset=bg_preset,
             ref_image=None,
             ref_weight=cfg.ref_weight if cfg.ref_weight is not None else REF_WEIGHT_DEFAULT,
             no_ref=False,
@@ -936,6 +988,10 @@ def apply_character_to_args(cfg: CharacterConfig, args: argparse.Namespace) -> N
     # default_mode: --mode 가 기본값("all")이고 캐릭터에 default_mode 가 있으면 채운다.
     if cfg.default_mode and getattr(args, "mode", "all") == "all":
         args.mode = _resolve_default_mode(cfg.default_mode)
+
+    # background: --bg 가 없으면 캐릭터 파일의 값으로 채운다
+    if cfg.background and not getattr(args, "bg", None):
+        args.bg = cfg.background
 
 
 # ─────────────────────────────────────────────
@@ -1074,9 +1130,34 @@ def read_pose_json(base_dir: Path) -> dict[str, Any]:
     return raw
 
 
-def load_pose_db(base_dir: Path) -> PoseDatabase:
-    """JSON 을 읽고 검증까지 완료한 PoseDatabase 를 반환한다."""
-    db = parse_pose_db(read_pose_json(base_dir))
+def load_pose_db(base_dir: Path, events_file: Path | None = None) -> PoseDatabase:
+    """
+    JSON 을 읽고 검증까지 완료한 PoseDatabase 를 반환한다.
+    events_file (예: projects/{roster}/events.json) 이 주어지면
+    해당 로스터 전용 이벤트 섹션을 메모리에서 동적으로 병합한다.
+    """
+    raw = read_pose_json(base_dir)
+
+    if events_file and events_file.exists():
+        try:
+            with open(events_file, encoding="utf-8-sig") as f:
+                events_raw = json.load(f)
+            if isinstance(events_raw, dict):
+                merged_sections: list[str] = []
+                for sec, body in events_raw.items():
+                    if sec.startswith(SECTION_COMMENT_PREFIX):
+                        continue
+                    if isinstance(body, dict):
+                        if sec not in raw:
+                            raw[sec] = {}
+                        raw[sec].update(body)
+                        merged_sections.append(sec)
+                if merged_sections:
+                    print(f"[EVENTS] 로스터 전용 이벤트 병합: {events_file.name} ({', '.join(merged_sections)})")
+        except Exception as e:
+            print(f"[WARN] 로스터 이벤트 파일({events_file}) 읽기 실패: {e}")
+
+    db = parse_pose_db(raw)
 
     if not db.entries:
         raise ConfigError(
@@ -1925,6 +2006,7 @@ def run_batch(
     lightning_steps: int = 2,
     lightning_cfg: float = 1.0,
     lightning_lora_name: str = "sdxl_lightning_2step_lora",
+    active_bg: str | None = None,
     dry_run: bool = False,
     mock: bool = False,
 ) -> BatchResult:
@@ -1948,7 +2030,8 @@ def run_batch(
         # 순서가 뒤바뀌면 이미 생성된 파일이 skipped 로 빠져 planned 가 불완전해진다.
         if dry_run:
             result.planned.append(code)
-            print(f"  [{tag}] (계획) {filename}  <- {entry.label}")
+            bg_info = f" [BG: {active_bg}]" if (active_bg and entry.section == "emotions") else ""
+            print(f"  [{tag}] (계획) {filename}  <- {entry.label}{bg_info}")
             continue
 
         if save_path.exists():
@@ -1960,8 +2043,15 @@ def run_batch(
 
         started = time.perf_counter()
         try:
-            full_prompt = join_tags(
-                base_positive, char_prompt, entry.prompt, f"{prefix}_{tag}"
+            pose_prompt = entry.prompt
+            if active_bg and entry.section == "emotions":
+                if "clean background" in pose_prompt:
+                    pose_prompt = pose_prompt.replace("clean background", active_bg)
+                else:
+                    pose_prompt = join_tags(pose_prompt, active_bg)
+
+            full_prompt = assemble_prompt(
+                base_positive, char_prompt, pose_prompt, f"{prefix}_{tag}"
             )
             
             # ── Lightning 모드 처리 ──────────────────────────────
@@ -2316,9 +2406,9 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
     # T12 / T13
     codes = synthetic.all_codes
     block = build_genit_block("t", codes, synthetic, code_width(codes))
-    calls = block.count("![image](")
-    report.check("T12 마크다운 라인 수 == 대상 수", calls == len(codes),
-                 f"{calls}/{len(codes)}")
+    calls = [line for line in block.splitlines() if line.startswith(f"{URL_PLACEHOLDER}t/")]
+    report.check("T12 마크다운 라인 수 == 대상 수", len(calls) == len(codes),
+                 f"{len(calls)}/{len(codes)}")
     report.check("T13 {{url}} 리터럴 포함", URL_PLACEHOLDER in block)
 
     # T14 — prefix 화이트리스트가 경로 이탈·인용부호 주입을 막는지
@@ -2697,6 +2787,28 @@ def _test_characters(report: TestReport, base_dir: Path) -> None:
         )
 
 
+def _test_background(report: TestReport, base_dir: Path) -> None:
+    """T37: 배경 해석 로직 (CLI 우선순위, 파일 프리셋 로드, 기본값 폴백)."""
+    print("\n[배경 시스템 검사]")
+    # 1. CLI 명시값 최우선
+    bg_cli = resolve_background("explicit bg", base_dir / "nonexistent.json")
+    report.check("T37a CLI 배경 우선", bg_cli == "explicit bg", str(bg_cli))
+
+    # 2. 존재하지 않는 파일이면 None
+    bg_none = resolve_background(None, base_dir / "nonexistent.json")
+    report.check("T37b 파일 부재 시 None", bg_none is None, str(bg_none))
+
+    # 3. projects/sea/background.json 이 있을 경우 프리셋 테스트
+    sea_bg_file = base_dir / "projects" / "sea" / "background.json"
+    if sea_bg_file.exists():
+        bg_def = resolve_background(None, sea_bg_file, "default")
+        report.check("T37c sea default 배경 로드", bool(bg_def and "beach bar" in bg_def), str(bg_def))
+        bg_night = resolve_background(None, sea_bg_file, "night")
+        report.check("T37d sea night 배경 로드", bool(bg_night and "night" in bg_night), str(bg_night))
+        bg_fallback = resolve_background(None, sea_bg_file, "unknown_preset")
+        report.check("T37e 없는 프리셋 default 폴백", bool(bg_fallback and "beach bar" in bg_fallback), str(bg_fallback))
+
+
 def run_self_test(base_dir: Path) -> int:
     """데이터·로직 자체 진단. 파일 쓰기와 네트워크 요청을 하지 않는다."""
     report = TestReport()
@@ -2731,6 +2843,7 @@ def run_self_test(base_dir: Path) -> int:
     _test_profiles(report, db)
     _test_reference(report)
     _test_characters(report, base_dir)
+    _test_background(report, base_dir)
     return _finish_test(report)
 
 
@@ -2793,6 +2906,14 @@ def build_parser(
     parser.add_argument("--profile", default=None, help=profile_help)
     parser.add_argument("--mode", default="all", help=mode_help)
     parser.add_argument("--codes", default=None, help="코드 직접 지정 (20-29 / 0,3,7)")
+    parser.add_argument(
+        "--bg", default=None,
+        help="감정 씬 배경 프롬프트 직접 지정 (기존 clean background 대체)",
+    )
+    parser.add_argument(
+        "--bg-preset", default="default",
+        help="projects/{roster}/background.json 에서 사용할 프리셋 키 (기본: default)",
+    )
 
     ref = parser.add_argument_group("참조 이미지 (IP-Adapter)")
     ref.add_argument(
@@ -2942,7 +3063,7 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     char_prompt = (args.char_prompt or "").strip()
 
     base_dir = Path.cwd()  # pose_database.json 은 항상 작업 디렉터리 루트
-    db = load_pose_db(base_dir)
+    db = load_pose_db(base_dir, roster.events_file)
     print_warnings(db)
 
     # ── positive/negative 결정 ─────────────────────────
@@ -3052,12 +3173,19 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         sampler_name = resolve_sampler()
     badge = mode_badge(dry_run, mock)
 
+    # ── 감정 씬 배경 결정 ─────────────────────────────
+    cli_bg: str | None = getattr(args, "bg", None)
+    bg_preset: str = getattr(args, "bg_preset", "default")
+    active_bg = resolve_background(cli_bg, roster.background_file, bg_preset)
+
     profile_label = "전용" if raw_positive else profile.name
     print(
         f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile_label} | "
         f"모드: {args.mode} ({len(targets)}장) | 폭: {width}"
     )
     print(f"[저장] {save_dir}")
+    if active_bg:
+        print(f"[BG]   감정(emotions) 씬 배경: '{active_bg}'")
     print(f"[POS]  {base_positive}")
     print(f"[NEG]  {negative_prompt}\n")
 
@@ -3084,6 +3212,7 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         lightning_steps=args.lightning_steps,
         lightning_cfg=args.lightning_cfg,
         lightning_lora_name=args.lightning_lora_name,
+        active_bg=active_bg,
         dry_run=dry_run,
         mock=mock,
     )
@@ -3147,6 +3276,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             codes_expr=args.codes,
             dry_run=args.dry_run,
             mock=args.mock,
+            cli_bg=args.bg,
+            bg_preset=args.bg_preset,
             enable_freeu=args.enable_freeu,
             freeu_b1=args.freeu_b1,
             freeu_b2=args.freeu_b2,

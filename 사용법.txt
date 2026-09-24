@@ -43,6 +43,8 @@
   --enable-lightning --lightning-steps 4 --lightning-cfg 1.5   SDXL Lightning
   --enable-freeu                                               FreeU 활성화
   --enable-adetailer                                           얼굴 보정
+  --bg-preset night                                            배경 프리셋 전환 (default, night 등)
+  --bg "beach cafe background, sunny day"                      감정 씬 배경 프롬프트 직접 지정
 
   ── 규칙 ─────────────────────────────────────────────────────────────
   ★ 기존 파일이 있으면 자동 건너뜀 (삭제 후 재실행하면 해당 파일만 재생성)
@@ -89,7 +91,8 @@
        └─ fth\                    판타지 하렘 로스터 (별칭: fth)
 
   새 로스터 추가: projects\{이름}\characters\, references\, assets\ 폴더 만들면
-  --roster {이름} 으로 자동 인식됩니다. 코드 수정 불필요.
+  --roster {이름} 으로 자동 인식됩니다. (선택: events.json, background.json)
+  코드 수정 불필요.
 
 
 ==============================================================================
@@ -167,7 +170,8 @@
       "default_mode": "female",
       "positive": "masterpiece, best quality, ..., 1girl, solo, silver hair, blue eyes, ...",
       "negative": "1boy, male, child, loli, uncensored, no censor, thin censorship",
-      "ref_weight": 0.7
+      "ref_weight": 0.7,
+      "background": "classroom background, window view"
     }
 
   레거시 형식 (char_prompt 방식):
@@ -220,7 +224,34 @@
 
 
 ==============================================================================
-  7. 실행 예시
+  7. 배경 시스템 (프로젝트별 분위기 통합)
+==============================================================================
+
+  감정(emotions) 씬(00~20)의 기본 "clean background"를 프로젝트나 캐릭터 분위기에
+  맞는 고유 배경으로 자동 치환합니다.
+
+  ★ 침대, 욕실, 샤워, 벽 등 고유 환경이 설정된 포즈 및 H씬은 절대 건드리지 않습니다.
+
+  1) 프로젝트 배경 프리셋: projects/{로스터}/background.json
+     {
+       "default": "tropical beach bar terrace background, ocean view through window, afternoon sunlight",
+       "night": "dimly lit beach bar interior, warm lamp lighting, dark night ocean outside window"
+     }
+
+  2) 캐릭터별 개별 지정: characters/{캐릭터}.json 내 "background" 필드
+
+  3) 우선순위:
+     커맨드라인 --bg > 캐릭터 JSON "background" > background.json 프리셋 > clean background(기본값)
+
+  4) 커맨드라인 활용:
+     # 프리셋 전환
+     python -u sd_batch_generator.py --char ren -r sea --bg-preset night
+     # 즉석 배경 지정
+     python -u sd_batch_generator.py --char ren -r sea --bg "modern cafe background"
+
+
+==============================================================================
+  8. 실행 예시
 ==============================================================================
 
   # dar 로스터 rog 캐릭터 전체
@@ -240,7 +271,7 @@
 
 
 ==============================================================================
-  8. 문제 해결
+  9. 문제 해결
 ==============================================================================
 
   증상                            원인 / 대응

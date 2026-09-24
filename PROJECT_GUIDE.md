@@ -34,6 +34,7 @@ kiro/
     ├── dark_generals/           흑막사천왕 (별칭: dar)
     │   ├── characters/          캐릭터 JSON
     │   ├── references/          IP-Adapter 참조 이미지
+    │   ├── events.json          [선택] 작품별 전용 이벤트 포즈 DB (200번대 등 자동 병합)
     │   └── assets/              생성 결과 (git 제외: projects/*/assets/)
     │       └── {prefix}/{prefix}_{NNN}.webp
     ├── oto/                     오토코노코 (별칭: oto)
@@ -186,15 +187,16 @@ pose_database.json
 {
   "prefix": "rei",
   "default_mode": "female",
-  "positive": "masterpiece, best quality, ..., 1girl, solo, dark purple hair, crimson eyes, ...",
-  "negative": "1boy, male, child, loli, uncensored, no censor, thin censorship",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, dark purple hair, crimson eyes, ...",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, 1boy, male, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4)",
   "ref_weight": 0.7,
   "seed": 1234567890
 }
 ```
 
-`positive`가 있으면 프로필의 `base_positive`와 `char_prompt`를 **완전히 무시**한다.
-표정·포즈 DB 태그는 항상 뒤에 추가된다.
+- `positive`가 있으면 프로필의 `base_positive`와 `char_prompt`를 **완전히 무시**한다.
+- `BREAK`를 기준으로 앞부분은 [공통 품질 티어], 뒷부분은 [캐릭터 고유 외형]으로 분리된다.
+- **주의**: 네거티브에 `sweat`, `perspiration`, `liquid`, `splatter` 등 체액/땀 태그를 넣으면 H씬 및 감정 포즈 태그와 정면 충돌하여 상쇄되므로 절대 넣지 않는다.
 
 ### char_prompt 방식 (레거시)
 
@@ -224,16 +226,26 @@ pose_database.json
 
 ## 6. 프롬프트 조립 순서
 
-### 포지티브 (char_prompt 방식)
+### 포지티브 (positive 방식 - BREAK 포함 시 권장)
 
 ```
-{profile.base_positive}, {char_prompt}, {포즈 DB 프롬프트}, {prefix}_{코드}
+{quality_tier}, {포즈 DB 프롬프트} BREAK {char_appearance}, {prefix}_{코드}
 ```
 
-### 포지티브 (positive 방식)
+- `positive` 내에 `BREAK`가 포함된 경우 `assemble_prompt()`가 이를 감지하여 포즈를 앞쪽 청크로 전진 배치한다:
+  - **1번 청크 (품질 + 포즈/구도)**: `{quality_tier}, {포즈 DB 프롬프트}` (CLIP 최우선 attention 확보, 카메라 구도 및 동작 반영률 극대화)
+  - **2번 청크 (캐릭터 본체/복장)**: `{char_appearance}, {prefix}_{코드}` (복장 색상이 포즈나 배경으로 번지는 Color Bleed 차단)
+
+### 포지티브 (positive 방식 - BREAK 미포함 레거시)
 
 ```
 {positive}, {포즈 DB 프롬프트}, {prefix}_{코드}
+```
+
+### 포지티브 (char_prompt 방식 - 레거시)
+
+```
+{profile.base_positive}, {char_prompt}, {포즈 DB 프롬프트}, {prefix}_{코드}
 ```
 
 Lightning 활성화 시: `<lora:{name}:1.0>` 가 맨 앞에 추가됨
@@ -243,6 +255,7 @@ Lightning 활성화 시: `<lora:{name}:1.0>` 가 맨 앞에 추가됨
 ```
 {profile.base_negative}, {custom_neg}
 ```
+(positive 방식 사용 시에는 캐릭터 JSON의 `negative`가 그대로 사용됨)
 
 마지막 `{prefix}_{코드}` 트리거 태그는 LoRA 트리거 워드 용도 잔재이며 실제 프롬프트에 그대로 들어간다.
 
@@ -479,17 +492,26 @@ projects/{roster}/assets/{prefix}/{prefix}_{코드}.webp
 | `inject_alwayson_scripts()` | 원본 불변성 계약 유지 필요 (T26b 검사) |
 | `URL_PLACEHOLDER` | f-string 이스케이프 실수 방지용 상수. 리터럴로 직접 쓰지 말 것 |
 
-### 새 로스터 추가
+### 새 로스터(프로젝트) 구성
 
 ```
 projects/
-  newroster/
-    characters/   JSON 파일들
-    references/   참조 이미지들
-    assets/       (자동 생성됨)
+  {roster}/
+    characters/       캐릭터 프리셋 JSON 파일들
+    references/       IP-Adapter 참조 이미지들
+    assets/           생성 결과물 (자동 생성됨)
+    events.json       (선택) 프로젝트 전용 이벤트 포즈 (200번대)
+    background.json   (선택) 감정(emotions) 씬 치환용 배경 프리셋
 ```
 
-→ 즉시 `--roster newroster`로 사용 가능. 코드 수정 없음.
+→ 즉시 `--roster {roster}`로 사용 가능. 코드 수정 없음.
+
+- **events.json**: 공용 포즈 DB와 분리된 프로젝트 전용 이벤트 포즈(`event_main`, `event_random` 등)를 정의하면 실행 시 동적으로 자동 병합됩니다.
+- **background.json**: 감정(`emotions`, 00~20) 씬의 `clean background`를 프로젝트 분위기 배경으로 자동 치환합니다.
+  - 프리셋 형식: `{"default": "...", "night": "..."}`
+  - CLI `--bg "직접지정"` 또는 `--bg-preset night`로 즉석 전환 가능
+  - 캐릭터 JSON의 `"background"` 필드로 캐릭터별 개별 override 가능
+  - **격리 보장**: 침대/욕실/벽 등 고유 환경이 명시된 포즈 및 H씬에는 절대 침범하지 않고 오직 `emotions` 씬에만 안전하게 적용됩니다.
 
 ### Depth ControlNet 확장 예시
 
@@ -559,42 +581,47 @@ if controlnet_unit is not None:
 
 ---
 
-## 21. Git Commit Message Guidelines
+## 21. Git 커밋 메시지 가이드라인 (Git Commit Guidelines)
 
-**Important: All commit messages MUST appear as standard code changes without revealing sensitive content details.**
+**중요: 모든 커밋 메시지는 민감한 세부 내용을 배제하고, 무엇을 어떻게 수정했는지 명확하고 사무적인 한국어로 작성해야 합니다.**
 
-### ❌ Avoid (Too Specific)
+### ❌ 피해야 할 예 (민감한 내용 노출 / 지나치게 구체적)
 - `feat: h씬/오토코노코씬 검열 태그 추가`
 - `fix: 펠라씬 nude male 태그 추가`
 - `feat: 성기 검열 태그 완료`
 
-### ✅ Use (Professional)
-- `feat: add content filtering tags to pose database`
-- `refactor: simplify censor tag syntax in pose database`
-- `fix: update pose scene descriptions`
-- `fix: add explicit profile field to character config`
+### ✅ 권장하는 예 (전문적·사무적 한국어 설명)
+- `feat: 프로젝트별 배경 설정(background.json) 로드 및 감정 씬 치환 기능 추가`
+- `feat: 프로젝트 전용 이벤트 포즈 동적 병합 파이프라인 구현`
+- `refactor: 이벤트 포즈 분리 및 프롬프트 DB 모듈화`
+- `fix: 캐릭터 설정 옵션 우선순위 및 파싱 예외 처리 개선`
+- `docs: 배경 시스템 및 신규 CLI 파라미터 사용법 문서화`
+- `test: 배경 해석 및 프리셋 폴백 로직 자체 검증 테스트 추가`
+- `chore: 포즈 데이터베이스 무결성 검증 및 항목 정리`
 
-### Standard Prefixes
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `refactor:` - Code restructuring
-- `docs:` - Documentation updates
-- `test:` - Test additions/modifications
-- `chore:` - Maintenance tasks
+### 표준 접두사 (Conventional Commits)
+- `feat:` — 신규 기능 추가 (배경 시스템, 이벤트 병합, 신규 CLI 옵션 등)
+- `fix:` — 버그 수정 및 예외 처리
+- `refactor:` — 기능 변경 없는 코드 구조 개선, 모듈 분리
+- `docs:` — 문서 및 사용 가이드 추가/수정
+- `test:` — 단위 테스트 및 검증 로직 추가/수정
+- `chore:` — 의존성, 빌드, 데이터 정리 및 기타 유지보수
 
-### Key Principles
-1. **Be generic**: Use technical terms like "pose database", "character config", "profile settings"
-2. **Avoid specifics**: Don't mention adult content, body parts, or explicit actions
-3. **Focus on structure**: Emphasize data structure changes, not content details
-4. **Professional tone**: Write as if for a public code review
+### 핵심 원칙
+1. **사무적·기술적 서술**: "포즈 데이터베이스", "캐릭터 설정 파서", "배경 해석 모듈" 등 기술 용어 사용
+2. **민감한 내용 절대 배제**: 성인물 관련 표현, 특정 신체 부위, 성적 행위 묘사 엄격히 금지
+3. **무엇을 어떻게 수정했는지 명시**: 단순 수식어가 아닌 변경 내용과 대상 컴포넌트를 명확히 기술
+4. **공개 코드 리뷰 수준의 격식**: 정중하고 사무적인 문체 유지
 
-### File-Specific Commit Patterns
+### 파일별 권장 커밋 패턴
 
-| File Changed | Commit Message Pattern |
+| 대상 파일 | 커밋 메시지 패턴 예시 |
 |---|---|
-| `pose_database.json` | "update pose database entries" |
-| `characters/*.json` | "update character configuration" |
-| `profiles/*.json` | "modify profile settings" |
-| `sd_batch_generator.py` | "update generator logic" |
+| `pose_database.json` | `feat:` 또는 `chore: 공용 포즈 데이터베이스 항목 및 태그 구성 업데이트` |
+| `projects/{roster}/events.json` | `feat:` 또는 `refactor: 프로젝트 전용 이벤트 포즈 데이터 갱신` |
+| `projects/{roster}/background.json` | `feat: 프로젝트 배경 프리셋 설정 추가/수정` |
+| `projects/{roster}/characters/*.json` | `feat:` 또는 `chore: 캐릭터 프리셋 프롬프트 및 설정 파라미터 갱신` |
+| `sd_batch_generator.py` | `feat:` / `refactor:` / `fix: [모듈명] 관련 로직 개선` |
+| 문서 (`*.md`, `*.txt`) | `docs: [문서명] 가이드라인 및 설명 업데이트` |
 
-**This guideline is stored in `.kiro/steering/commit-messages.md` and should be followed for ALL commits.**
+**이 가이드라인은 `.kiro/steering/commit-messages.md` 및 `GEMINI.md`와 상호 일치해야 합니다.**
