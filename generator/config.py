@@ -77,7 +77,7 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 # 3. 실제 생성 파라미터 (SDXL / Illustrious)
 # ─────────────────────────────────────────────
 IMAGE_SIZE = (832, 1216)
-STEPS = 26
+STEPS = 30
 CFG_SCALE = 7
 LORA_STRING = ""
 WEBP_QUALITY = 95
