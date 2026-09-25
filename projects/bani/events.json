@@ -1,0 +1,69 @@
+{
+  "_comment": "바니걸 라운지(bani) 전용 맵(001~005) 및 이벤트 CG(201~217) DB",
+  "events": {
+    "001": {
+      "label": "메인바카운터",
+      "prompt": "no humans, scenery, luxury bunny girl bar lounge interior, polished mahogany bar counter, bar stools, illuminated glass shelves with glowing liquor bottles, warm amber and golden mood lighting, crystal chandeliers, depth of field, masterpiece, best quality, absurdres"
+    },
+    "002": {
+      "label": "프라이빗VIP룸",
+      "prompt": "no humans, scenery, private luxury VIP booth, plush crimson red velvet sofas, polished marble table, champagne bucket with iced bottles, warm romantic dim lighting, soft bokeh, lavish interior, depth of field, masterpiece, best quality, absurdres"
+    },
+    "003": {
+      "label": "오너점장실",
+      "prompt": "no humans, scenery, exclusive executive office lounge, leather executive sofa, antique mahogany desk, soft desk lamp glow, private liquor decanter, secret private room atmosphere, quiet shadows, depth of field, masterpiece, best quality, absurdres"
+    },
+    "004": {
+      "label": "스태프파우더룸",
+      "prompt": "no humans, scenery, backstage dressing powder room interior, Hollywood mirror with glowing round bulbs, cosmetics and perfume bottles on vanity table, wardrobe rack with spare bunny suits, cozy intimate staff room, soft lighting, depth of field, masterpiece, best quality, absurdres"
+    },
+    "005": {
+      "label": "심야밀폐홀",
+      "prompt": "no humans, scenery, closed bar lounge at late night, lowered metal shutters at entrance, neon sign switched to soft violet glow, empty quiet cocktail lounge, reflections on polished floor, intimate secluded nighttime atmosphere, depth of field, masterpiece, best quality, absurdres"
+    },
+    "201": {
+      "label": "피크타임샴페인콜",
+      "prompt": "pov, standing in bustling bar counter, holding illuminated champagne bottle with sparkler, golden sparks flying, pop of champagne cork, overflowing bubbling champagne flutes, sparkling bokeh lights, lively party celebration, wide angle, dynamic pose, bright radiant smile, looking at viewer, cowboy shot"
+    },
+    "202": {
+      "label": "정전과젖은바니슈트",
+      "prompt": "standing, black out room, emergency dim lighting, water droplets streaming down skin, soaked wet glossy black bunny suit, wet glistening skin, dripping hair strands, clinging wet fabric, startled flustered expression, arms slightly crossed, looking at viewer, heavy romantic atmosphere, cowboy shot"
+    },
+    "203": {
+      "label": "심야진실게임",
+      "prompt": "pov, sitting on floor in intimate circle, spinning empty wine bottle on floor between them, bottle pointing at viewer, heavy-lidded seductive gaze, flushed red cheeks from alcohol, resting chin on hands, playful teasing smirk, dim ambient spotlight, close-up upper body"
+    },
+    "204": {
+      "label": "VIP룸심야독대엔딩",
+      "prompt": "sitting on crimson velvet sofa, intimate luxury VIP room, leaning close to viewer, bunny suit loosened at chest, deep cleavage exposed, one hand gently caressing viewer cheek, heavy-lidded sultry bedroom eyes, glossy parted lips, warm private dim lighting, tender confession expression, close-up upper body"
+    },
+    "211": {
+      "label": "머리띠정돈스킨십",
+      "prompt": "standing, pov, masculine hands gently adjusting crooked black bunny ears hairband on character head, looking up at viewer, bashful cute blush, eyes rounded, hands nervously touching chest, gentle tender intimacy, cowboy shot"
+    },
+    "212": {
+      "label": "하이힐삐끗안아채기",
+      "prompt": "standing, off balance, tripping forward on high heels, caught in masculine embrace, masculine arms supporting character waist, character gasping with wide eyes, flushed startled face, chest pressed against viewer, dynamic motion, cowboy shot"
+    },
+    "213": {
+      "label": "손겹쳐칵테일셰이킹",
+      "prompt": "behind bar counter, standing together, pov, masculine hands layered over character hands holding silver cocktail shaker, shaking shaker together, character turning head over shoulder, flushed bashful cheeks, ears slightly twitching, warm spotlight, upper body"
+    },
+    "214": {
+      "label": "슈트뒷지퍼도움요청",
+      "prompt": "standing, from behind view, looking back over shoulder, holding long bunny suit zipper pull behind back, exposed bare back and shoulder blades, outfit unzipped slightly, flushed embarrassed face, biting lower lip, shy requesting gaze, cowboy shot from behind"
+    },
+    "215": {
+      "label": "토끼꼬리만지기벌칙",
+      "prompt": "standing bent slightly forward, looking back over shoulder, pov, masculine hand playfully pinching soft white fluffy bunny tail on lower back, arched back, trembling with sensitive ticklish blush, gasping open mouth, teary bashful eyes, buttocks and waist focus"
+    },
+    "216": {
+      "label": "진상손님퇴치후포옹",
+      "prompt": "standing in hallway, quiet corner, back hug or front embrace, burying face into viewer chest, clutching viewer clothes tightly, trembling shoulders, relieved teary eyes, safe protected feeling, tender comforting moment, cowboy shot"
+    },
+    "217": {
+      "label": "몰래먹던간식입가닦아주기",
+      "prompt": "sitting behind counter, pov, masculine thumb gently wiping cream or chocolate crumb from character lip corner, holding bite-sized cake, caught red-handed with cheeks stuffed like hamster, cute surprised blush, wide innocent eyes, close-up upper body"
+    }
+  }
+}
