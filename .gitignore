@@ -1,6 +1,7 @@
 # ── 생성 결과물 ──────────────────────────────
 # 재생성 가능하므로 추적하지 않는다.
 projects/*/assets/
+projects/*/*_original/
 
 # save_as_webp() 의 원자적 쓰기 임시 파일.
 # 정상 종료 시 남지 않지만 중단되면 잔존할 수 있다.
@@ -9,6 +10,7 @@ projects/*/assets/
 # ── 파이썬 ───────────────────────────────────
 __pycache__/
 *.py[cod]
+*.bak
 *.egg-info/
 .venv/
 venv/
