@@ -50,7 +50,8 @@ _OUTFIT_KEYWORDS = frozenset({
     "uniform", "suit", "collar", "cuffs", "tie", "bowtie", "necklace", "pendant", "choker",
     "bracelet", "gloves", "socks", "stockings", "pantyhose", "shoes", "boots", "heels",
     "bra", "panties", "underwear", "swimwear", "bikini", "swimsuit", "leotard", "one-piece",
-    "apron", "shorts", "robe", "kimono", "hoodie", "top", "camisole"
+    "apron", "shorts", "robe", "kimono", "hoodie", "top", "camisole",
+    "underboob", "underbust", "corset", "bodice", "bustier", "straps", "suspender", "garter"
 })
 
 _HAIR_KEYWORDS = (
@@ -62,7 +63,7 @@ _HAIR_KEYWORDS = (
 def strip_outfit_tags(prompt_text: str) -> str:
     """
     캐릭터 프롬프트에서 헤어/체형/얼굴 태그는 보존하고 의상 및 착용 액세서리 태그를 제거한다.
-    완전 탈의(H-씬)에서 목이나 팔 등에 의상 파편(하이넥, 롱슬리브 등)이 잔류하는 현상을 방지한다.
+    완전 탈의(H-씬)에서 목이나 팔 등에 의상 파편(하이넥, 롱슬리브, 언더붑/언더버스트 탑 등)이 잔류하는 현상을 방지한다.
     """
     if not prompt_text:
         return ""
@@ -77,7 +78,7 @@ def strip_outfit_tags(prompt_text: str) -> str:
             is_hair = any(h in clean for h in _HAIR_KEYWORDS)
             words = clean.split()
             is_outfit = not is_hair and any(w in _OUTFIT_KEYWORDS for w in words)
-            if not is_outfit and any(kw in clean for kw in ("through dress", "contouring dress", "through clothes")):
+            if not is_outfit and any(kw in clean for kw in ("through dress", "contouring dress", "through clothes", "underboob", "underbust")):
                 is_outfit = True
 
             if not is_outfit:

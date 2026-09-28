@@ -29,15 +29,16 @@ CLIP 토큰 분산을 방지하기 위해 2개의 청크로 분리 조립합니�
 - **해결 매커니즘 (`generator/prompt.py`)**:
   - `strip_outfit_tags()` 함수 신설:
     - 헤어스타일(`hair`, `ponytail`, `bun`, `bangs`, `strands` 등), 눈동자, 얼굴, 체형, 피부톤 등 본연의 외형은 **100% 보존**.
-    - 드레스, 니트, 소매, 넥라인, 칼라, 목걸이, 스커트, 바지, 속옷 등 **의상/착용물 키워드만 완벽히 자동 적출**.
+    - 드레스, 니트, 소매, 넥라인, 칼라, 목걸이, 스커트, 바지, 속옷 및 **언더붑/언더버스트/코르셋(`underboob`, `underbust`, `corset`, `bodice`, `straps`) 관련 키워드 완벽히 자동 적출**. (BJh처럼 캐릭터 설정에 `underboob exposure`, `bare underbust curve`가 있을 경우 H-씬에서 가슴 위 탑과 허리 코르셋이 강제 생성되는 현상을 완벽 해결)
   - `generator/runner.py`에서 탈의 씬(`h_scenes`, `scenes_otokonoko` 또는 `nude`, `bare skin` 포함 씬) 감지 시:
-    - 캐릭터 외형 프롬프트에 `strip_outfit_tags()`를 적용하여 의상 태그를 배제.
-    - 네거티브 프롬프트에 `(clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini:1.3)` 자동 주입.
+    - 캐릭터 외형 프롬프트에 `strip_outfit_tags()`를 적용하여 의상 및 언더붑 태그를 배제.
+    - 네거티브 프롬프트에 `(clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35)` 자동 주입.
+    - 참조 이미지 속 평상복(블랙 드레스 등)의 신체 전사를 막기 위해 IP-Adapter 가중치를 `0.5`로 자동 완화.
 
 ### 2.3 2인 상호작용 씬 페어링 및 파트너 생성 보장 매커니즘
 - **배경 문제**: 상호작용 H-씬에서 상대방 파트너(모브 남성)가 누락되고 여성 캐릭터 단독 샷(`solo`)만 출력되는 문제.
 - **해결 매커니즘 (`generator/runner.py`)**:
-  - **네거티브 필터링**: 캐릭터 네거티브에 남성 억제 토큰(`1boy`, `male`, `masculine`, `man`, `men`, `guy`, `boy`, `beard`, `mustache`, `facial hair`)이 있더라도 상호작용 씬에서는 이를 완벽히 필터링 제외.
+  - **네거티브 필터링**: 캐릭터 네거티브에 남성/복수인원 억제 토큰(`1boy`, `2boys`, `male`, `masculine`, `man`, `men`, `guy`, `boy`, `boys`, `yaoi`, `multiple characters`, `beard`, `mustache`, `facial hair`)이 있더라도 상호작용 씬에서는 이를 완벽히 필터링 제외.
   - **단독 태그 차단**: 포지티브 프롬프트에서 `solo` 태그 완전 제거.
   - **2인 구도 페어링 태그 주입**:
     - 일반 H-씬(`h_scenes`): 프롬프트 최선두에 `hetero, 1boy` 자동 주입.
@@ -55,10 +56,10 @@ CLIP 토큰 분산을 방지하기 위해 2개의 청크로 분리 조립합니�
 ### 3.1 40번 이상 H-씬 및 오토코노코 씬 전면 개편 (정예화 및 후처리 검열 연계)
 - **인위적 검열 태그 전면 제거**: 프롬프트의 `censored`, `(black censor bar...)` 등 모델 화풍을 훼손하던 키워드를 전면 삭제. 검열은 `censor_studio.py` 후처리 도구로 전담하여 순수 최고 화질 생성 보장.
 - **자연스러운 표준 정석 구도 유지**: 억지로 가리려다 인체 비율이 무너지지 않도록, 표준적인 Danbooru 구도 태그(측면 앵글, 대면 구도, 상반신 샷 등)를 적용하여 해부학적 무결성 극대화.
-- **중복 구도 통폐합 (총 65종 → 34종 압축)**:
-  - 일반 H-씬(`h_scenes`): 40~56번 (17종 정예화)
-  - 오토코노코 씬(`scenes_otokonoko`): 140~156번 (17종 대칭 구성, 캐릭터 특화 클라이맥스 연출 보존)
-  - 에셋 생성 소요 시간 약 48% 단축 및 구도별 시각적 변별력 대폭 향상.
+- **정예화 및 1:1 대칭 완비 (총 40종)**:
+  - 일반 H-씬(`h_scenes`): 40~59번 (20종 완비: 기본 체위 + 구강 체인 + 사후여운 다각화)
+  - 오토코노코 씬(`scenes_otokonoko`): 140~159번 (20종 완비: 애널/핸드잡 특화 1:1 대칭 매핑)
+  - 구도별 시각적 변별력 대폭 향상 및 클라이맥스 체액 연출 극대화.
 
 ### 3.2 바닥(`floor`) 편향 제거 및 범용 가구/기물 매핑
 - **바닥 편향 원인**: 프롬프트 앞단에 `((discarded clothes on floor...:1.35))` 및 `floor sex` 태그가 강하게 걸려 장면 전체가 차가운 맨바닥으로 오염됨.
@@ -85,6 +86,56 @@ CLIP 토큰 분산을 방지하기 위해 2개의 청크로 분리 조립합니�
    - 투명 유리벽 밀착 구도 강화 (`standing against clear glass wall, pinned against glass`).
    - 네거티브에 `(bars, vertical bars, fence, lattice, cage, blinds, grating:1.3)` 자동 주입.
    - 완전 탈의 태그 전진 배치 (`((completely nude, full nudity, unclothed, bare skin:1.25))`).
+
+### 3.4 유혹 포즈 및 샤워 구도 고도화 (26~29, 38~39)
+- **26번 (무릎 유혹)**: 침대 위에 무릎을 꿇고 허리를 꺾어 정면의 유저를 올려다보는 유혹 포즈.
+- **27번 (펠라 시늉)**: 입술에 손가락을 얹고 혀를 살짝 내밀어 구강 봉사를 암시하는 도발적 제스처 (`finger on lips, parted lips, tongue out, suggestive mouth gesture, teasing`).
+- **28번 (대딸 시늉)**: 손으로 스트로킹 모션을 흉내 내며 원을 만들어 유혹하는 상징적 제스처 (`suggestive hand gesture, hand mimicking stroking motion, hand forming circle, teasing seductive smile`).
+- **29번 (뒤치기 유혹)**: 사지에 엎드려 엉덩이를 치켜들고 어깨 너머로 뒤돌아보는 후배위 유혹 구도 (`on all fours, ass up, arched back, looking back over shoulder, turned back, buttocks focus`).
+- **38번 (샤워 알몸 뒤태)**: 투명 유리 샤워부스 안에서 젖은 몸으로 등과 엉덩이를 강조하는 알몸 단독 뒤태 (`completely nude, back focus, from behind, standing in shower, clear glass shower stall, water droplets, wet hair, buttocks focus`).
+- **39번 (샤워장 유리 밀착 유혹)**: 투명 유리벽에 가슴과 손을 완전히 밀착하고 너머의 유저를 유혹하는 상반신 클로즈업 (`completely nude, breasts pressed against glass, hands pressed on glass, looking at viewer through glass, condensation, water droplets, upper body focus`).
+
+### 3.5 H-씬 구강 체인 완비 및 사후여운/클라이맥스 체액 강화 (52~59)
+- **단계별 구강 체인 구축**:
+  - `52` (구강 기본 봉사): `kneeling, oral, looking up at partner`
+  - `53` (구강 절정): `facial cum, thick cum on face, mouth, lips`
+  - `54` (이라마치오 / 딥스로트): `deepthroat irrumatio, shaft deep in throat, throat bulge, tears streaming, gagging pleasure`
+  - `55` (구강 사후여운): `oral aftermath, excessive cum overflowing from mouth, dripping from lips to chest, completely dazed expression`
+- **사후여운 구도 다각화**:
+  - `58` (침대 사후여운): 침대에 똑바로 누워 탈진한 채 절정의 여운을 즐김, 시트에 고인 풍성한 체액 웅덩이 연출.
+  - `59` (엎드린 사후여운): 침대에 앞으로 엎어져 베개에 얼굴을 묻은 채 탈진, 허벅지 사이로 흘러내리는 짙은 체액 연출 (`lying prone on bed, face down on pillow, exhausted aftersex aftermath, thick cum dripping between thighs`).
+- **클라이맥스 체액 연출 강화**:
+  - 절정 및 사후여운 씬(`41, 43, 45, 48, 51, 53, 54, 55, 58, 59`)에 `((excessive cum:1.35~1.4))`, `thick cum dripping...`, `cum pool` 등 Danbooru 모델에 직관적인 강조 태그를 전진 배치하여 시각적 몰입도 극대화.
+
+### 3.6 오토코노코 씬 1:1 대칭 완비 및 특화 연출 (140~159)
+- **일반 H-씬과 1:1 대응 (`+100` 오프셋)**:
+  - `140~149`: 애널 선교/절정, 후배위/절정, 기승위/절정, 역기승위, 대면좌위, 매팅프레스(절정), 스푸닝.
+  - `150 / 151` (상호자극 / 절정): 가슴밀착(파이즈리) 대신 침대 위 핸드잡 상호작용 및 사정 절정 연출 (`handjob receiving`, `handjob climax`, 손과 복부에 쏟아지는 풍성한 사정 연출).
+  - `152 / 153` (구강 체인): 펠라치오 기본 봉사 및 얼굴/입술에 짙은 체액이 튀는 페이셜 클라이맥스.
+  - `154 / 155` (이라마치오 & 구강 사후여운 신설):
+    - `154`: 목 불룩 딥스로트 이라마치오, 눈물과 쾌락의 구역질 (`deepthroat irrumatio, throat bulge, tears streaming, gagging pleasure`).
+    - `155`: 입가에서 흘러넘쳐 가슴과 허벅지로 흐르는 체액 범벅, 멍하니 풀린 눈의 탈진 여운.
+  - `156 / 157` (입위 & 샤워 씬): 벽 밀착 서서 애널, 투명 유리 샤워부스 벽 밀착 애널.
+  - `158 / 159` (사후여운 다각화):
+    - `158` (침대 사후여운): 침대에 누워 탈진, 시트에 고인 짙은 체액 웅덩이 연출 대폭 강화.
+    - `159` (엎드린 사후여운 신설): 침대에 앞으로 엎어져 베개에 얼굴을 묻고 탈진, 허벅지 사이로 흘러내리는 풍성한 체액 연출 (`lying prone on bed, ass slightly raised, thick cum dripping between thighs`).
+- **상호작용 보장 매커니즘**:
+  - `runner.py`에서 `yaoi, 2boys` 자동 주입 및 네거티브에서 `2boys`, `yaoi`, `multiple characters`까지 완전 필터링 배제하여 2인 결합 보장.
+
+### 3.7 챗봇 AI 이미지 선택 최적화를 위한 범용 절정 라벨 설계
+- **배경 문제**:
+  - 다양한 체위(선교, 후배위, 기승위, 역기승위, 대면좌위, 매팅프레스, 스푸닝, 입위벽밀착, 샤워 등 9종)에 비해 개별 절정 씬이 1:1로 존재하지 않아, 챗봇 AI(LLM)가 대면좌위/스푸닝/역기승위/벽밀착 등의 체위 진행 후 매칭되는 절정 이미지를 찾지 못하고 엉뚱한 기본 이미지를 호출하거나 체위 이미지를 반복하는 문제 발생.
+- **해결 매커니즘 (구도 기반 범용 명칭 + 포괄 체위 키워드 병기)**:
+  - **41 / 141 (`정면절정(선교/대면)`)**: 누운 자세 및 마주보는 모든 정면 체위(선교체위, 대면좌위 등)의 범용 클라이맥스로 100% 매칭.
+  - **43 / 143 (`후방절정(후배위/스푸닝/벽)`)**: 엎드리거나 뒤에서 결합하는 모든 후방 체위(후배위, 스푸닝, 입위벽밀착, 샤워 등)의 범용 클라이맥스로 100% 매칭.
+  - **45 / 145 (`상위절정(기승위/역기승)`)**: 위에서 주도하거나 뒤돌아 올라탄 모든 상위 체위(기승위, 역기승위 등)의 범용 클라이맥스로 100% 매칭.
+  - **48 / 148 (`밀착절정(매팅프레스)`)**: 기존 단순 `매팅프레스` 라벨을 절정 명칭으로 전환하여, 다리를 접어올린 초밀착 압착 클라이맥스로 명확히 인지.
+  - **51 / 151**: `가슴절정(파이즈리)` / `상호절정(핸드잡)`.
+  - **53 / 153**: `구강절정(페이셜)`, **54 / 154**: `이라마치오(딥스로트)`.
+  - **사후여운 분기**:
+    - **58 / 158 (`침대사후여운(누움)`)**: 정면/상위/밀착 절정 후 침대 정자세 탈진 여운.
+    - **59 / 159 (`엎드린사후여운(엎드림)`)**: 후방/애널/격렬한 결합 후 침대에 앞으로 엎어져 쉬는 탈진 여운.
+- **효과**: AI가 텍스트 지문이나 대화의 체위 키워드(`대면`, `스푸닝`, `역기승`, `벽` 등) 및 구도 키워드(`정면`, `후방`, `상위`, `밀착`) 중 어떤 단어를 보더라도 즉시 가장 자연스러운 절정 이미지를 오차 없이 매칭함.
 
 ---
 

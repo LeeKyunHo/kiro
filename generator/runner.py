@@ -177,8 +177,8 @@ def run_batch(
             is_interactive = any(k in pose_prompt.lower() for k in partner_keywords) or entry.section in ("h_scenes", "scenes_otokonoko")
             if is_interactive:
                 male_neg_tokens = {
-                    "1boy", "male", "masculine", "man", "men", "guy", "boy", "boys",
-                    "beard", "mustache", "facial hair"
+                    "1boy", "2boys", "male", "masculine", "man", "men", "guy", "boy", "boys",
+                    "yaoi", "multiple characters", "beard", "mustache", "facial hair"
                 }
                 neg_tags = [t.strip() for t in actual_negative.split(",") if t.strip()]
                 filtered_neg = []
@@ -195,9 +195,9 @@ def run_batch(
                 if "shower" in pose_prompt.lower():
                     actual_negative = f"{actual_negative}, (bars, vertical bars, fence, lattice, cage, blinds, grating:1.3)"
 
-                # 탈의 씬에서 목이나 팔 등에 의상 파편(하이넥, 소매, 칼라 등) 및 수영복 생성 차단
+                # 탈의 씬에서 목이나 팔 등에 의상 파편(하이넥, 소매, 칼라 등), 언더붑/언더버스트 탑, 코르셋 및 수영복 생성 차단
                 if is_nude_scene:
-                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini:1.3)"
+                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35)"
 
                 # solo 태그 제거
                 for solo_pat in (", solo", "solo,", " solo "):
@@ -227,7 +227,11 @@ def run_batch(
 
             controlnet_units: list[dict] = []
             if controlnet_unit is not None:
-                controlnet_units.append(controlnet_unit)
+                unit = dict(controlnet_unit)
+                # 탈의 씬인 경우 참조 이미지의 의상(블랙 드레스 등)이 강제 투영되지 않도록 IP-Adapter 가중치를 0.5로 완화
+                if is_nude_scene and unit.get("weight", 0) > 0.5:
+                    unit["weight"] = 0.5
+                controlnet_units.append(unit)
 
             payload = inject_alwayson_scripts(
                 payload,

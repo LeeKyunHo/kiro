@@ -2,7 +2,7 @@
   "_schema": {
     "purpose": "캐릭터 챗봇용 이미지 에셋 프롬프트 DB (Unholy Nova AI 최적화, 순수 Danbooru 태그)",
     "structure": "최상위 키 = 섹션명, 값 = { 코드: 프롬프트 }",
-    "number_ranges": "00-19: emotions(감정 20종), 20-39: poses(솔로포즈+스킨십 20종), 40-56: h_scenes(female 17종), 140-156: scenes_otokonoko(otokonoko 17종)"
+    "number_ranges": "00-19: emotions(감정 20종), 20-39: poses(솔로포즈+스킨십 20종), 40-59: h_scenes(female 20종), 140-159: scenes_otokonoko(otokonoko 20종)"
   },
   "emotions": {
     "00": {
@@ -105,27 +105,27 @@
     },
     "24": {
       "label": "뒤돌아봄",
-      "prompt": "from behind, looking back, looking at viewer, over shoulder, standing, cowboy shot"
+      "prompt": "((back focus:1.35)), ((from behind:1.35)), ((looking back over shoulder:1.25)), looking at viewer, arched back, turned back, standing, cowboy shot"
     },
     "25": {
       "label": "앉아서",
       "prompt": "sitting, crossed legs, looking at viewer, relaxed, elegant, cowboy shot"
     },
     "26": {
-      "label": "무릎꿇기",
-      "prompt": "kneeling, looking up, looking at viewer, hands on thighs, cowboy shot"
+      "label": "무릎유혹",
+      "prompt": "kneeling, leaning forward, looking up at viewer, hands on knees, arched back, seductive gaze, heavy blush, cleavage, cowboy shot"
     },
     "27": {
-      "label": "쇄골노출",
-      "prompt": "standing, looking at viewer, bare shoulders, collarbone, off shoulder, seductive smile, cowboy shot"
+      "label": "펠라시늉",
+      "prompt": "kneeling, looking up at viewer, suggestive mouth gesture, finger on lips, parted lips, tongue out, seductive expression, heavy blush, teasing, cowboy shot"
     },
     "28": {
-      "label": "가슴골강조",
-      "prompt": "standing, looking at viewer, leaning forward, cleavage, breasts, cowboy shot"
+      "label": "대딸시늉",
+      "prompt": "sitting on bed, looking at viewer, suggestive hand gesture, hand mimicking stroking motion, hand forming circle, teasing seductive smile, heavy blush, cowboy shot"
     },
     "29": {
-      "label": "상의탈의",
-      "prompt": "standing, looking at viewer, undressing, topless, bare breasts, off shoulder, cowboy shot"
+      "label": "도기유혹",
+      "prompt": "on bed, on all fours, ass up, arched back, looking back over shoulder, looking at viewer, turned back, seductive gaze, heavy blush, buttocks focus, cowboy shot"
     },
     "30": {
       "label": "전신나체",
@@ -160,38 +160,38 @@
       "prompt": "kiss, french kiss, hetero, 1boy, closed eyes, blush, passionate, upper body"
     },
     "38": {
-      "label": "목덜미키스",
-      "prompt": "neck kiss, hetero, 1boy, head tilted, closed eyes, blush, parted lips, cowboy shot"
+      "label": "샤워뒤태",
+      "prompt": "completely nude, full nudity, bare skin, back focus, from behind, standing in shower, clear glass shower stall, water droplets on skin, looking back over shoulder, wet hair, arched back, buttocks focus, simple clean background, cowboy shot"
     },
     "39": {
-      "label": "뒤에서밀착",
-      "prompt": "hug from behind, hetero, 1boy, hand on stomach, chin on shoulder, blush, flustered, cowboy shot"
+      "label": "유리밀착유혹",
+      "prompt": "completely nude, full nudity, bare skin, breasts pressed against glass, hands pressed on glass, looking at viewer through glass, seductive gaze, heavy blush, condensation on glass, water droplets, clear glass shower stall, intimate close-up, upper body focus"
     }
   },
   "h_scenes": {
     "40": {
       "label": "선교체위",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary, from side view, looking at partner, blush, parted lips, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary position, legs spread wide, from side view, looking at partner, heavy blush, parted lips, cowboy shot"
     },
     "41": {
-      "label": "선교절정",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary, climax, ahegao, rolling eyes, body blush, upper body"
+      "label": "정면절정(선교/대면)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary position, climax, ((excessive cum:1.35)), ((thick cum covering body:1.3)), cum pool on bedsheets, cum on stomach, cum dripping between thighs, ahegao, rolling eyes, trembling, body blush, cowboy shot"
     },
     "42": {
       "label": "도기체위",
       "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, doggystyle, from side view, looking back over shoulder, parted lips, cowboy shot"
     },
     "43": {
-      "label": "도기절정",
-      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, doggystyle, climax, looking back, ahegao, trembling, cowboy shot"
+      "label": "후방절정(후배위/스푸닝/벽)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, deeply arched back, deep doggystyle, climax, ((excessive cum:1.35)), ((thick cum dripping from buttocks:1.3)), cum on back and thighs, cum pool, looking back, ahegao, trembling arms, body blush, cowboy shot"
     },
     "44": {
       "label": "기승위",
-      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, cowgirl position, looking down, hands on partner chest, blush, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, cowgirl position, looking down, hands on partner chest, heavy blush, cowboy shot"
     },
     "45": {
-      "label": "기승위절정",
-      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, cowgirl position, climax, head thrown back, arched back, ahegao, body blush, cowboy shot"
+      "label": "상위절정(기승위/역기승)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, deep cowgirl sex, climax, ((excessive cum:1.35)), ((thick cum covering genitals:1.3)), cum on stomach and inner thighs, cum dripping, head thrown back, deeply arched back, ahegao, body blush, cowboy shot"
     },
     "46": {
       "label": "역기승위",
@@ -199,113 +199,137 @@
     },
     "47": {
       "label": "대면좌위",
-      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, facing partner, hugging, arms around neck, chest to chest, intimate, blush, upper body"
+      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, facing partner, hugging, arms around neck, chest to chest, intimate, heavy blush, upper body"
     },
     "48": {
-      "label": "매팅프레스",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, knees to chest, mating press, looking up, teary eyes, blush, cowboy shot"
+      "label": "밀착절정(매팅프레스)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, knees folded to chest, deep mating press, climax, ((excessive cum:1.35)), ((thick cum covering body:1.3)), cum pool on bedsheets, cum dripping between thighs, looking up, teary pleasure eyes, ahegao, cowboy shot"
     },
     "49": {
       "label": "스푸닝",
-      "prompt": "completely nude, full nudity, bare skin, lying on side, spooning, partner arm around waist, intimate embrace, peaceful expression, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, spooning position, partner arm around waist, intimate embrace, heavy-lidded pleasure gaze, cowboy shot"
     },
     "50": {
-      "label": "가슴밀착",
-      "prompt": "completely nude, full nudity, bare skin, paizuri, kneeling, looking up at partner, hands on partner thighs, blush, upper body"
+      "label": "가슴밀착(파이즈리)",
+      "prompt": "completely nude, full nudity, bare skin, pov, looking down, paizuri, titfuck, intimate close-up, kneeling between partner legs, chest pressed against partner, hands resting on partner thighs, looking up at partner, heavy blush, upper body close-up"
     },
     "51": {
-      "label": "가슴밀착절정",
-      "prompt": "completely nude, full nudity, bare skin, paizuri, climax, looking up, ahegao, mouth open, body blush, upper body"
+      "label": "가슴절정(파이즈리)",
+      "prompt": "completely nude, full nudity, bare skin, pov, looking down, paizuri titfuck climax, intimate close-up, kneeling between partner legs, chest pressed against partner, ((excessive cum:1.4)), ((huge cumshot:1.35)), cum on breasts and cleavage, cum dripping down chest, cum on face and chin, ahegao, tongue out, dazed pleasure expression, upper body close-up"
     },
     "52": {
-      "label": "구강상호작용",
-      "prompt": "completely nude, full nudity, bare skin, fellatio, kneeling on rug, looking up, parted lips, blush, upper body"
+      "label": "구강상호작용(펠라)",
+      "prompt": "completely nude, full nudity, bare skin, fellatio oral sex, kneeling between partner legs, intimate close-up, mouth wide open taking shaft, looking up at partner, heavy-lidded submissive gaze, heavy blush, saliva dripping, upper body close-up"
     },
     "53": {
-      "label": "구강절정",
-      "prompt": "completely nude, full nudity, bare skin, facial, kneeling, closed eyes, teary eyes, messy face, upper body"
+      "label": "구강절정(페이셜)",
+      "prompt": "completely nude, full nudity, bare skin, facial cumshot climax, kneeling between partner legs, ((excessive cum:1.4)), ((huge cumshot:1.35)), cum covering face, cum dripping from cheeks and chin, mouth open, tongue out, teary eyes, messy ahegao, upper body close-up"
     },
     "54": {
-      "label": "입위벽밀착",
-      "prompt": "completely nude, full nudity, bare skin, standing sex, against wall, one leg raised, pinned, looking at partner, blush, cowboy shot"
+      "label": "이라마치오(딥스로트)",
+      "prompt": "completely nude, full nudity, bare skin, deepthroat irrumatio, kneeling between partner legs, partner hand on head, shaft deep in throat, throat bulge, tears streaming, gagging pleasure, heavy blush, saliva dripping, intimate close-up, upper body close-up"
     },
     "55": {
-      "label": "샤워씬",
-      "prompt": "completely nude, full nudity, bare skin, shower sex, standing against glass, one leg raised, clear glass shower, simple background, cowboy shot"
+      "label": "구강사후여운(입가정액)",
+      "prompt": "completely nude, full nudity, bare skin, oral aftermath, kneeling exhausted, ((excessive cum:1.4)), ((thick cum overflowing from mouth:1.35)), cum dripping from lips to chest, cum pool on thighs, completely dazed expression, heavy-lidded unfocused eyes, mouth hanging open, tears of ecstasy, heavy blush, messy, upper body close-up"
     },
     "56": {
-      "label": "사후여운",
-      "prompt": "completely nude, full nudity, bare skin, aftersex, lying in bed, cozy blanket, messy hair, peaceful smile, relaxed, cowboy shot"
+      "label": "입위벽밀착",
+      "prompt": "completely nude, full nudity, bare skin, standing sex, pinned against wall, one leg raised, vaginal penetration, hands on wall, looking at partner, heavy blush, trembling, cowboy shot"
+    },
+    "57": {
+      "label": "샤워씬",
+      "prompt": "completely nude, full nudity, bare skin, shower sex, standing against clear glass wall, pinned against glass, one leg wrapped around partner waist, vaginal penetration, clear glass shower stall, simple clean background, cowboy shot"
+    },
+    "58": {
+      "label": "침대사후여운(누움)",
+      "prompt": "completely nude, full nudity, bare skin, aftersex aftermath, lying on bed, messy white sheets, ((excessive cum:1.3)), cum pool on bedsheets, cum dripping on thighs, cozy blanket, messy hair, exhausted peaceful smile, completely satisfied, relaxed, cowboy shot"
+    },
+    "59": {
+      "label": "엎드린사후여운(엎드림)",
+      "prompt": "completely nude, full nudity, bare skin, lying prone on bed, face down on pillow, ass slightly raised, exhausted aftersex aftermath, legs spread, ((excessive cum:1.35)), ((thick cum dripping between thighs:1.35)), cum pool on bedsheets, cum dripping down inner thighs, trembling legs, flushed back, heavy-lidded dazed expression, completely lost in pleasure, cowboy shot"
     }
   },
   "scenes_otokonoko": {
     "140": {
       "label": "선교체위",
-      "prompt": "completely nude, full nudity, bare body, lying on back, anal missionary, from side view, looking at partner, blush, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, anal missionary, legs spread wide, from side view, looking at partner, heavy blush, parted lips, cowboy shot"
     },
     "141": {
-      "label": "선교절정",
-      "prompt": "completely nude, full nudity, bare body, lying on back, anal missionary, climax, ahegao, rolling eyes, body blush, cowboy shot"
+      "label": "정면절정(선교/대면)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, anal missionary, climax, ((excessive cum:1.35)), ((thick cum covering body:1.3)), cum pool on bedsheets, cum on stomach, cum dripping between thighs, ahegao, rolling eyes, trembling, body blush, cowboy shot"
     },
     "142": {
       "label": "후배위",
-      "prompt": "completely nude, full nudity, bare body, on all fours, arched back, anal doggystyle, from side view, looking back, parted lips, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, anal doggystyle, from side view, looking back over shoulder, parted lips, cowboy shot"
     },
     "143": {
-      "label": "후배위절정",
-      "prompt": "completely nude, full nudity, bare body, on all fours, arched back, anal doggystyle, climax, looking back, ahegao, trembling, cowboy shot"
+      "label": "후방절정(후배위/스푸닝/벽)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, deeply arched back, deep anal doggystyle, climax, ((excessive cum:1.35)), ((thick cum dripping from buttocks:1.3)), cum on back and thighs, cum pool, looking back, ahegao, trembling arms, body blush, cowboy shot"
     },
     "144": {
       "label": "기승위",
-      "prompt": "completely nude, full nudity, bare body, straddling, anal cowgirl, hands on partner chest, looking down, blush, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, anal cowgirl, looking down at partner, hands on partner chest, heavy blush, cowboy shot"
     },
     "145": {
-      "label": "기승위절정",
-      "prompt": "completely nude, full nudity, bare body, straddling, anal cowgirl, climax, head thrown back, arched back, ahegao, body blush, cowboy shot"
+      "label": "상위절정(기승위/역기승)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, deep anal cowgirl, climax, ((excessive cum:1.35)), ((thick cum covering genitals:1.3)), cum on stomach and inner thighs, cum dripping, head thrown back, deeply arched back, ahegao, body blush, cowboy shot"
     },
     "146": {
       "label": "역기승위",
-      "prompt": "completely nude, full nudity, bare body, straddling backwards, anal reverse cowgirl, looking back over shoulder, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling backwards, anal reverse cowgirl, looking back over shoulder, cowboy shot"
     },
     "147": {
       "label": "대면좌위",
-      "prompt": "completely nude, full nudity, bare body, sitting on lap, straddling, facing partner, hugging, arms around neck, intimate, blush, upper body"
+      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, facing partner, hugging, arms around neck, chest to chest, intimate, heavy blush, upper body"
     },
     "148": {
-      "label": "매팅프레스",
-      "prompt": "completely nude, full nudity, bare body, lying on back, knees to chest, anal mating press, looking up, teary eyes, blush, cowboy shot"
+      "label": "밀착절정(매팅프레스)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, knees folded to chest, deep anal mating press, climax, ((excessive cum:1.35)), ((thick cum covering body:1.3)), cum pool on bedsheets, cum dripping between thighs, looking up, teary pleasure eyes, ahegao, cowboy shot"
     },
     "149": {
       "label": "스푸닝",
-      "prompt": "completely nude, full nudity, bare body, lying on side, anal spooning, partner arm around waist, intimate embrace, peaceful, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, anal spooning, partner arm around waist, intimate embrace, heavy-lidded pleasure gaze, cowboy shot"
     },
     "150": {
-      "label": "상호자극",
-      "prompt": "completely nude, full nudity, bare body, sitting, handjob receiving, legs spread, looking down, blush, parted lips, upper body"
+      "label": "상호자극(핸드잡)",
+      "prompt": "completely nude, full nudity, bare skin, sitting on bed, handjob receiving, legs spread wide, partner stroking shaft, looking down at partner hand, heavy blush, parted lips, trembling, upper body"
     },
     "151": {
-      "label": "상호자극절정",
-      "prompt": "completely nude, full nudity, bare body, lying back, handjob climax, arched back, ahegao, trembling, upper body"
+      "label": "상호절정(핸드잡)",
+      "prompt": "completely nude, full nudity, bare skin, lying back on bed, handjob climax, arched back, ((excessive cum:1.4)), ((huge cumshot:1.35)), cum on stomach and hands, cum dripping between fingers, cum pool on sheets, ahegao, tongue out, trembling, heavy body blush, upper body"
     },
     "152": {
-      "label": "구강상호작용",
-      "prompt": "completely nude, full nudity, bare body, fellatio, kneeling on rug, looking up, submissive, blush, upper body"
+      "label": "구강상호작용(펠라)",
+      "prompt": "completely nude, full nudity, bare skin, fellatio oral sex, kneeling between partner legs, intimate close-up, mouth wide open taking shaft, looking up at partner, heavy-lidded submissive gaze, heavy blush, saliva dripping, upper body close-up"
     },
     "153": {
-      "label": "구강절정",
-      "prompt": "completely nude, full nudity, bare body, facial, kneeling, closed eyes, teary eyes, messy face, upper body"
+      "label": "구강절정(페이셜)",
+      "prompt": "completely nude, full nudity, bare skin, facial cumshot climax, kneeling between partner legs, ((excessive cum:1.4)), ((huge cumshot:1.35)), cum covering face, cum dripping from cheeks and chin, mouth open, tongue out, teary eyes, messy ahegao, upper body close-up"
     },
     "154": {
-      "label": "입위벽밀착",
-      "prompt": "completely nude, full nudity, bare body, standing against wall, anal standing sex, one leg raised, pinned, blush, cowboy shot"
+      "label": "이라마치오(딥스로트)",
+      "prompt": "completely nude, full nudity, bare skin, deepthroat irrumatio, kneeling between partner legs, partner hand on head, shaft deep in throat, throat bulge, tears streaming, gagging pleasure, heavy blush, saliva dripping, intimate close-up, upper body close-up"
     },
     "155": {
-      "label": "샤워씬",
-      "prompt": "completely nude, full nudity, bare body, shower anal, standing against glass, clear glass shower, simple background, cowboy shot"
+      "label": "구강사후여운(입가정액)",
+      "prompt": "completely nude, full nudity, bare skin, oral aftermath, kneeling exhausted, ((excessive cum:1.4)), ((thick cum overflowing from mouth:1.35)), cum dripping from lips to chest, cum pool on thighs, completely dazed expression, heavy-lidded unfocused eyes, mouth hanging open, tears of ecstasy, heavy blush, messy, upper body close-up"
     },
     "156": {
-      "label": "사후여운",
-      "prompt": "completely nude, full nudity, bare body, aftersex, lying in bed, cozy blanket, messy hair, peaceful smile, relaxed, cowboy shot"
+      "label": "입위벽밀착",
+      "prompt": "completely nude, full nudity, bare skin, standing anal sex, pinned against wall, one leg raised, anal penetration, hands on wall, looking back at partner, heavy blush, trembling, cowboy shot"
+    },
+    "157": {
+      "label": "샤워씬",
+      "prompt": "completely nude, full nudity, bare skin, shower anal sex, standing against clear glass wall, pinned against glass, one leg wrapped around partner waist, anal penetration, clear glass shower stall, simple clean background, cowboy shot"
+    },
+    "158": {
+      "label": "침대사후여운(누움)",
+      "prompt": "completely nude, full nudity, bare skin, aftersex aftermath, lying on bed, messy white sheets, ((excessive cum:1.3)), cum pool on bedsheets, cum dripping on thighs, cozy blanket, messy hair, exhausted peaceful smile, completely satisfied, relaxed, cowboy shot"
+    },
+    "159": {
+      "label": "엎드린사후여운(엎드림)",
+      "prompt": "completely nude, full nudity, bare skin, lying prone on bed, face down on pillow, ass slightly raised, exhausted aftersex aftermath, legs spread, ((excessive cum:1.35)), ((thick cum dripping between thighs:1.35)), cum pool on bedsheets, cum dripping down inner thighs, trembling legs, flushed back, heavy-lidded dazed expression, completely lost in pleasure, cowboy shot"
     }
   }
 }
