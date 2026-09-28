@@ -172,9 +172,15 @@ def run_batch(
             actual_negative = negative_prompt
             partner_keywords = (
                 "partner", "faceless male", "penetration", "kiss", "fellatio",
-                "hetero", "missionary", "cowgirl", "doggystyle", "cunnilingus", "fingering"
+                "hetero", "missionary", "cowgirl", "doggystyle", "cunnilingus", "fingering",
+                "groping", "ass grab"
             )
-            is_interactive = any(k in pose_prompt.lower() for k in partner_keywords) or entry.section in ("h_scenes", "scenes_otokonoko")
+            is_aftermath = any(kw in pose_prompt.lower() for kw in ("aftermath", "aftersex"))
+            is_interactive = (
+                any(k in pose_prompt.lower() for k in partner_keywords)
+                or entry.section in ("h_scenes", "scenes_otokonoko")
+            ) and not is_aftermath
+
             if is_interactive:
                 male_neg_tokens = {
                     "1boy", "2boys", "male", "masculine", "man", "men", "guy", "boy", "boys",
@@ -191,6 +197,9 @@ def run_batch(
                 # 상호작용 씬에서 두 인물이 서로 멀리 떨어져 생성되는 현상 차단
                 actual_negative = f"{actual_negative}, (standing apart, separated, distance between characters:1.3)"
 
+                # 모브 남성에게 얼굴이나 표정/감정이 이식되는 현상 원천 차단
+                actual_negative = f"{actual_negative}, ((male face, detailed male face, handsome male, male eyes, visible male face, male expression, male blush:1.55))"
+
                 # 샤워 씬의 경우 유리문/타일이 창살/격자/블라인드로 왜곡되는 현상 방지
                 if "shower" in pose_prompt.lower():
                     actual_negative = f"{actual_negative}, (bars, vertical bars, fence, lattice, cage, blinds, grating:1.3)"
@@ -204,15 +213,23 @@ def run_batch(
                     full_prompt = full_prompt.replace(solo_pat, " ")
                 full_prompt = " ".join(full_prompt.split())
 
-                # 2인 구도 페어링 태그 보강 (모델이 1인 단독으로 편향되는 현상 방지)
-                if entry.section == "h_scenes" or "hetero" in pose_prompt.lower():
-                    if "hetero" not in full_prompt.lower():
-                        full_prompt = f"hetero, 1boy, {full_prompt}"
-                    elif "1boy" not in full_prompt.lower():
-                        full_prompt = f"1boy, {full_prompt}"
-                elif entry.section == "scenes_otokonoko":
+                # 2인 구도 페어링 태그 보강 (모델이 1인 단독으로 편향되는 현상 방지 및 모브 얼굴 배제)
+                is_otokonoko_char = "otokonoko" in active_base_pos.lower() or "otokonoko" in active_char_prompt.lower()
+                if entry.section == "scenes_otokonoko" or (is_otokonoko_char and is_interactive):
                     if "yaoi" not in full_prompt.lower() and "2boys" not in full_prompt.lower():
-                        full_prompt = f"yaoi, 2boys, {full_prompt}"
+                        full_prompt = f"yaoi, 2boys, faceless male, {full_prompt}"
+                    full_prompt = full_prompt.replace("hetero,", "").replace("hetero", "")
+                elif entry.section == "h_scenes" or "hetero" in pose_prompt.lower() or is_interactive:
+                    if "hetero" not in full_prompt.lower():
+                        full_prompt = f"hetero, 1boy, faceless male, {full_prompt}"
+                    elif "1boy" not in full_prompt.lower():
+                        full_prompt = f"1boy, faceless male, {full_prompt}"
+
+            # 사후여운 씬인 경우 모브/남성 파트너 얼굴 및 신체 생성 원천 차단
+            if is_aftermath:
+                actual_negative = f"{actual_negative}, ((1boy, 2boys, male, masculine, partner, faceless male, multiple characters, extra face:1.5))"
+                if is_nude_scene:
+                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35)"
 
             payload = build_txt2img_payload(
                 prompt=full_prompt,

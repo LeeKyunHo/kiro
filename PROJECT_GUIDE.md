@@ -78,7 +78,8 @@ kiro/
     ├── sea/                     바다/비치 바 (별칭: sea)
     ├── oto/                     오토코노코 (별칭: oto)
     ├── school/                  학원물 (별칭: school)
-    └── fth/                     판타지 하렘 (별칭: fth)
+    ├── fth/                     판타지 하렘 (별칭: fth)
+    └── don/                     돈 프로젝트 (별칭: don)
         ├── characters/          캐릭터 프리셋 JSON (*.json)
         ├── references/          IP-Adapter 참조 이미지 (*.webp, *.png 등)
         ├── assets/              생성된 이미지 에셋 (git 제외: {prefix}_{NNN}.webp)
@@ -173,9 +174,9 @@ RosterPathManager(roster_name)
   "_schema":          { "...": "메타/주석. 파싱 제외" },
   "_profiles":        { "female": { "base_positive": "...", "base_negative": "..." } },
   "emotions":         { "00": "프롬프트 태그", "01": "..." },
-  "poses":            { "21": "...", "30": "..." },
-  "h_scenes":         { "40": "...", "75": "..." },
-  "scenes_otokonoko": { "140": "...", "170": "..." }
+  "poses":            { "20": "...", "39": "..." },
+  "h_scenes":         { "40": "...", "59": "..." },
+  "scenes_otokonoko": { "140": "...", "159": "..." }
 }
 ```
 

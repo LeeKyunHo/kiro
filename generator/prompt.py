@@ -46,8 +46,8 @@ def join_tags(*parts: str) -> str:
 
 _OUTFIT_KEYWORDS = frozenset({
     "dress", "skirt", "bodycon", "knit", "high-neck", "turtleneck", "sleeves", "sleeved",
-    "cutout", "shirt", "blouse", "pants", "jeans", "jacket", "coat", "sweater", "cardigan",
-    "uniform", "suit", "collar", "cuffs", "tie", "bowtie", "necklace", "pendant", "choker",
+    "cutout", "shirt", "blouse", "pants", "jeans", "trousers", "slacks", "jacket", "coat", "sweater", "cardigan",
+    "uniform", "suit", "collar", "cuffs", "tie", "necktie", "bowtie", "necklace", "pendant", "choker",
     "bracelet", "gloves", "socks", "stockings", "pantyhose", "shoes", "boots", "heels",
     "bra", "panties", "underwear", "swimwear", "bikini", "swimsuit", "leotard", "one-piece",
     "apron", "shorts", "robe", "kimono", "hoodie", "top", "camisole",

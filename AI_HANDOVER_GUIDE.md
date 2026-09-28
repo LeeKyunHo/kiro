@@ -8,7 +8,7 @@
 
 ## 1. 프로젝트 개요 및 핵심 아키텍처
 
-- **목적**: Stable Diffusion WebUI (Forge/A1111) API를 연동하여 캐릭터 챗봇용 2D 셀화풍 일러스트 에셋(감정 20종, 솔로포즈+스킨십 20종, H-씬 17종, 오토코노코 17종 등 총 74종)을 배치 생성하고 젠잇(Genit) 마크다운 코드를 조립하는 CLI 시스템.
+- **목적**: Stable Diffusion WebUI (Forge/A1111) API를 연동하여 캐릭터 챗봇용 2D 셀화풍 일러스트 에셋(감정 20종, 솔로포즈+스킨십 20종, H-씬 20종, 오토코노코 씬 20종 등 총 80종)을 배치 생성하고 젠잇(Genit) 마크다운 코드를 조립하는 CLI 시스템.
 - **체크포인트**: Unholy Nova AI (SDXL 기반 Danbooru 학습). 프롬프트는 자연어 서술을 배제하고 순수 Danbooru 공식 태그만 사용.
 - **핵심 분리 원칙**:
   - **프롬프트 데이터 격리**: 공용 포즈 DB는 `pose_database.json`에, 캐릭터 외형/의상은 `projects/{roster}/characters/{char}.json`에 위치.
@@ -41,8 +41,13 @@ CLIP 토큰 분산을 방지하기 위해 2개의 청크로 분리 조립합니�
   - **네거티브 필터링**: 캐릭터 네거티브에 남성/복수인원 억제 토큰(`1boy`, `2boys`, `male`, `masculine`, `man`, `men`, `guy`, `boy`, `boys`, `yaoi`, `multiple characters`, `beard`, `mustache`, `facial hair`)이 있더라도 상호작용 씬에서는 이를 완벽히 필터링 제외.
   - **단독 태그 차단**: 포지티브 프롬프트에서 `solo` 태그 완전 제거.
   - **2인 구도 페어링 태그 주입**:
-    - 일반 H-씬(`h_scenes`): 프롬프트 최선두에 `hetero, 1boy` 자동 주입.
-    - 오토코노코 씬(`scenes_otokonoko`): 프롬프트 최선두에 `yaoi, 2boys` 자동 주입.
+    - 일반 H-씬(`h_scenes`): 프롬프트 최선두에 `hetero, 1boy, faceless male` 자동 주입.
+    - 오토코노코 씬(`scenes_otokonoko`): 프롬프트 최선두에 `yaoi, 2boys, faceless male` 자동 주입.
+  - **모브 남성 얼굴/감정 이식 차단**:
+    - 모델이 2인 씬에서 파트너 남성에게 주인공의 표정(아헤가오/홍조)이나 눈코입을 그려 넣는 현상을 막기 위해, 상호작용 씬 네거티브에 `((male face, detailed male face, handsome male, male eyes, visible male face, male expression, male blush:1.55))` 자동 주입.
+  - **사후여운(Aftermath) 씬 솔로 분리 보장**:
+    - `aftermath`, `aftersex` 키워드가 포함된 씬(55, 58, 59, 155, 158, 159 등)은 성행위 종료 후 캐릭터 단독 여운 샷이므로 `is_interactive`에서 제외.
+    - `1boy/hetero` 주입을 배제하고 네거티브에 `((1boy, 2boys, male, masculine, partner, faceless male, multiple characters, extra face:1.5))`를 주입하여 100% 단독 샷 보장.
   - **거리 분리 방지**: 네거티브에 `(standing apart, separated, distance between characters:1.3)`를 주입하여 두 캐릭터가 물리적으로 떨어지는 현상 차단.
 
 ---
@@ -87,20 +92,24 @@ CLIP 토큰 분산을 방지하기 위해 2개의 청크로 분리 조립합니�
    - 네거티브에 `(bars, vertical bars, fence, lattice, cage, blinds, grating:1.3)` 자동 주입.
    - 완전 탈의 태그 전진 배치 (`((completely nude, full nudity, unclothed, bare skin:1.25))`).
 
-### 3.4 유혹 포즈 및 샤워 구도 고도화 (26~29, 38~39)
-- **26번 (무릎 유혹)**: 침대 위에 무릎을 꿇고 허리를 꺾어 정면의 유저를 올려다보는 유혹 포즈.
-- **27번 (펠라 시늉)**: 입술에 손가락을 얹고 혀를 살짝 내밀어 구강 봉사를 암시하는 도발적 제스처 (`finger on lips, parted lips, tongue out, suggestive mouth gesture, teasing`).
-- **28번 (대딸 시늉)**: 손으로 스트로킹 모션을 흉내 내며 원을 만들어 유혹하는 상징적 제스처 (`suggestive hand gesture, hand mimicking stroking motion, hand forming circle, teasing seductive smile`).
-- **29번 (뒤치기 유혹)**: 사지에 엎드려 엉덩이를 치켜들고 어깨 너머로 뒤돌아보는 후배위 유혹 구도 (`on all fours, ass up, arched back, looking back over shoulder, turned back, buttocks focus`).
-- **38번 (샤워 알몸 뒤태)**: 투명 유리 샤워부스 안에서 젖은 몸으로 등과 엉덩이를 강조하는 알몸 단독 뒤태 (`completely nude, back focus, from behind, standing in shower, clear glass shower stall, water droplets, wet hair, buttocks focus`).
-- **39번 (샤워장 유리 밀착 유혹)**: 투명 유리벽에 가슴과 손을 완전히 밀착하고 너머의 유저를 유혹하는 상반신 클로즈업 (`completely nude, breasts pressed against glass, hands pressed on glass, looking at viewer through glass, condensation, water droplets, upper body focus`).
+### 3.4 스킨십 및 추행·유혹 포즈 고도화 (20~39번)
+- **표정 전면 개편**: 22번부터 시작되는 스킨십 구간의 밋밋한 `smile`, `confident` 등을 전면 배제하고, `seductive smile`, `bedroom eyes`, `parted lips panting`, `heavy body blush`, `teary eyes`, `biting lip`, `flustered and aroused` 등 각 행동에 맞는 꼴리고 성적 긴장감 넘치는 표정을 주입.
+- **실패율 높은 포즈 5종 쇄신 (추행 / 밀착 / 도발 전환)**:
+  - **24번 (뒤돌아봄)**: `back focus` 제거로 맨등/옷 구멍 방지, 정석 뒤돌아봄 구도(`from behind, looking back over shoulder, turned back`).
+  - **25번 (소파유혹)**: 다리 기형 유발하던 `crossed legs` 대신 소파에 기대어 다리를 살짝 벌리고 손을 허벅지 사이에 얹어 도발하는 핀업 (`sitting on sofa, leaning back, hands between thighs, parting legs slightly, provocative pose`).
+  - **27번 (배후옷속침범)**: 손가락 뭉개지던 펠라 시늉 대신, 캐릭터는 앞을 보고 있고 등 뒤의 모브 남성이 양손을 옷 안으로 넣어 맨살 가슴을 주무르는 포즈 (`groping, hands under clothes, hands inside shirt, breast grab, fondling breasts, partner behind, faceless male, looking at viewer, front view, arched back, breathless panting`).
+  - **28번 (밀착포옹)**: 화면 분할 컷 및 원치 않는 탈의를 유발하던 포커스 태그를 전면 배제하고, 옷을 온전히 입은 상태에서 마주보고 안아 골반/허리를 감싸며 캐릭터가 등을 보인 채 어깨 너머로 돌아보는 단일 컷 구도로 최적화 (`fully clothed, embrace, hugging partner, facing partner, faceless male, hands on hips, hands on waist, from behind, turned back, looking back over shoulder, looking at viewer`).
+  - **31번 (배후성추행)**: 기형 손 유발하던 머리쓰다듬기(`headpat`) 대신, 뒤에서 끌어안아 한 손은 허리를 감싸고 다른 한 손은 옷 위로 가슴을 거칠게 움켜쥐는 정석 백 그로핑 (`groping, breast grab, grabbing from behind, partner behind, hands on breasts, arms around waist, faceless male, looking back, protesting, parted lips`).
+  - **35번 (침대덮치기)**: 얼굴/각도 붕괴 극심하던 무릎베개(`lap pillow`) 대신, 침대에 쓰러뜨려 위에서 덮치며 양 손목을 머리 위로 눌러 제압한 H-씬 전초전 구도 (`pushed down on bed, on bed, pinned down, partner hovering over, faceless male, hands pinned above head, wrist grab, heart eyes, breathless`).
+- **캐릭터 성별별 2인 페어링 자동 분기 (`runner.py`)**:
+  - `poses` 상호작용 씬에서 여성 캐릭터는 `hetero, 1boy, faceless male`, 오토코노코 캐릭터(`shn`)는 `yaoi, 2boys, faceless male`이 자동으로 선두 주입되어 충돌 없이 공용 DB 호환 보장.
 
 ### 3.5 H-씬 구강 체인 완비 및 사후여운/클라이맥스 체액 강화 (52~59)
 - **단계별 구강 체인 구축**:
   - `52` (구강 기본 봉사): `kneeling, oral, looking up at partner`
   - `53` (구강 절정): `facial cum, thick cum on face, mouth, lips`
   - `54` (이라마치오 / 딥스로트): `deepthroat irrumatio, shaft deep in throat, throat bulge, tears streaming, gagging pleasure`
-  - `55` (구강 사후여운): `oral aftermath, excessive cum overflowing from mouth, dripping from lips to chest, completely dazed expression`
+  - `55 / 155` (구강 사후여운): 침대에 양손을 짚고 무릎 꿇은 채 고개를 들어 유저를 멍하니 올려다보는 단독 구도 (`kneeling on bed, hands on mattress, head tilted up, looking up at viewer, open mouth, tongue out, tears of ecstasy, cum dripping from chin down chest`, 모브 완전 배제).
 - **사후여운 구도 다각화**:
   - `58` (침대 사후여운): 침대에 똑바로 누워 탈진한 채 절정의 여운을 즐김, 시트에 고인 풍성한 체액 웅덩이 연출.
   - `59` (엎드린 사후여운): 침대에 앞으로 엎어져 베개에 얼굴을 묻은 채 탈진, 허벅지 사이로 흘러내리는 짙은 체액 연출 (`lying prone on bed, face down on pillow, exhausted aftersex aftermath, thick cum dripping between thighs`).
@@ -159,6 +168,22 @@ CLIP 토큰 분산을 방지하기 위해 2개의 청크로 분리 조립합니�
    - `0.6` ~ `0.7` 권장 (기본 `0.65`). `0.8` 이상 시 포즈 제어력이 급격히 떨어짐.
 3. **네거티브 안전 규격**:
    - `sweat, perspiration, liquid, splatter` 등은 파이프라인 단위 검사에서 금지 태그로 지정되어 있으므로 네거티브에 임의 추가 금지.
+
+### 4.3 `don` 프로젝트 최초 오토코노코 캐릭터: 시온 (`shn`)
+- **컨셉**: `oes`의 남편, 글로벌 M&A 전문 엘리트 비즈니스맨, 평소 해외 출장으로 부재중이나 이벤트 트리거로 귀국하는 공략 가능 캐릭터.
+- **핵심 특징**:
+  - 쾌남보다는 가정에 소홀하고 마이크로 성기 콤플렉스를 가진 미소년 남편.
+  - 순수 흑발(Jet-black) 목덜미 로우 포니테일 & 잔머리 시스루 뱅, 차가운 사파이어 블루 눈동자.
+  - 장신구 일절 배제(`no jewelry, no accessories`).
+  - 여성이 정장을 입은 듯한 얇은 허리와 은은한 가슴 굴곡의 슬렌더 테일러드 수트 핏.
+  - 의상 무결성 보장: 스커트류 1.7 가중치 차단 및 맨등/옷 구멍(`((bare back, backless, open back, exposed back, back cutout, cutout, torn clothes, hole in clothes:1.6))`) 원천 차단.
+  - 손 자세 고정 편향 억제: Danbooru의 `otokonoko` 태그 특유의 다소곳이 손 모으는 기본 편향을 차단하기 위해 네거티브에 `((hands clasped, clasping hands, hands together, holding hands, hands in front of body, hands on lap, fidgeting hands:1.4))` 주입 및 IP-Adapter `ref_weight: 0.65` 최적화.
+  - 프롬프트 복합 괄호 정규화: `strip_outfit_tags` 적용 시 고아 괄호가 생기지 않도록 개별 태그 단위 단일 괄호로 완전 분리.
+- **모드 및 파일**:
+  - `default_mode: "otokonoko"`
+  - 설정 파일: `projects/don/characters/shn.json`
+  - 공식 레퍼런스: `projects/don/references/shn.webp` (832x1216 WEBP)
+  - 감정(20종) + 포즈(20종) + 오토코노코 H-씬(20종) 총 60개 에셋 완전 호환.
 
 ---
 
