@@ -24,7 +24,7 @@ MEMORY_URL = f"{API_HOST}/sdapi/v1/memory"
 MEMORY_TIMEOUT = 5
 GIB = 1024 ** 3
 
-SAMPLER_CANDIDATES = ("Euler a", "Euler", "DPM++ 2M SDE Karras", "DPM++ 2M Karras", "DPM++ 2M")
+SAMPLER_CANDIDATES = ("Euler", "Euler a", "DPM++ 2M SDE Karras", "DPM++ 2M Karras", "DPM++ 2M")
 
 SAMPLERS_TIMEOUT = 5
 TXT2IMG_TIMEOUT = 300
@@ -78,7 +78,7 @@ WEIGHT_SUFFIX_PATTERN = re.compile(r":\s*-?\d+(?:\.\d+)?\s*$")
 # ─────────────────────────────────────────────
 IMAGE_SIZE = (832, 1216)
 STEPS = 30
-CFG_SCALE = 7
+CFG_SCALE = 6
 LORA_STRING = ""
 WEBP_QUALITY = 95
 WEBP_METHOD = 6

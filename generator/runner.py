@@ -33,7 +33,9 @@ from generator.prompt import (
     assemble_prompt,
     find_tag_conflicts,
     join_tags,
+    normalize_tag,
     resolve_background,
+    strip_outfit_tags,
     validate_prefix,
     validate_ref_weight,
 )
@@ -128,8 +130,18 @@ def run_batch(
                 else:
                     pose_prompt = join_tags(pose_prompt, active_bg)
 
+            # 탈의/H-씬인 경우 캐릭터 기본 프롬프트에서 의상 태그를 자동 제거하여 목/팔 잔재 방지
+            active_base_pos = base_positive
+            active_char_prompt = char_prompt
+            is_nude_scene = entry.section in ("h_scenes", "scenes_otokonoko") or any(
+                kw in pose_prompt.lower() for kw in ("nude", "unclothed", "bare skin", "bare body")
+            )
+            if is_nude_scene:
+                active_base_pos = strip_outfit_tags(base_positive)
+                active_char_prompt = strip_outfit_tags(char_prompt)
+
             full_prompt = assemble_prompt(
-                base_positive, char_prompt, pose_prompt, f"{prefix}_{tag}"
+                active_base_pos, active_char_prompt, pose_prompt, f"{prefix}_{tag}"
             )
             
             actual_sampler = sampler_name
@@ -156,9 +168,55 @@ def run_batch(
             actual_width = entry.width if entry.width else IMAGE_SIZE[0]
             actual_height = entry.height if entry.height else IMAGE_SIZE[1]
             
+            # 파트너가 존재하는 포즈/H-씬인 경우 남성 억제 네거티브 및 solo 태그 자동 완화, 2인 페어링 보강
+            actual_negative = negative_prompt
+            partner_keywords = (
+                "partner", "faceless male", "penetration", "kiss", "fellatio",
+                "hetero", "missionary", "cowgirl", "doggystyle", "cunnilingus", "fingering"
+            )
+            is_interactive = any(k in pose_prompt.lower() for k in partner_keywords) or entry.section in ("h_scenes", "scenes_otokonoko")
+            if is_interactive:
+                male_neg_tokens = {
+                    "1boy", "male", "masculine", "man", "men", "guy", "boy", "boys",
+                    "beard", "mustache", "facial hair"
+                }
+                neg_tags = [t.strip() for t in actual_negative.split(",") if t.strip()]
+                filtered_neg = []
+                for t in neg_tags:
+                    clean_t = normalize_tag(t)
+                    if clean_t not in male_neg_tokens:
+                        filtered_neg.append(t)
+                actual_negative = ", ".join(filtered_neg)
+
+                # 상호작용 씬에서 두 인물이 서로 멀리 떨어져 생성되는 현상 차단
+                actual_negative = f"{actual_negative}, (standing apart, separated, distance between characters:1.3)"
+
+                # 샤워 씬의 경우 유리문/타일이 창살/격자/블라인드로 왜곡되는 현상 방지
+                if "shower" in pose_prompt.lower():
+                    actual_negative = f"{actual_negative}, (bars, vertical bars, fence, lattice, cage, blinds, grating:1.3)"
+
+                # 탈의 씬에서 목이나 팔 등에 의상 파편(하이넥, 소매, 칼라 등) 및 수영복 생성 차단
+                if is_nude_scene:
+                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini:1.3)"
+
+                # solo 태그 제거
+                for solo_pat in (", solo", "solo,", " solo "):
+                    full_prompt = full_prompt.replace(solo_pat, " ")
+                full_prompt = " ".join(full_prompt.split())
+
+                # 2인 구도 페어링 태그 보강 (모델이 1인 단독으로 편향되는 현상 방지)
+                if entry.section == "h_scenes" or "hetero" in pose_prompt.lower():
+                    if "hetero" not in full_prompt.lower():
+                        full_prompt = f"hetero, 1boy, {full_prompt}"
+                    elif "1boy" not in full_prompt.lower():
+                        full_prompt = f"1boy, {full_prompt}"
+                elif entry.section == "scenes_otokonoko":
+                    if "yaoi" not in full_prompt.lower() and "2boys" not in full_prompt.lower():
+                        full_prompt = f"yaoi, 2boys, {full_prompt}"
+
             payload = build_txt2img_payload(
                 prompt=full_prompt,
-                negative_prompt=negative_prompt,
+                negative_prompt=actual_negative,
                 sampler_name=actual_sampler,
                 width=actual_width,
                 height=actual_height,

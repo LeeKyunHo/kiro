@@ -1,0 +1,7 @@
+{
+  "prefix": "sce",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, mature female, 31yo, voluptuous curvy hourglass body, huge breasts, narrow waist, wide hips, thick thighs, (rich dark brown wavy long hair draped over right shoulder:1.25), (soft side-parted bangs:1.2), (warm brown eyes:1.2), (beauty mark under left eye:1.2), (gold dangling drop earrings:1.15), (skin-tight beige spaghetti strap sleeveless bodycon mini dress:1.25), (matching beige ribbed knit long cardigan worn loosely off shoulders:1.25), deep scoop neckline, navel indentation through dress, snug knit dress clinging tightly to full figure, clean pale skin",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, 1boy, male, masculine, beard, mustache, facial hair, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale, short hair, bob cut, high ponytail, bun, black hair, blonde hair, t-shirt, jeans, pants, jacket, coat",
+  "ref_weight": 0.75
+}

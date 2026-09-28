@@ -44,6 +44,49 @@ def join_tags(*parts: str) -> str:
     return ", ".join(part.strip() for part in parts if part and part.strip())
 
 
+_OUTFIT_KEYWORDS = frozenset({
+    "dress", "skirt", "bodycon", "knit", "high-neck", "turtleneck", "sleeves", "sleeved",
+    "cutout", "shirt", "blouse", "pants", "jeans", "jacket", "coat", "sweater", "cardigan",
+    "uniform", "suit", "collar", "cuffs", "tie", "bowtie", "necklace", "pendant", "choker",
+    "bracelet", "gloves", "socks", "stockings", "pantyhose", "shoes", "boots", "heels",
+    "bra", "panties", "underwear", "swimwear", "bikini", "swimsuit", "leotard", "one-piece",
+    "apron", "shorts", "robe", "kimono", "hoodie", "top", "camisole"
+})
+
+_HAIR_KEYWORDS = (
+    "hair", "ponytail", "bun", "bangs", "strands", "sidelocks",
+    "twintails", "braid", "updo", "ahoge", "curls"
+)
+
+
+def strip_outfit_tags(prompt_text: str) -> str:
+    """
+    캐릭터 프롬프트에서 헤어/체형/얼굴 태그는 보존하고 의상 및 착용 액세서리 태그를 제거한다.
+    완전 탈의(H-씬)에서 목이나 팔 등에 의상 파편(하이넥, 롱슬리브 등)이 잔류하는 현상을 방지한다.
+    """
+    if not prompt_text:
+        return ""
+
+    chunks = []
+    parts = prompt_text.split(" BREAK ")
+    for part in parts:
+        tags = [t.strip() for t in part.split(",") if t.strip()]
+        cleaned_tags = []
+        for t in tags:
+            clean = t.lower().replace("(", "").replace(")", "").split(":")[0].strip()
+            is_hair = any(h in clean for h in _HAIR_KEYWORDS)
+            words = clean.split()
+            is_outfit = not is_hair and any(w in _OUTFIT_KEYWORDS for w in words)
+            if not is_outfit and any(kw in clean for kw in ("through dress", "contouring dress", "through clothes")):
+                is_outfit = True
+
+            if not is_outfit:
+                cleaned_tags.append(t)
+        chunks.append(", ".join(cleaned_tags))
+
+    return " BREAK ".join(chunks)
+
+
 def assemble_prompt(
     base_positive: str,
     char_prompt: str,

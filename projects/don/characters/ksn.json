@@ -1,0 +1,7 @@
+{
+  "prefix": "ksn",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, 23yo, slender toned hourglass body, perky large breasts, very narrow waist, flat stomach, toned abs, firm curvy hips, slender long legs, (platinum silver-grey sleek layered medium hair, chin-to-collarbone length:1.25), (neat see-through fringe bangs:1.2), (deep blue eyes:1.2), (black leather choker collar around neck:1.2), (silver droplet pendant necklace:1.15), (skin-tight white ribbed knit spaghetti strap crop camisole:1.25), (matching white tight high-waisted ribbed mini skirt:1.25), (oversized dark grey cable knit cardigan worn loosely off shoulders:1.25), exposed midriff, visible navel, clean pale skin",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, 1boy, male, masculine, beard, mustache, facial hair, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale, long hair past chest, ponytail, black hair, brown hair, dress, pants, jeans, one-piece dress, full shirt",
+  "ref_weight": 0.75
+}
