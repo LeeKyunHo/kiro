@@ -1,163 +1,171 @@
 {
   "_schema": {
-    "purpose": "캐릭터 챗봇용 이미지 에셋 프롬프트 DB (LuminarQMix v7.1 e-Pred 최적화)",
+    "purpose": "캐릭터 챗봇용 이미지 에셋 프롬프트 DB (Unholy Nova AI 최적화, 순수 Danbooru 태그)",
     "structure": "최상위 키 = 섹션명, 값 = { 코드: 프롬프트 }",
-    "number_ranges": "00-20: emotions(공용), 21-37: poses(공용 상호작용), 40-75: h_scenes(female), 140-170: scenes_otokonoko(otokonoko)"
+    "number_ranges": "00-19: emotions(감정 20종), 20-39: poses(솔로포즈+스킨십 20종), 40-75: h_scenes(female), 140-170: scenes_otokonoko(otokonoko)"
   },
   "emotions": {
     "00": {
       "label": "평상",
-      "prompt": "standing, looking at viewer, neutral expression, relaxed arms at sides, calm face, clean background, soft lighting, cowboy shot"
+      "prompt": "standing, looking at viewer, neutral expression, relaxed, clean background, soft lighting, cowboy shot"
     },
     "01": {
       "label": "미소",
-      "prompt": "standing, looking at viewer, bright smile, slightly raised cheeks, eyes curved happily, joyful expression, clean background, soft lighting, cowboy shot"
+      "prompt": "standing, looking at viewer, smile, happy, relaxed, clean background, soft lighting, cowboy shot"
     },
     "02": {
-      "label": "날카로운눈",
-      "prompt": "standing, furrowed brows, clenched jaw, tense shoulders, sharp glare, angry expression, clean background, soft lighting, cowboy shot"
+      "label": "활짝웃음",
+      "prompt": "standing, looking at viewer, laughing, open mouth, closed eyes, ^_^, happy, clean background, soft lighting, cowboy shot"
     },
     "03": {
-      "label": "다운캐스트",
-      "prompt": "standing, slightly hunched shoulders, teary eyes, soft trembling lips, hands loosely clasped in front, pouty sad expression, clean background, soft lighting, cowboy shot"
+      "label": "홍조",
+      "prompt": "standing, looking at viewer, blush, embarrassed, looking away, fidgeting, clean background, soft lighting, cowboy shot"
     },
     "04": {
-      "label": "당혹홍조",
-      "prompt": "standing, rosy cheeks, fidgeting hands, averted gaze, flustered blushing, embarrassed expression, clean background, soft lighting, cowboy shot"
+      "label": "뾰로통",
+      "prompt": "standing, looking at viewer, pout, puffed cheeks, crossed arms, annoyed, clean background, soft lighting, cowboy shot"
     },
     "05": {
-      "label": "충격",
-      "prompt": "standing, mouth slightly open, hand raised near face, wide eyes, shocked surprised expression, clean background, soft lighting, cowboy shot"
+      "label": "분노",
+      "prompt": "standing, looking at viewer, angry, furrowed brow, clenched teeth, sharp eyes, clean background, soft lighting, cowboy shot"
     },
     "06": {
-      "label": "냉소",
-      "prompt": "standing, one eyebrow raised, chin lifted, hand resting on hip, downward gaze, top pulled open at chest, collarbone exposed, inner clothing visible, clothing layering, cold smirk, teasing expression, clean background, soft lighting, cowboy shot"
+      "label": "경멸",
+      "prompt": "standing, looking at viewer, contempt, smirk, half-closed eyes, looking down, cold expression, clean background, soft lighting, cowboy shot"
     },
     "07": {
-      "label": "수줍음",
-      "prompt": "standing, red cheeks, averted gaze, hands clasped in front, bashful shy blush, timid expression, clean background, soft lighting, cowboy shot"
+      "label": "슬픔",
+      "prompt": "standing, looking at viewer, sad, teary eyes, downcast eyes, frown, clean background, soft lighting, cowboy shot"
     },
     "08": {
-      "label": "뾰로통",
-      "prompt": "standing, crossed arms, pouting lips, looking away, puffed cheeks, sulking annoyed expression, clean background, soft lighting, cowboy shot"
+      "label": "울음",
+      "prompt": "standing, looking at viewer, crying, tears, streaming tears, sobbing, clean background, soft lighting, cowboy shot"
     },
     "09": {
-      "label": "공포떨림",
-      "prompt": "standing, tensed shoulders, slight crouch, wide eyes, frightened scared expression, clean background, soft lighting, cowboy shot"
+      "label": "놀람",
+      "prompt": "standing, looking at viewer, surprised, wide eyes, open mouth, shocked, clean background, soft lighting, cowboy shot"
     },
     "10": {
       "label": "자신감",
-      "prompt": "standing, chin raised, relaxed arms, steady gaze, confident smile, self-assured expression, clean background, soft lighting, cowboy shot"
+      "prompt": "standing, looking at viewer, confident, smug, hand on hip, grin, clean background, soft lighting, cowboy shot"
     },
     "11": {
       "label": "의문",
-      "prompt": "standing, finger on chin, curious eyes, head tilted, inquisitive thinking expression, clean background, soft lighting, cowboy shot"
+      "prompt": "standing, looking at viewer, thinking, head tilt, curious, question mark, clean background, soft lighting, cowboy shot"
     },
     "12": {
-      "label": "기대",
-      "prompt": "standing, leaning slightly forward, eager open smile, sparkling eyes, excited anticipation expression, clean background, soft lighting, cowboy shot"
+      "label": "장난",
+      "prompt": "standing, looking at viewer, playful, tongue out, one eye closed, wink, peace sign, clean background, soft lighting, cowboy shot"
     },
     "13": {
-      "label": "실망",
-      "prompt": "standing, flat expression, vacant downward gaze, drooping shoulders, disappointed dejected expression, clean background, soft lighting, cowboy shot"
+      "label": "하트눈",
+      "prompt": "standing, looking at viewer, heart-shaped pupils, blush, happy, excited, clean background, soft lighting, cowboy shot"
     },
     "14": {
-      "label": "진지",
-      "prompt": "standing, neutral lips, straight posture, composed gaze, serious focused expression, clean background, soft lighting, cowboy shot"
+      "label": "유혹",
+      "prompt": "standing, looking at viewer, seductive smile, bedroom eyes, parted lips, blush, clean background, soft lighting, cowboy shot"
     },
     "15": {
-      "label": "집착",
-      "prompt": "standing, unblinking gaze, slight smile, leaning forward, intense piercing stare, determined expression, clean background, soft lighting, cowboy shot"
+      "label": "나른",
+      "prompt": "sitting, looking at viewer, bored, half-closed eyes, chin rest, tired, clean background, soft lighting, cowboy shot"
     },
     "16": {
-      "label": "외면",
-      "prompt": "standing, unfocused gaze, hand resting on hip, looking away distracted, disinterested expression, clean background, soft lighting, cowboy shot"
+      "label": "진지",
+      "prompt": "standing, looking at viewer, serious, expressionless, straight posture, focused, clean background, soft lighting, cowboy shot"
     },
     "17": {
-      "label": "절망",
-      "prompt": "standing, head hanging low, tears streaming down cheeks, trembling hands, hollow despair, anguished expression, clean background, soft lighting, cowboy shot"
+      "label": "공포",
+      "prompt": "standing, looking at viewer, scared, trembling, wide eyes, pale face, cowering, clean background, soft lighting, cowboy shot"
     },
     "18": {
-      "label": "유혹",
-      "prompt": "standing, heavy-lidded half-closed eyes, tongue lightly touching upper lip, one hand sliding down neck to collarbone, top slightly slipped off shoulder, bare collarbone exposed, inviting gaze at viewer, seductive bedroom eyes, alluring expression, clean background, soft lighting, cowboy shot"
+      "label": "얀데레",
+      "prompt": "standing, looking at viewer, yandere, crazy smile, wide eyes, empty eyes, obsessed, clean background, soft lighting, cowboy shot"
     },
     "19": {
-      "label": "나른",
-      "prompt": "sitting, half-closed eyes, cheek resting on hand, bored slouched posture, tired uninterested expression, clean background, soft lighting, cowboy shot"
-    },
-    "20": {
-      "label": "당황패닉",
-      "prompt": "standing, both hands raised near face, wide eyes, open mouth, flustered panic, startled overwhelmed expression, clean background, soft lighting, cowboy shot"
+      "label": "사악웃음",
+      "prompt": "standing, looking at viewer, evil smile, smirk, shadowed face, sinister, clean background, soft lighting, cowboy shot"
     }
   },
   "poses": {
+    "20": {
+      "label": "윙크",
+      "prompt": "standing, looking at viewer, wink, one eye closed, peace sign, playful, smile, cowboy shot"
+    },
     "21": {
-      "label": "뺨쓰다듬기",
-      "prompt": "pov, standing, large masculine hand gently on cheek, eyes softly closed, leaning into hand, gentle touch, tender moment, cowboy shot"
+      "label": "양손하트",
+      "prompt": "standing, looking at viewer, heart hands, smile, happy, blush, cowboy shot"
     },
     "22": {
-      "label": "가슴잡기 거부",
-      "prompt": "pov, standing, large masculine hand forcefully groping breast, flushed embarrassed expression, avoiding eye contact, other hand pushing male wrist away weakly, resisting touch, unwanted advance, cowboy shot"
+      "label": "손흔들기",
+      "prompt": "standing, looking at viewer, waving, raised hand, smile, greeting, cowboy shot"
     },
     "23": {
-      "label": "윙크",
-      "prompt": "standing, one eye closed, slight head tilt, finger pointing at viewer, playful wink, cheerful gesture, cowboy shot"
+      "label": "팔짱",
+      "prompt": "standing, looking at viewer, crossed arms, under breasts, confident, cowboy shot"
     },
     "24": {
-      "label": "나체가리기",
-      "prompt": "standing, clothes slipped off, arms crossed over chest, one hand at groin, flushed teary face, looking away, covering naked body, shy embarrassed, cowboy shot"
+      "label": "뒤돌아봄",
+      "prompt": "from behind, looking back, looking at viewer, over shoulder, standing, cowboy shot"
     },
     "25": {
-      "label": "가슴잡기 수용",
-      "prompt": "pov, standing, large masculine hand squeezing breast, flushed face, eyes half-closed in pleasure, soft moan expression, leaning slightly into touch, hand loosely resting on male wrist, enjoying intimate touch, cowboy shot"
+      "label": "앉아서",
+      "prompt": "sitting, crossed legs, looking at viewer, relaxed, elegant, cowboy shot"
     },
     "26": {
-      "label": "쇄골유혹",
-      "prompt": "standing, bare shoulders and collarbone exposed, head tilted slightly, one hand gently tracing down neck to upper chest, fingers lightly touching chest, other hand on hip, chest pushed forward, bedroom eyes, glossy parted lips, seductive alluring gaze, cowboy shot"
+      "label": "무릎꿇기",
+      "prompt": "kneeling, looking up, looking at viewer, hands on thighs, cowboy shot"
     },
     "27": {
-      "label": "가슴골강조",
-      "prompt": "standing, leaning slightly forward, hands pulling down front neckline of clothes, pulling down top slightly, (deep cleavage, emphasized breasts, exposed upper chest:1.25), squeezing breasts together with arms, looking at viewer, playful seductive smile, slightly flushed cheeks, teasing gaze, cowboy shot"
+      "label": "쇄골노출",
+      "prompt": "standing, looking at viewer, bare shoulders, collarbone, off shoulder, seductive smile, cowboy shot"
     },
     "28": {
-      "label": "상의탈의",
-      "prompt": "standing, topless bare breasts, outfit slipping off shoulders and down torso, one hand at waistband barely holding clothing up, (completely topless, bare upper body:1.2), flushed face, biting lower lip, inviting gaze, sensual undressing moment, cowboy shot"
+      "label": "가슴골강조",
+      "prompt": "standing, looking at viewer, leaning forward, cleavage, breasts, cowboy shot"
     },
     "29": {
-      "label": "전신나체",
-      "prompt": "standing, completely nude, one arm across chest with fingers barely covering nipples, other hand over groin, knees slightly together, flushed embarrassed expression, looking at viewer, full nudity, vulnerable pose, cowboy shot"
+      "label": "상의탈의",
+      "prompt": "standing, looking at viewer, undressing, topless, bare breasts, off shoulder, cowboy shot"
     },
     "30": {
-      "label": "옆에서손투입",
-      "prompt": "standing, from side view, top pulled aside, faceless male partner standing beside character, male hand slipped under top from side, character flushed face, biting lip, knees pressed together, one hand weakly gripping male wrist, surprised overwhelmed expression, intimate touching, cowboy shot"
+      "label": "전신나체",
+      "prompt": "standing, looking at viewer, completely nude, nude, covering breasts, covering crotch, embarrassed, blush, cowboy shot"
     },
     "31": {
-      "label": "유두핥기",
-      "prompt": "sitting, leaning back, ((topless, bare breasts:1.25)), head tilted back, soft parted glossy lips, heavy-lidded sultry eyes, flushed cheeks, faceless male partner leaning in close, partner kissing and caressing her breast, hand caressing waist, intimate sensual pleasure, seductive romantic moment, upper body close-up"
+      "label": "머리쓰다듬기",
+      "prompt": "pov, headpat, hand on head, looking at viewer, happy, blush, smile, cowboy shot"
     },
     "32": {
-      "label": "파트너핥기",
-      "prompt": "crawling on bed, on all fours, butt up, arched back, leaning forward over partner, from side view, faceless male partner lying on back below, bare male torso, licking male chest, nipple lick, tongue out, flushed cheeks, eyes half-closed, mid-shot from side angle"
+      "label": "벽치기",
+      "prompt": "kabedon, against wall, cornered, looking at viewer, blush, nervous, cowboy shot"
     },
     "33": {
-      "label": "유두집기",
-      "prompt": "standing, from side view, faceless male partner standing beside character, male arm around character shoulder, male hand pinching exposed nipple, top pulled aside, character flushed face, biting lower lip, leaning into touch, teasing touch, cowboy shot"
+      "label": "정면포옹",
+      "prompt": "hug, embrace, hetero, 1boy, face in chest, arms around partner, blush, upper body"
     },
     "34": {
-      "label": "딥키스",
-      "prompt": "pov, over the shoulder view, back of partner's head in foreground, romantic deep passionate kiss, lips gently pressed together, close-up on character's face, character eyes closed in bliss, flushed cheeks, hands gently holding partner's collar, intimate romantic embrace, cinematic lighting, upper body close-up"
+      "label": "백허그",
+      "prompt": "hug from behind, hetero, 1boy, back hug, chin on shoulder, blush, happy, cowboy shot"
     },
     "35": {
       "label": "무릎베개",
-      "prompt": "pov, lying on back, character resting head on masculine lap, looking up at viewer, heavy-lidded pleasure gaze, flushed cheeks, one hand reaching up toward viewer, lips slightly parted, lap pillow view, intimate angle, close-up upper body"
+      "prompt": "pov, lap pillow, lying on lap, looking up, looking at viewer, relaxed, smile, upper body"
     },
     "36": {
-      "label": "샤워씬",
-      "prompt": "from behind view, ((completely nude, full nudity, unclothed, bare body:1.45)), (undressing, shedding clothes, removing clothes:1.2), ((discarded clothes on floor, crumpled clothing on floor:1.35)), water streaming down body, wet skin glistening, looking back over shoulder, side boob visible, flushed cheeks, relaxed expression, wet hair, steam, showering scene, bathroom setting, cowboy shot from behind"
+      "label": "공주님안기",
+      "prompt": "princess carry, carried, hetero, 1boy, arms around neck, blush, embarrassed, full body"
     },
     "37": {
-      "label": "뒤에서더블그럽",
-      "prompt": "standing, from behind angle, back hug, faceless male partner embracing character from behind, chin resting on character shoulder, one male hand slipped inside top groping breast, other male hand slipped under clothing touching between legs, intimate groping from behind, character flushed face, eyes squeezed shut, biting lower lip, cowboy shot"
+      "label": "딥키스",
+      "prompt": "kiss, french kiss, hetero, 1boy, closed eyes, blush, passionate, upper body"
+    },
+    "38": {
+      "label": "목덜미키스",
+      "prompt": "neck kiss, hetero, 1boy, head tilted, closed eyes, blush, parted lips, cowboy shot"
+    },
+    "39": {
+      "label": "뒤에서밀착",
+      "prompt": "hug from behind, hetero, 1boy, hand on stomach, chin on shoulder, blush, flustered, cowboy shot"
     }
   },
   "h_scenes": {
