@@ -2,7 +2,7 @@
   "_schema": {
     "purpose": "캐릭터 챗봇용 이미지 에셋 프롬프트 DB (Unholy Nova AI 최적화, 순수 Danbooru 태그)",
     "structure": "최상위 키 = 섹션명, 값 = { 코드: 프롬프트 }",
-    "number_ranges": "00-19: emotions(감정 20종), 20-39: poses(솔로포즈+스킨십 20종), 40-75: h_scenes(female), 140-170: scenes_otokonoko(otokonoko)"
+    "number_ranges": "00-19: emotions(감정 20종), 20-39: poses(솔로포즈+스킨십 20종), 40-56: h_scenes(female 17종), 140-156: scenes_otokonoko(otokonoko 17종)"
   },
   "emotions": {
     "00": {
@@ -171,265 +171,141 @@
   "h_scenes": {
     "40": {
       "label": "선교체위",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), lying on bed, legs spread wide raised, missionary position, from side view, faceless male partner above, vaginal penetration, censored, (black censor bar, censor bar:1.2), masculine hands pinning wrists above head, overwhelmed pleasure face, flushed cheeks, eyes squeezed shut, biting lower lip, upper body to thighs"
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary, from side view, looking at partner, blush, parted lips, cowboy shot"
     },
     "41": {
       "label": "선교절정",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), lying on bed, legs wrapped around partner waist, deep missionary sex, from side angle, faceless male partner above, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on stomach and thighs, cum pool, ahegao, rolling eyes, upper body to thighs"
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary, climax, ahegao, rolling eyes, body blush, upper body"
     },
     "42": {
-      "label": "하반신클로즈업",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), lying on bed, legs spread wide, close-up lower body, censored, (black censor bar, censor bar:1.2), hands pulling inner thighs apart, intense pleasure face, flushed cheeks, mouth hanging open, drooling slightly, lower body focus"
+      "label": "도기체위",
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, doggystyle, from side view, looking back over shoulder, parted lips, cowboy shot"
     },
     "43": {
-      "label": "도기자위",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), on all fours, arched back, doggystyle position, from side view, faceless male behind, vaginal penetration from behind, censored, (black censor bar, censor bar:1.2), masculine hands gripping hips hard, looking back over shoulder, pleasure-dazed expression, mouth open panting, flushed cheeks, thighs focus"
+      "label": "도기절정",
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, doggystyle, climax, looking back, ahegao, trembling, cowboy shot"
     },
     "44": {
-      "label": "도기절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), on all fours, deeply arched back, deep doggystyle sex, from side angle, faceless male behind, vaginal penetration from behind, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on back and buttocks, cum dripping down thighs, ahegao, drooling, head hanging, trembling arms"
+      "label": "기승위",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, cowgirl position, looking down, hands on partner chest, blush, cowboy shot"
     },
     "45": {
-      "label": "카우걸",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), straddling seated, cowgirl position, from side angle, faceless male below, vaginal penetration, censored, (black censor bar, censor bar:1.2), hands on partner chest, slowly lowering hips onto shaft, heavy-lidded pleasure gaze, flushed cheeks, soft moaning lips parted, upper body"
+      "label": "기승위절정",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, cowgirl position, climax, head thrown back, arched back, ahegao, body blush, cowboy shot"
     },
     "46": {
-      "label": "카우걸절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), straddling seated, deep cowgirl sex, hips grinding down hard, faceless male below, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on stomach, cum dripping, head thrown back, ahegao, eyes rolled up, upper body"
+      "label": "역기승위",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling backwards, reverse cowgirl position, looking back over shoulder, cowboy shot"
     },
     "47": {
-      "label": "역카우걸",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), straddling seated backwards, reverse cowgirl position, from behind angle, faceless male below, vaginal penetration, censored, (black censor bar, censor bar:1.2), lowering hips onto shaft, heavy-lidded pleasure face, flushed cheeks, biting lower lip, looking back over shoulder, upper body"
+      "label": "대면좌위",
+      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, facing partner, hugging, arms around neck, chest to chest, intimate, blush, upper body"
     },
     "48": {
-      "label": "역카우걸절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), straddling backwards, deep reverse cowgirl sex, back arched, faceless male below, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on back, cum dripping down spine, ahegao, looking back, trembling, upper body"
+      "label": "매팅프레스",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, knees to chest, mating press, looking up, teary eyes, blush, cowboy shot"
     },
     "49": {
-      "label": "매팅프레스",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), lying on bed, knees folded to chest, mating press position, from side angle, faceless male above, vaginal penetration, censored, (black censor bar, censor bar:1.2), masculine hands pressing knees down hard, heavy-lidded teary pleasure eyes, flushed cheeks, lips parted gasping, mid-shot"
+      "label": "스푸닝",
+      "prompt": "completely nude, full nudity, bare skin, lying on side, spooning, partner arm around waist, intimate embrace, peaceful expression, cowboy shot"
     },
     "50": {
-      "label": "매팅프레스절정",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), lying on bed, fully folded legs pressed to chest, deep mating press sex, from side view, faceless male pressing down, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on stomach and thighs, cum pool, ahegao, tears streaming, mid-shot"
+      "label": "가슴밀착",
+      "prompt": "completely nude, full nudity, bare skin, paizuri, kneeling, looking up at partner, hands on partner thighs, blush, upper body"
     },
     "51": {
-      "label": "손가락삽입(앉음)",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare skin:1.45)), sitting, legs spread wide apart, from side view, faceless male partner, masculine hands, masculine fingers penetrating vagina, fingering, censored, (black censor bar, censor bar:1.2), heavy-lidded pleasure eyes, flushed cheeks, biting lip, upper body"
+      "label": "가슴밀착절정",
+      "prompt": "completely nude, full nudity, bare skin, paizuri, climax, looking up, ahegao, mouth open, body blush, upper body"
     },
     "52": {
-      "label": "손가락절정(스쿼팅)",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare skin:1.45)), lying back, legs spread wide, from side view, faceless male partner, masculine hands, masculine fingers deep inside vagina, fingering climax, censored, (black censor bar, censor bar:1.2), back arched, female ejaculation, squirting, dripping wetness, ahegao, trembling, upper body"
+      "label": "구강상호작용",
+      "prompt": "completely nude, full nudity, bare skin, fellatio, kneeling on rug, looking up, parted lips, blush, upper body"
     },
     "53": {
-      "label": "스푸닝",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare skin:1.45)), lying on side, spooning position, from side view, faceless male behind, vaginal penetration from behind, censored, (black censor bar, censor bar:1.2), masculine hand on waist, heavy-lidded pleasure face, flushed cheeks, soft moaning lips, mid-shot"
+      "label": "구강절정",
+      "prompt": "completely nude, full nudity, bare skin, facial, kneeling, closed eyes, teary eyes, messy face, upper body"
     },
     "54": {
-      "label": "스푸닝절정",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare skin:1.45)), lying on side, deep spooning sex, from side view, faceless male behind, vaginal penetration from behind, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on thighs, cum dripping, eyes squeezed shut in pleasure, trembling, gasping open mouth, flushed face, mid-shot"
+      "label": "입위벽밀착",
+      "prompt": "completely nude, full nudity, bare skin, standing sex, against wall, one leg raised, pinned, looking at partner, blush, cowboy shot"
     },
     "55": {
-      "label": "파이즈리",
-      "prompt": "pov, looking down, paizuri, titfuck, intimate close-up, kneeling between partner legs, close physical contact, chest pressed against partner, completely nude, unclothed, bare skin, topless bare breasts, masculine shaft between breasts, hands resting on partner thighs, censored, (black censor bar, censor bar:1.2), looking up at partner, heavy-lidded upward gaze, flushed cheeks, parted lips, saliva string, upper body close-up"
+      "label": "샤워씬",
+      "prompt": "completely nude, full nudity, bare skin, shower sex, standing against glass, one leg raised, clear glass shower, simple background, cowboy shot"
     },
     "56": {
-      "label": "파이즈리절정",
-      "prompt": "pov, looking down, paizuri titfuck climax, intimate close-up, kneeling between partner legs, close physical contact, chest pressed against partner, completely nude, unclothed, bare skin, topless bare breasts, masculine shaft between breasts, (excessive cum:1.4), (huge cumshot:1.3), cum on breasts and chest, cum dripping down cleavage, cum on face, heavy-lidded dazed pleasure expression, tongue out licking cum, upper body close-up"
-    },
-    "57": {
-      "label": "쿠닐링구스",
-      "prompt": "reclining on sofa, leaning back against sofa cushions, legs spread wide, cunnilingus, faceless male partner kneeling between her thighs, face buried between thighs, hand gripping partner hair, arched back, completely nude, unclothed, bare skin, heavy-lidded pleasure face, flushed cheeks, gasping lips, upper body to thighs"
-    },
-    "58": {
-      "label": "펠라치오",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, fellatio oral sex, mouth wide open taking masculine shaft, own hands on shaft, censored, (black censor bar, censor bar:1.2), heavy-lidded submissive pleasure gaze looking up, flushed cheeks, saliva dripping, upper body close-up"
-    },
-    "59": {
-      "label": "펠라치오절정",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, deep fellatio oral climax, mouth taking shaft deep, throat bulge, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (excessive cum:1.4), (huge cumshot:1.3), cum flooding mouth dripping from lips, cum on face and chest, teary overwhelmed eyes, swallowing expression, upper body close-up"
-    },
-    "60": {
-      "label": "손가락삽입(누움)",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare skin:1.45)), lying back, from side view, faceless male hand, masculine fingers deep inside vagina, fingering, censored, (black censor bar, censor bar:1.2), intense pleasure face, flushed cheeks, teary pleasure eyes, mouth hanging open, drooling slightly, completely lost in sensation, upper body"
-    },
-    "61": {
-      "label": "손가락절정(눕기)",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare skin:1.45)), lying back, legs spread wide, from side view, faceless male hand, masculine fingers deep inside vagina, fingering climax, censored, (black censor bar, censor bar:1.2), gripping sheets, female ejaculation, squirting, dripping wetness, ahegao, upper body"
-    },
-    "62": {
-      "label": "카우걸(마주보기)",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), straddling lap, cowgirl position, from side view, over the shoulder view, back of male partner's head, facing partner, vaginal penetration, censored, (black censor bar, censor bar:1.2), hands gripping masculine shoulders, heavy-lidded pleasure gaze, flushed cheeks, lips parted in ecstasy, body trembling with pleasure, upper body"
-    },
-    "63": {
-      "label": "카우걸마주보기절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare skin:1.45)), sitting on lap, deep sex, from side view, over the shoulder view, back of male partner's head, facing partner, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), clinging to partner chest, cum on stomach, ahegao, crying blush, upper body"
-    },
-    "66": {
-      "label": "얼굴사정",
-      "prompt": "((completely nude, kneeling on rug, full nudity, unclothed, bare skin:1.45)), kneeling, facial cumshot aftermath, faceless male standing, bare chest, (excessive cum:1.4), (huge cumshot:1.3), cum covering face and dripping, heavy-lidded ahegao expression, mouth open tongue out licking cum, messy face, upper body close-up"
-    },
-    "67": {
-      "label": "샤워섹스",
-      "prompt": "standing against clear glass wall, pinned against glass, shower sex, ((completely nude, full nudity, unclothed, bare skin:1.25)), from side view, faceless male partner, one leg raised wrapped around partner waist, vaginal penetration, censored, (black censor bar, censor bar:1.2), masculine hands gripping thigh and waist, heavy-lidded pleasure face, flushed cheeks, gasping lips, clear glass shower stall, simple clean background, upper body"
-    },
-    "68": {
-      "label": "샤워섹스절정",
-      "prompt": "standing against clear glass wall, pinned against glass, shower sex climax, ((completely nude, full nudity, unclothed, bare skin:1.25)), from side view, faceless male partner, one leg wrapped around partner waist, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), clinging to partner shoulders, ahegao, eyes rolled up, clear glass shower stall, simple clean background, upper body"
-    },
-    "69": {
-      "label": "아마조네스",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare skin:1.45)), straddling on top, amazones position, from side view, faceless male below, vaginal penetration, censored, (black censor bar, censor bar:1.2), riding aggressively, heavy-lidded dominant pleasure gaze, flushed cheeks, lips parted moaning, upper body"
-    },
-    "70": {
-      "label": "아마조네스절정",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare skin:1.45)), straddling on top, deep amazones sex, from side view, faceless male below, vaginal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), hips grinding down hard, cum on stomach, ahegao, sweat dripping, upper body"
-    },
-    "71": {
-      "label": "앉은자세삽입",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare skin:1.45)), sitting position, legs spread apart, from side view, faceless male partner, vaginal penetration from front, censored, (black censor bar, censor bar:1.2), masculine hands gripping thighs, heavy-lidded breathless pleasure face, flushed cheeks, leaning back on hands, mid-shot"
-    },
-    "72": {
-      "label": "벽섹스",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), standing against wall, wall sex from front, from side angle, faceless male partner, one leg raised, vaginal penetration, censored, (black censor bar, censor bar:1.2), masculine hand pressing shoulder to wall, heavy-lidded overwhelmed pleasure face, flushed cheeks, lips parted in ecstasy, body trembling with pleasure, upper body"
-    },
-    "73": {
-      "label": "뒤에서앉기",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare skin:1.45)), sitting position, from side view, faceless male behind, vaginal penetration from behind, censored, (black censor bar, censor bar:1.2), masculine hands gripping hips, character hands on own thighs, head thrown back, heavy-lidded pleasure expression, flushed cheeks, lips parted moaning, upper body"
-    },
-    "74": {
-      "label": "벽도기자위",
-      "prompt": "((completely nude, full nudity, unclothed, bare skin:1.45)), standing bent forward against wall, doggystyle from behind, from behind angle, faceless male behind, vaginal penetration from behind, censored, (black censor bar, censor bar:1.2), hands pressed flat on wall, looking back over shoulder, aroused flushed face, lustful half-closed eyes, gasping open mouth, needy expression, upper body"
-    },
-    "75": {
-      "label": "바닥섹스",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare skin:1.45)), from side view, faceless male above, vaginal penetration, censored, (black censor bar, censor bar:1.2), heavy-lidded pleasure face, flushed cheeks, one arm over eyes, trembling moaning lips, mid-shot"
+      "label": "사후여운",
+      "prompt": "completely nude, full nudity, bare skin, aftersex, lying in bed, cozy blanket, messy hair, peaceful smile, relaxed, cowboy shot"
     }
   },
   "scenes_otokonoko": {
     "140": {
-      "label": "항문선교",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare body:1.45)), lying on back, legs raised and spread wide, anal missionary position, from side view, faceless male partner above, anal penetration, censored, (black censor bar, censor bar:1.2), masculine hands pinning wrists above head, overwhelmed pleasure face, flushed cheeks, eyes squeezed shut, biting lower lip, body tensing from sensation, upper body to thighs"
+      "label": "선교체위",
+      "prompt": "completely nude, full nudity, bare body, lying on back, anal missionary, from side view, looking at partner, blush, cowboy shot"
     },
     "141": {
-      "label": "항문선교절정",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed:1.45)), lying on back, legs raised and spread, deep anal missionary sex, from side view, faceless male partner above, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on stomach and thighs, cum pool, ahegao, rolling eyes, trembling, upper body to thighs"
+      "label": "선교절정",
+      "prompt": "completely nude, full nudity, bare body, lying on back, anal missionary, climax, ahegao, rolling eyes, body blush, cowboy shot"
     },
     "142": {
-      "label": "하반신노출클로즈업",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare body:1.45)), lying back, legs spread wide apart, exposed position, censored, (black censor bar, censor bar:1.2), own hands pulling inner thighs apart, intense pleasure face, flushed cheeks, mouth hanging open, drooling slightly, completely lost in sensation, lower body focus"
+      "label": "후배위",
+      "prompt": "completely nude, full nudity, bare body, on all fours, arched back, anal doggystyle, from side view, looking back, parted lips, cowboy shot"
     },
     "143": {
-      "label": "항문도기",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare body:1.45)), on all fours, arched back, anal doggystyle position, from side view, faceless male behind, anal penetration from behind, censored, (black censor bar, censor bar:1.2), masculine hands gripping slender hips hard, flushed heavy pleasure face, looking back, gasping open mouth, thighs focus"
+      "label": "후배위절정",
+      "prompt": "completely nude, full nudity, bare body, on all fours, arched back, anal doggystyle, climax, looking back, ahegao, trembling, cowboy shot"
     },
     "144": {
-      "label": "항문도기절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed:1.45)), on all fours, deeply arched back, deep anal doggystyle sex, from side view, faceless male behind, anal penetration from behind, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on back and buttocks, cum dripping down thighs, ahegao, drooling, head hanging, trembling arms"
+      "label": "기승위",
+      "prompt": "completely nude, full nudity, bare body, straddling, anal cowgirl, hands on partner chest, looking down, blush, cowboy shot"
     },
     "145": {
-      "label": "항문카우걸",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare body:1.45)), straddling seated, anal cowgirl position, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), slowly lowering hips onto shaft, hands on partner chest, flushed pleasure face, biting lip, trembling thighs, upper body"
+      "label": "기승위절정",
+      "prompt": "completely nude, full nudity, bare body, straddling, anal cowgirl, climax, head thrown back, arched back, ahegao, body blush, cowboy shot"
     },
     "146": {
-      "label": "항문카우걸절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed:1.45)), straddling seated, deep anal cowgirl sex, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), hips grinding down hard, (excessive cum:1.4), (huge cumshot:1.3), cum on stomach, cum dripping, overwhelmed ahegao, moaning open mouth, upper body"
+      "label": "역기승위",
+      "prompt": "completely nude, full nudity, bare body, straddling backwards, anal reverse cowgirl, looking back over shoulder, cowboy shot"
     },
     "147": {
-      "label": "항문역카우걸",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare body:1.45)), straddling seated backwards, anal reverse cowgirl position, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), lowering hips onto shaft, flushed pleasure face, biting lower lip, looking back over shoulder with heavy-lidded eyes, upper body"
+      "label": "대면좌위",
+      "prompt": "completely nude, full nudity, bare body, sitting on lap, straddling, facing partner, hugging, arms around neck, intimate, blush, upper body"
     },
     "148": {
-      "label": "항문역카우걸절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed:1.45)), straddling backwards, deep anal reverse cowgirl sex, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), back deeply arched, (excessive cum:1.4), (huge cumshot:1.3), cum on back, cum dripping, ahegao, looking back trembling, upper body"
+      "label": "매팅프레스",
+      "prompt": "completely nude, full nudity, bare body, lying on back, knees to chest, anal mating press, looking up, teary eyes, blush, cowboy shot"
     },
     "149": {
-      "label": "항문매팅프레스",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare body:1.45)), lying on back, knees folded to chest, anal mating press position, from side view, faceless male above, anal penetration, censored, (black censor bar, censor bar:1.2), masculine hands pressing knees down hard, flushed face, teary overwhelmed eyes, gasping open mouth, mid-shot"
+      "label": "스푸닝",
+      "prompt": "completely nude, full nudity, bare body, lying on side, anal spooning, partner arm around waist, intimate embrace, peaceful, cowboy shot"
     },
     "150": {
-      "label": "항문매팅프레스절정",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed:1.45)), lying on back, fully folded legs pressed to chest, deep anal mating press sex, from side view, faceless male pressing down, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on stomach and thighs, cum pool, ahegao, tears streaming, trembling, mid-shot"
+      "label": "상호자극",
+      "prompt": "completely nude, full nudity, bare body, sitting, handjob receiving, legs spread, looking down, blush, parted lips, upper body"
     },
     "151": {
-      "label": "핸드잡(수용)",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare body:1.45)), sitting, legs spread wide apart, handjob receiving, from side view, faceless male hand, masculine hand stroking small member, censored, (black censor bar, censor bar:1.2), hand on tiny shaft, heavy-lidded pleasure eyes, flushed cheeks, biting lip, upper body"
+      "label": "상호자극절정",
+      "prompt": "completely nude, full nudity, bare body, lying back, handjob climax, arched back, ahegao, trembling, upper body"
     },
     "152": {
-      "label": "핸드잡절정",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed:1.45)), lying back, legs spread wide, handjob climax, from side view, faceless male hand, masculine hand stroking small member rapidly, censored, (black censor bar, censor bar:1.2), hand on tiny shaft, back arched, (excessive cum:1.4), (huge cumshot:1.3), cum on hand and stomach, cum dripping, ahegao, trembling"
+      "label": "구강상호작용",
+      "prompt": "completely nude, full nudity, bare body, fellatio, kneeling on rug, looking up, submissive, blush, upper body"
     },
     "153": {
-      "label": "항문스푸닝",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare body:1.45)), lying on side, anal spooning position, from side view, faceless male behind, anal penetration from behind, censored, (black censor bar, censor bar:1.2), masculine hand gripping waist, flushed pleasure face, soft moaning lips, mid-shot"
+      "label": "구강절정",
+      "prompt": "completely nude, full nudity, bare body, facial, kneeling, closed eyes, teary eyes, messy face, upper body"
     },
     "154": {
-      "label": "항문스푸닝절정",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed:1.45)), lying on side, deep anal spooning sex, from side view, faceless male behind, anal penetration from behind, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), cum on thighs, cum dripping, eyes squeezed shut in pleasure, trembling, gasping open mouth, flushed face, mid-shot"
+      "label": "입위벽밀착",
+      "prompt": "completely nude, full nudity, bare body, standing against wall, anal standing sex, one leg raised, pinned, blush, cowboy shot"
     },
     "155": {
-      "label": "딥스로트",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, deepthroat oral sex, mouth taking shaft deep into throat, throat bulge, censored, (black censor bar, censor bar:1.2), teary eyes, upper body close-up"
+      "label": "샤워씬",
+      "prompt": "completely nude, full nudity, bare body, shower anal, standing against glass, clear glass shower, simple background, cowboy shot"
     },
     "156": {
-      "label": "딥스로트절정",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, deepthroat oral climax, mouth taking shaft deep, throat bulge, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (excessive cum:1.4), (huge cumshot:1.3), cum flooding mouth dripping from lips, cum on face and chest, tears streaming, drooling heavily, swallowing expression, upper body close-up"
-    },
-    "157": {
-      "label": "구강애무(혀)",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, oral stimulation, delicate hand stroking shaft, tongue licking tip, censored, (black censor bar, censor bar:1.2), flushed cheeks, soft parted lips, upper body close-up"
-    },
-    "158": {
-      "label": "펠라치오",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, fellatio oral sex, mouth taking shaft, censored, (black censor bar, censor bar:1.2), heavy-lidded submissive pleasure gaze, flushed cheeks, lips parted in ecstasy, soft moaning, upper body close-up"
-    },
-    "159": {
-      "label": "펠라치오절정",
-      "prompt": "kneeling, kneeling on rug, from side view, faceless male standing, fellatio oral climax, mouth taking shaft, deep oral, throat bulge, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (excessive cum:1.4), (huge cumshot:1.3), cum in mouth dripping from lips, cum on face and chest, crying teary eyes, swallowing expression, upper body close-up"
-    },
-    "160": {
-      "label": "항문손가락",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare body:1.45)), bent over, from side view, faceless male hand, anal fingering, masculine fingers penetrating anus, censored, (black censor bar, censor bar:1.2), back arched, intense pleasure face, flushed cheeks, teary pleasure eyes, mouth hanging open, drooling slightly, completely lost in sensation, upper body"
-    },
-    "161": {
-      "label": "항문손가락절정",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed:1.45)), bent over, from side view, faceless male hand, anal fingering climax, masculine fingers deep inside anus, censored, (black censor bar, censor bar:1.2), back arched, (excessive cum:1.4), (huge cumshot:1.3), cum on thighs, cum dripping, ahegao, trembling, gripping surface, upper body"
-    },
-    "162": {
-      "label": "항문카우걸(마주보기)",
-      "prompt": "((completely nude, on bed, full nudity, unclothed, bare body:1.45)), straddling on lap, cowgirl position, from side view, over the shoulder view, back of male partner's head, facing partner, anal penetration, censored, (black censor bar, censor bar:1.2), hands on partner shoulders, hips lowering onto shaft, heavy-lidded pleasure eyes, flushed cheeks, lips parted in ecstasy, body trembling with pleasure, upper body"
-    },
-    "163": {
-      "label": "항문카우걸마주보기절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed:1.45)), sitting on lap, deep anal sex, from side view, over the shoulder view, back of male partner's head, facing partner, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), clinging to partner chest, (excessive cum:1.4), (huge cumshot:1.3), cum on stomach, ahegao, crying blush, upper body"
-    },
-    "164": {
-      "label": "포박항문선교",
-      "prompt": "((completely nude, lying on bed, full nudity, unclothed, bare body:1.45)), lying on back, wrists bound above head, restrained anal missionary, from side view, faceless male above, anal penetration, censored, (black censor bar, censor bar:1.2), masculine hands on bound wrists, overwhelmed teary pleasure expression, flushed cheeks, eyes squeezed shut, biting lower lip, body tensing from sensation, mid-shot"
-    },
-    "165": {
-      "label": "포박항문카우걸절정",
-      "prompt": "((completely nude, on bed, full nudity, unclothed:1.45)), straddling seated, wrists bound behind back, restrained anal cowgirl, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), hips grinding down, (excessive cum:1.4), (huge cumshot:1.3), cum on stomach, cum dripping, overwhelmed ahegao, upper body"
-    },
-    "166": {
-      "label": "얼굴사정",
-      "prompt": "((completely nude, kneeling on rug, full nudity, unclothed, bare body:1.45)), kneeling, facial cumshot aftermath, faceless male standing, (excessive cum:1.4), (huge cumshot:1.3), cum covering face and dripping, mouth open tongue out licking cum, messy ahegao face, upper body close-up"
-    },
-    "167": {
-      "label": "샤워항문",
-      "prompt": "standing against clear glass wall, pinned against glass, shower anal sex, ((completely nude, full nudity, unclothed, bare body:1.25)), from side view, faceless male partner, one leg raised, anal penetration, censored, (black censor bar, censor bar:1.2), masculine hands gripping slender waist, heavy-lidded pleasure face, flushed cheeks, gasping lips, clear glass shower stall, simple clean background, upper body"
-    },
-    "168": {
-      "label": "샤워항문절정",
-      "prompt": "standing against clear glass wall, pinned against glass, shower anal sex climax, ((completely nude, full nudity, unclothed, bare body:1.25)), from side view, faceless male partner, one leg raised, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), (excessive cum:1.4), (huge cumshot:1.3), clinging to partner shoulders, ahegao, trembling, clear glass shower stall, simple clean background, upper body"
-    },
-    "169": {
-      "label": "항문아마조네스",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed, bare body:1.45)), straddling on top, amazones anal position, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), riding aggressively, hands on masculine chest, heavy-lidded dominant pleasure gaze, flushed cheeks, lips parted moaning, upper body"
-    },
-    "170": {
-      "label": "항문아마조네스절정",
-      "prompt": "((completely nude, sitting on sofa, full nudity, unclothed:1.45)), straddling on top, deep amazones anal sex, from side view, faceless male below, anal penetration, censored, (black censor bar, censor bar:1.2), (thick cum covering genitals:1.7), (semen obscuring penetration:1.6), hips grinding down hard, (excessive cum:1.4), (huge cumshot:1.3), cum on stomach, ahegao, sweat dripping, trembling, upper body"
+      "label": "사후여운",
+      "prompt": "completely nude, full nudity, bare body, aftersex, lying in bed, cozy blanket, messy hair, peaceful smile, relaxed, cowboy shot"
     }
   }
 }
