@@ -53,6 +53,7 @@ ROSTER_ALIAS = {
     "dar": "dark_generals",
     "sea": "sea",
     "oto": "oto",
+    "home": "home",
     "default": "dark_generals",
 }
 

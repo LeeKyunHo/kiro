@@ -1,0 +1,7 @@
+{
+  "prefix": "dan",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, slender, (medium breasts:1.2), narrow waist, soft body curves, ((pure black hair:1.25)), ((straight long hair:1.2)), see-through bangs, long hair down, (warm hazel brown eyes:1.2), light blue oversized oxford shirt, collared shirt, open collar, (thin white strap:0.95), ivory pleated miniskirt, white ankle socks, brown loafers",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, 1boy, male, masculine, beard, mustache, facial hair, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale, animal ears, cat ears, fox ears, dog ears, beast ears, animal tail, child, loli, flat chest, giant hips, unnatural body proportions, glasses, (blonde hair:1.5), (silver hair:1.5), (pink hair:1.4), (purple hair:1.4), (red hair:1.4), school uniform, blazer, serafuku, sailor uniform, crop top, t-shirt, bag, tote bag, backpack, holding object",
+  "ref_weight": 0.6
+}

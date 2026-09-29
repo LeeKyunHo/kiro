@@ -78,7 +78,7 @@ kiro/
     ├── sea/                     바다/비치 바 (별칭: sea)
     ├── oto/                     오토코노코 (별칭: oto)
     ├── school/                  학원물 (별칭: school)
-    ├── fth/                     판타지 하렘 (별칭: fth)
+    ├── home/                    아이디어 창고 / 캐릭터 대기소 (별칭: home)
     └── don/                     돈 프로젝트 (별칭: don)
         ├── characters/          캐릭터 프리셋 JSON (*.json)
         ├── references/          IP-Adapter 참조 이미지 (*.webp, *.png 등)

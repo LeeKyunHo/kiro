@@ -18,5 +18,7 @@
 - 기존 주석 및 독스트링을 임의로 훼손하지 않습니다.
 - 프롬프트 데이터는 `pose_database.json`에, 파이프라인 로직은 `sd_batch_generator.py`에 격리하는 원칙을 준수합니다.
 
-## 4. 파이프라인 학습 및 인수인계 문서 참조 (Handover & Continuity)
-- 새로운 대화 세션이나 다른 에이전트 인스턴스가 투입될 때, 반드시 루트 디렉토리의 **[`AI_HANDOVER_GUIDE.md`](file:///c:/Users/rbsgh/kiro/AI_HANDOVER_GUIDE.md)**를 최우선으로 읽고 파이프라인의 최근 아키텍처 개편 사항(의상 자동 스트리핑 엔진, 2인 구도 페어링 태그 주입, 범용 가구 매핑, 샤워/파이즈리 구도 보정 등)을 완벽히 숙지한 후 작업을 이어갑니다.
+## 4. 파이프라인 학습 및 문서 교차 참조 (Handover & Continuity)
+- 새로운 대화 세션이나 다른 에이전트 인스턴스가 투입될 때:
+  - **파이프라인 아키텍처 및 런타임 로직**: 반드시 루트 디렉토리의 **[`AI_HANDOVER_GUIDE.md`](file:///c:/Users/rbsgh/kiro/AI_HANDOVER_GUIDE.md)**를 최우선으로 읽고 핵심 불변식을 숙지합니다.
+  - **캐릭터 JSON 및 포즈 프롬프트 작업**: **[`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)**를 단일 진실 공급원(SSOT)으로 반드시 교차 확인하여 80종 정예화 라벨, BREAK 문법, 화풍 공식, 손 앵커링 규칙을 준수합니다.

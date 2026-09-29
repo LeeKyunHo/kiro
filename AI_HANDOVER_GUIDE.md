@@ -2,7 +2,7 @@
 
 > **문서 목적**: Antigravity 에이전트가 투입되었을 때 불필요한 일회성 히스토리나 특정 캐릭터 묘사에 혼선 없이, 시스템 아키텍처, 파이프라인 핵심 메커니즘, 프롬프트 작성 불변식, 검증 규칙을 즉시 파악하고 작업을 연속성 있게 수행하기 위한 핵심 가이드.  
 > **최종 갱신일**: 2026-09-28  
-> **연계 문서**: [`GEMINI.md`](file:///c:/Users/rbsgh/kiro/GEMINI.md), [`PROJECT_GUIDE.md`](file:///c:/Users/rbsgh/kiro/PROJECT_GUIDE.md), [`pose_database.json`](file:///c:/Users/rbsgh/kiro/pose_database.json)
+> **연계 문서**: [`GEMINI.md`](file:///c:/Users/rbsgh/kiro/GEMINI.md), [`PROJECT_GUIDE.md`](file:///c:/Users/rbsgh/kiro/PROJECT_GUIDE.md), [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt), [`pose_database.json`](file:///c:/Users/rbsgh/kiro/pose_database.json)
 
 ---
 
@@ -43,36 +43,29 @@ CLIP 토큰 분산 방지 및 포즈 제어력 유지를 위한 2청크 분리 �
 
 ---
 
-## 3. 포즈 데이터베이스(`pose_database.json`) 구조 및 작성 규칙
+## 3. 포즈 데이터베이스(`pose_database.json`) 구조 및 연계 규칙
+
+> 📖 **포즈 상세 작성 가이드 및 80종 전체 레퍼런스**: [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)의 **3장**을 단일 진실 공급원(SSOT)으로 반드시 교차 확인하십시오.
 
 ### 3.1 번호 대역 (총 80종 정예화 체제)
 - `00~19` (**`emotions`**): 감정 표현 20종 (단독 샷, `clean background` 포함 → 프로젝트별 `background.json`으로 자동 치환)
-- `20~39` (**`poses`**): 솔로 포즈 및 스킨십/밀착 20종 (의상 착용 기준)
+- `20~39` (**`poses`**): 착의 솔로 포즈 및 스킨십/밀착 20종 (의상 착용 기준)
 - `40~59` (**`h_scenes`**): 여성 2인 결합 씬 20종 (기본 체위 + 클라이맥스/체액 + 사후여운)
 - `140~159` (**`scenes_otokonoko`**): 오토코노코 2인 결합 씬 20종 (40~59번과 1:1 대칭 매핑)
 
-### 3.2 포즈 작성 핵심 불변식
+### 3.2 시스템 연계 4대 핵심 불변식
 1. **명시적 `label` 필수**: `{"label": "한국어라벨", "prompt": "Danbooru 태그"}` 형식 유지 (젠잇 매핑 가이드 및 콘솔 출력용).
 2. **성별 태그 금지**: 포즈 프롬프트 내에 `1girl`, `1boy` 하드코딩 금지 (성별은 캐릭터 및 파이프라인에서 자동 제어).
-3. **손 위치 앵커링(Anchor)**: 손이 허공에 뜨면 기형 손/손 모음 편향이 발생하므로 침대 짚기, 상대방 신체 감싸기 등 물리적 접촉면을 명확히 명시.
+3. **손 위치 앵커링(Anchor)**: 손이 허공에 뜨면 기형 손/스스로 만짐 편향이 발생하므로 물리적 접촉면(상대방 가슴/어깨, 침대 등)을 명확히 명시.
 4. **구도 충돌 금지**: `close-up`과 `cowboy shot`처럼 상반된 화각 태그를 동시 사용하면 멀티뷰(화면 분할 컷) 버그가 발생하므로 단일 화각 유지.
 
 ---
 
 ## 4. 캐릭터 JSON 작성 규칙 (`projects/{roster}/characters/`)
 
-### 4.1 작성 템플릿
-```json
-{
-  "prefix": "char_id",
-  "default_mode": "female",
-  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, [체형 및 나이], [고정 헤어스타일], [고정 눈동자 색], [기본 의상 묘사]",
-  "negative": "worst quality, low quality, bad anatomy, bad hands, 1boy, male, masculine, photorealistic, 3d, [반대 속성 차단 태그]",
-  "ref_weight": 0.65
-}
-```
+> 📖 **캐릭터 템플릿, 4단계 레이어 공식 및 화풍 적용법**: [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)의 **2장**을 단일 진실 공급원(SSOT)으로 반드시 교차 확인하십시오.
 
-### 4.2 필수 준수 불변식
+### 4.1 시스템 무결성 5대 불변식
 1. **캐릭터 프롬프트에 고정 표정/홍조(`blush`, `smile` 등) 절대 금지**: 표정이 들어가면 감정 씬(00~19번)의 다양한 감정이 무력화됨.
 2. **캐릭터 프롬프트에 자세/배경(`standing`, `clean background` 등) 절대 금지**: 배경 태그가 들어가면 배경 치환 시스템(`background.json`)이 무력화됨.
 3. **복합 괄호 내 쉼표 금지 (고아 괄호 방지)**: `(tag1, tag2:1.2)` 형태는 탈의 시 닫는 괄호 유실 버그를 일으키므로, 반드시 `(tag1:1.2), (tag2:1.2)` 단일 괄호로 작성.
@@ -83,10 +76,10 @@ CLIP 토큰 분산 방지 및 포즈 제어력 유지를 위한 2청크 분리 �
 
 ## 5. 에이전트 작업 및 커뮤니케이션 규칙
 
-1. **응답 언어**: 모든 대화, 설명, 코드 분석, 결과 보고는 **항상 한국어**로 작성.
-2. **사무적·기술적 용어 사용**:
-   - 콘솔 출력 및 사용자 응답 시 노골적인 비속어나 민감한 묘사를 배제하고, 공식적인 기술/구도 용어(체위, 클라이맥스, 화각, 페어링 태그, 파트너 객체, 네거티브 필터링 등) 사용.
-3. **Git 커밋 규격**:
-   - `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:` 접두어 사용 및 민감 표현 배제한 사무적 서술 준수.
-4. **작업 완료 전 무결성 검증**:
-   - 코드, 프롬프트, 캐릭터 JSON 수정 후 반드시 `python sd_batch_generator.py --test` (52개 항목) PASS 확인.
+1. **상호 교차 체크 원칙 (인계가이드 vs 제작규칙)**:
+   - **파이프라인 로직 / CLI / 런타임 아키텍처 작업 시**: 본 문서([`AI_HANDOVER_GUIDE.md`](file:///c:/Users/rbsgh/kiro/AI_HANDOVER_GUIDE.md))와 [`PROJECT_GUIDE.md`](file:///c:/Users/rbsgh/kiro/PROJECT_GUIDE.md)를 최우선 체크.
+   - **캐릭터 JSON 생성·수정 / 포즈 DB 개편 시**: [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)를 최우선 체크하여 프롬프트/라벨/화풍 규격을 준수.
+2. **응답 언어**: 모든 대화, 설명, 코드 분석, 결과 보고는 **항상 한국어**로 작성.
+3. **사무적·기술적 용어 사용**: 콘솔 출력 및 사용자 응답 시 노골적인 비속어나 민감한 묘사를 배제하고, 공식적인 기술/구도 용어(체위, 클라이맥스, 화각, 페어링 태그, 파트너 객체, 네거티브 필터링 등) 사용.
+4. **Git 커밋 규격**: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:` 접두어 사용 및 민감 표현 배제한 사무적 서술 준수.
+5. **작업 완료 전 무결성 검증**: 코드, 프롬프트, 캐릭터 JSON 수정 후 반드시 `python sd_batch_generator.py --test` (52개 항목) PASS 확인.
