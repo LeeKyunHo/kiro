@@ -18,10 +18,11 @@
 
   1. 가장 많이 쓰는 명령어 (치트시트)
      - 원클릭 전체 일괄 생성, 단일 캐릭터, 특정 번호 생성
+     - [New] 여러 캐릭터 / 여러 프로젝트 연달아 순차 생성 (세미콜론 및 ForEach)
      - 배경 분위기 변경 및 1개 파일 재생성
      - 미리보기(dry-run) 및 시스템 자체 점검(test)
   2. 주요 로스터 (작품 프로젝트) 안내
-     - sea(바다), dar(사천왕), oto(오토코노코), school(학원), fth(하렘), don(돈)
+     - sea(바다), zip(대저택), cafe(카페), oto(오토코노코), dar(사천왕), home(홈)
   3. 최초 1회 설치 및 WebUI 필수 세팅
      - Python/패키지 설치 및 WebUI 필수 설정 (이미지 패턴 비우기 등)
   4. 배경 시스템과 이벤트 씬 활용법
@@ -51,6 +52,20 @@
   python -u sd_batch_generator.py --char ren -r sea          # 렌 전체 에셋 생성
   python -u sd_batch_generator.py --char rog -r dar          # 로그 전체 에셋 생성
   python -u sd_batch_generator.py --char shn -r don          # 시온 전체 에셋 생성
+
+  ── [연달아 실행] 여러 캐릭터 / 여러 프로젝트 순차 일괄 생성 (★ 강력 추천) ─
+  # 1. 같은 프로젝트에서 특정 캐릭터들만 연달아 생성 (세미콜론 ; 사용)
+  python -u sd_batch_generator.py -r sea --char sak; python -u sd_batch_generator.py -r sea --char sio
+
+  # 2. 여러 프로젝트의 전체 캐릭터를 차례대로 연속 생성
+  python -u sd_batch_generator.py -r sea --all-chars; python -u sd_batch_generator.py -r zip --all-chars
+
+  # 3. 신규 캐릭터 000번(평상)만 연달아 뽑아서 빠르게 확인할 때
+  python -u sd_batch_generator.py -r sea --char sak --codes 0; python -u sd_batch_generator.py -r sea --char sio --codes 0
+
+  # 4. [PowerShell 반복문] 이름 목록만 깔끔하게 적어서 돌릴 때
+  "sak", "sio" | ForEach-Object { python -u sd_batch_generator.py -r sea --char $_ }
+  "sea", "zip", "cafe" | ForEach-Object { python -u sd_batch_generator.py -r $_ --all-chars }
 
   ── 특정 번호만 골라서 생성 ───────────────────────────────────────────────
   python -u sd_batch_generator.py --char ren -r sea --codes "0,1,2,3"   # 감정만
@@ -84,10 +99,13 @@
   | 별칭    | 폴더 위치                  | 작품 설명 및 특징                         |
   |---------|----------------------------|--------------------------------------------|
   | `sea`   | `projects/sea/`            | 바다/비치 바 (배경 치환 + 이벤트 씬 완비)  |
+  | `zip`   | `projects/zip/`            | 명문 대저택 & 귀족 아가씨 (펜트하우스 배경)|
+  | `cafe`  | `projects/cafe/`           | 모던 코지 카페 & 베이커리 (카페 배경)      |
+  | `oto`   | `projects/oto/`            | 오토코노코 전문 (파스텔 룸 배경)           |
   | `dar`   | `projects/dark_generals/`  | 흑막사천왕                                 |
-  | `oto`   | `projects/oto/`            | 오토코노코 전문                            |
+  | `home`  | `projects/home/`           | 일상/메이드 저택                           |
+  | `don`   | `projects/don/`            | 돈 & 럭셔리 아파트                         |
   | `school`| `projects/school/`         | 학원물                                     |
-  | `fth`   | `projects/fth/`            | 판타지 하렘                                |
 
   * 신규 작품 추가: `projects/{원하는이름}/` 폴더를 만들고 그 안에 `characters/`를
     넣으면 `--roster {원하는이름}`으로 코드 수정 없이 즉시 작동합니다.
