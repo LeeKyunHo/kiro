@@ -1,0 +1,7 @@
+{
+  "prefix": "cyr",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, petite, soft curvy body, busty, huge breasts, narrow waist, round hips, (light beige brown hair:1.2), (shoulder-length hair:1.2), (soft wavy bob:1.15), (doe-like warm brown eyes:1.2), small floral hair clip, (thin white strap:0.95), off-shoulder cream knit sweater, oversized loose sweater, bare shoulders, draped beige pleated maxi skirt",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, pantyshot, exposed panties, exposed bra cup, see-through, dark skin, short haircut, black hair, pants, leather, formal suit, cat ears, fox ears, dog ears, wolf ears, furry, 1boy, male, masculine, beard, mustache, facial hair, muscular, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale",
+  "ref_weight": 0.7
+}

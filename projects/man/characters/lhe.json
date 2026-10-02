@@ -1,0 +1,7 @@
+{
+  "prefix": "lhe",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, slender, small breasts, defined collarbone, pale skin, (ash silver hair:1.2), (short shaggy wolf cut hair:1.25), (messy bangs:1.15), (charcoal grey eyes:1.2), (smokey eye makeup:1.2), silver ear cuffs, small black neck choker, (thin black strap:0.95), black lace bustier top, open black oversized leather biker jacket, slipping off shoulders, charcoal distressed denim skinny jeans",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, pantyshot, exposed panties, exposed bra cup, see-through, long hair, blonde hair, brown hair, dress, skirt, sweet lolita, colorful clothes, cat ears, fox ears, dog ears, wolf ears, furry, 1boy, male, masculine, beard, mustache, facial hair, muscular, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale",
+  "ref_weight": 0.7
+}

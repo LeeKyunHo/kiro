@@ -1,0 +1,7 @@
+{
+  "prefix": "hsh",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, mature female, slender curvy, large breasts, (honey blonde hair:1.2), (long wavy hair:1.2), (amber eyes:1.2), delicate gold necklace, (thin silk strap:0.95), pale blue silk slip maxi dress, long satin dress, white cashmere shawl draped over shoulders",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, pantyshot, exposed panties, exposed bra cup, see-through, short hair, black hair, dark hair, red dress, black dress, cat ears, fox ears, dog ears, wolf ears, furry, 1boy, male, masculine, beard, mustache, facial hair, muscular, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale",
+  "ref_weight": 0.7
+}

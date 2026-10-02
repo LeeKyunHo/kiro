@@ -1,0 +1,7 @@
+{
+  "prefix": "kma",
+  "default_mode": "female",
+  "positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, voluptuous hourglass figure, large breasts, tiny waist, wide hips, (platinum ash blonde hair:1.2), (voluminous long glam curls:1.25), (center part bangs:1.15), (blue-grey eyes:1.2), (glossy lips:1.15), sparkling diamond drop earrings, (thin metallic strap:0.95), champagne gold glitter bodycon mini dress, strapless sequin dress, shimmering fabric",
+  "negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, pantyshot, exposed panties, exposed bra cup, see-through, black hair, short hair, modest clothes, pants, casual hoodie, oversized clothes, cat ears, fox ears, dog ears, wolf ears, furry, 1boy, male, masculine, beard, mustache, facial hair, muscular, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), border, frame, monochrome, greyscale",
+  "ref_weight": 0.7
+}
