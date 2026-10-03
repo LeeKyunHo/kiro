@@ -52,6 +52,7 @@ class PoseEntry:
     width: int | None = None   # 동적 해상도 오버라이드 (optional)
     height: int | None = None
     label_override: str | None = None  # pose_database.json 의 "label" 필드 (optional)
+    description: str = ""              # pose_database.json 의 "description" 필드 (optional)
 
     @property
     def label(self) -> str:

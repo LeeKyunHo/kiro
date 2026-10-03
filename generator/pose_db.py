@@ -55,6 +55,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 height = value.get("height")
                 raw_label = value.get("label")
                 label_override = raw_label.strip() if isinstance(raw_label, str) and raw_label.strip() else None
+                description = str(value.get("description", "") or "").strip()
                 if not isinstance(prompt, str) or not prompt.strip():
                     db.warnings.append(f"코드 {key} 의 prompt 가 비어 있음 - 무시")
                     continue
@@ -63,6 +64,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 width = None
                 height = None
                 label_override = None
+                description = ""
             else:
                 db.warnings.append(f"코드 {key} 의 값이 문자열/딕셔너리가 아님 - 무시")
                 continue
@@ -77,7 +79,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                     f"코드 {code} 중복 정의 ('{previous}' -> '{section}') - 나중 값 사용"
                 )
 
-            db.entries[code] = PoseEntry(code, prompt.strip(), section, width, height, label_override)
+            db.entries[code] = PoseEntry(code, prompt.strip(), section, width, height, label_override, description)
             section_codes.append(code)
 
         db.sections[section] = sorted(section_codes)

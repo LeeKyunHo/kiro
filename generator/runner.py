@@ -225,6 +225,18 @@ def run_batch(
                     elif "1boy" not in full_prompt.lower():
                         full_prompt = f"1boy, faceless male, {full_prompt}"
 
+                # 모브 남성 파트너 무특징화: BREAK를 통한 여주인공과 모브의 Attention 완전 격리 (이염 원천 차단)
+                # 착의 스킨십 씬(단색 블랙 팬츠 고정) vs 탈의 성인 씬(완전 탈의) 하의 정밀 분기
+                if is_nude_scene:
+                    mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (naked male:1.2), (shirtless male:1.15), (bottomless male:1.2), muscular build, featureless silhouette"
+                    mob_negative = "male clothes, male shirt, pants, trousers, jeans, shorts, underwear, male hair, male bangs, male haircut"
+                else:
+                    mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (shirtless male:1.15), (bare shoulders:1.1), (solid black pants:1.2), muscular build, featureless silhouette"
+                    mob_negative = "male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, male hair, male bangs, male haircut"
+
+                full_prompt = f"{full_prompt} {mob_positive}"
+                actual_negative = f"{actual_negative}, {mob_negative}"
+
             # 사후여운 씬인 경우 모브/남성 파트너 얼굴 및 신체 생성 원천 차단
             if is_aftermath:
                 actual_negative = f"{actual_negative}, ((1boy, 2boys, male, masculine, partner, faceless male, multiple characters, extra face:1.5))"
