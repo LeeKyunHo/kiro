@@ -214,6 +214,10 @@ def run_batch(
                 if is_nude_scene:
                     actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35)"
 
+                # 침대 및 탈의 씬에서 불필요한 와인/음료/유리잔/병 오브젝트 생성 차단
+                if is_nude_scene or "on bed" in pose_prompt.lower():
+                    actual_negative = f"{actual_negative}, (wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)"
+
                 # solo 태그 제거 (off-screen 파트너 씬은 제외)
                 if not is_offscreen_partner:
                     for solo_pat in (", solo", "solo,", " solo "):
@@ -249,7 +253,7 @@ def run_batch(
             if is_aftermath:
                 actual_negative = f"{actual_negative}, ((1boy, 2boys, male, masculine, partner, faceless male, multiple characters, extra face:1.5))"
                 if is_nude_scene:
-                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35)"
+                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35), (wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)"
 
             payload = build_txt2img_payload(
                 prompt=full_prompt,
