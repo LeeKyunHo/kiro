@@ -199,8 +199,8 @@ def run_batch(
                 if not is_offscreen_partner:
                     actual_negative = f"{actual_negative}, (standing apart, separated, distance between characters:1.3)"
 
-                # 모브 남성에게 얼굴이나 표정/감정이 이식되는 현상 원천 차단
-                actual_negative = f"{actual_negative}, ((male face, detailed male face, handsome male, male eyes, visible male face, male expression, male blush:1.55))"
+                # 모브 남성에게 얼굴이나 표정/감정이 이식되는 현상 및 추가 머리/복수 남성 증식 차단
+                actual_negative = f"{actual_negative}, ((male face, detailed male face, handsome male, male eyes, visible male face, male expression, male blush:1.55)), ((2boys, 2males, multiple males, extra male, extra head, two heads:1.4))"
 
                 # 파트너가 화면 밖(off-screen)인 POV 씬: 남성 몸통/하반신/바지 화면 침범 원천 차단
                 if is_offscreen_partner:
