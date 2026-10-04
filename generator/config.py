@@ -24,7 +24,7 @@ MEMORY_URL = f"{API_HOST}/sdapi/v1/memory"
 MEMORY_TIMEOUT = 5
 GIB = 1024 ** 3
 
-SAMPLER_CANDIDATES = ("Euler", "Euler a", "DPM++ 2M SDE Karras", "DPM++ 2M Karras", "DPM++ 2M")
+SAMPLER_CANDIDATES = ( "DPM++ 2M Karras", "DPM++ 2M SDE Karras", "DPM++ 2M","Euler", "Euler a")
 
 SAMPLERS_TIMEOUT = 5
 TXT2IMG_TIMEOUT = 300

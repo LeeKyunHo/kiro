@@ -176,6 +176,7 @@ def run_batch(
                 "groping", "ass grab"
             )
             is_aftermath = any(kw in pose_prompt.lower() for kw in ("aftermath", "aftersex"))
+            is_offscreen_partner = any(kw in pose_prompt.lower() for kw in ("off-screen", "offscreen", "completely off-screen"))
             is_interactive = (
                 any(k in pose_prompt.lower() for k in partner_keywords)
                 or entry.section in ("h_scenes", "scenes_otokonoko")
@@ -195,10 +196,15 @@ def run_batch(
                 actual_negative = ", ".join(filtered_neg)
 
                 # 상호작용 씬에서 두 인물이 서로 멀리 떨어져 생성되는 현상 차단
-                actual_negative = f"{actual_negative}, (standing apart, separated, distance between characters:1.3)"
+                if not is_offscreen_partner:
+                    actual_negative = f"{actual_negative}, (standing apart, separated, distance between characters:1.3)"
 
                 # 모브 남성에게 얼굴이나 표정/감정이 이식되는 현상 원천 차단
                 actual_negative = f"{actual_negative}, ((male face, detailed male face, handsome male, male eyes, visible male face, male expression, male blush:1.55))"
+
+                # 파트너가 화면 밖(off-screen)인 POV 씬: 남성 몸통/하반신/바지 화면 침범 원천 차단
+                if is_offscreen_partner:
+                    actual_negative = f"{actual_negative}, ((male body, male torso, male lower body, male legs, pants, trousers, black pants, jeans, lap, sitting between legs, legs of partner, 1boy:1.5))"
 
                 # 샤워 씬의 경우 유리문/타일이 창살/격자/블라인드로 왜곡되는 현상 방지
                 if "shower" in pose_prompt.lower():
@@ -208,34 +214,36 @@ def run_batch(
                 if is_nude_scene:
                     actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35)"
 
-                # solo 태그 제거
-                for solo_pat in (", solo", "solo,", " solo "):
-                    full_prompt = full_prompt.replace(solo_pat, " ")
-                full_prompt = " ".join(full_prompt.split())
+                # solo 태그 제거 (off-screen 파트너 씬은 제외)
+                if not is_offscreen_partner:
+                    for solo_pat in (", solo", "solo,", " solo "):
+                        full_prompt = full_prompt.replace(solo_pat, " ")
+                    full_prompt = " ".join(full_prompt.split())
 
-                # 2인 구도 페어링 태그 보강 (모델이 1인 단독으로 편향되는 현상 방지 및 모브 얼굴 배제)
-                is_otokonoko_char = "otokonoko" in active_base_pos.lower() or "otokonoko" in active_char_prompt.lower()
-                if entry.section == "scenes_otokonoko" or (is_otokonoko_char and is_interactive):
-                    if "yaoi" not in full_prompt.lower() and "2boys" not in full_prompt.lower():
-                        full_prompt = f"yaoi, 2boys, faceless male, {full_prompt}"
-                    full_prompt = full_prompt.replace("hetero,", "").replace("hetero", "")
-                elif entry.section == "h_scenes" or "hetero" in pose_prompt.lower() or is_interactive:
-                    if "hetero" not in full_prompt.lower():
-                        full_prompt = f"hetero, 1boy, faceless male, {full_prompt}"
-                    elif "1boy" not in full_prompt.lower():
-                        full_prompt = f"1boy, faceless male, {full_prompt}"
+                # 2인 구도 페어링 태그 보강 및 Attention 격리 (화면 내 파트너가 직접 등장하는 경우에만 적용)
+                if not is_offscreen_partner:
+                    is_otokonoko_char = "otokonoko" in active_base_pos.lower() or "otokonoko" in active_char_prompt.lower()
+                    if entry.section == "scenes_otokonoko" or (is_otokonoko_char and is_interactive):
+                        if "yaoi" not in full_prompt.lower() and "2boys" not in full_prompt.lower():
+                            full_prompt = f"yaoi, 2boys, faceless male, {full_prompt}"
+                        full_prompt = full_prompt.replace("hetero,", "").replace("hetero", "")
+                    elif entry.section == "h_scenes" or "hetero" in pose_prompt.lower() or is_interactive:
+                        if "hetero" not in full_prompt.lower():
+                            full_prompt = f"hetero, 1boy, faceless male, {full_prompt}"
+                        elif "1boy" not in full_prompt.lower():
+                            full_prompt = f"1boy, faceless male, {full_prompt}"
 
-                # 모브 남성 파트너 무특징화: BREAK를 통한 여주인공과 모브의 Attention 완전 격리 (이염 원천 차단)
-                # 착의 스킨십 씬(단색 블랙 팬츠 고정) vs 탈의 성인 씬(완전 탈의) 하의 정밀 분기
-                if is_nude_scene:
-                    mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (naked male:1.2), (shirtless male:1.15), (bottomless male:1.2), muscular build, featureless silhouette"
-                    mob_negative = "male clothes, male shirt, pants, trousers, jeans, shorts, underwear, male hair, male bangs, male haircut"
-                else:
-                    mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (shirtless male:1.15), (bare shoulders:1.1), (solid black pants:1.2), muscular build, featureless silhouette"
-                    mob_negative = "male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, male hair, male bangs, male haircut"
+                    # 모브 남성 파트너 무특징화: BREAK를 통한 여주인공과 모브의 Attention 완전 격리 (이염 원천 차단)
+                    # 착의 스킨십 씬(단색 블랙 팬츠 고정) vs 탈의 성인 씬(완전 탈의) 하의 정밀 분기
+                    if is_nude_scene:
+                        mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (naked male:1.2), (shirtless male:1.15), (bottomless male:1.2), muscular build, featureless silhouette"
+                        mob_negative = "male clothes, male shirt, pants, trousers, jeans, shorts, underwear, male hair, male bangs, male haircut"
+                    else:
+                        mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (shirtless male:1.15), (bare shoulders:1.1), (solid black pants:1.2), muscular build, featureless silhouette"
+                        mob_negative = "male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, male hair, male bangs, male haircut"
 
-                full_prompt = f"{full_prompt} {mob_positive}"
-                actual_negative = f"{actual_negative}, {mob_negative}"
+                    full_prompt = f"{full_prompt} {mob_positive}"
+                    actual_negative = f"{actual_negative}, {mob_negative}"
 
             # 사후여운 씬인 경우 모브/남성 파트너 얼굴 및 신체 생성 원천 차단
             if is_aftermath:
