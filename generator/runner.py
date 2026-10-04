@@ -177,10 +177,16 @@ def run_batch(
             )
             is_aftermath = any(kw in pose_prompt.lower() for kw in ("aftermath", "aftersex"))
             is_offscreen_partner = any(kw in pose_prompt.lower() for kw in ("off-screen", "offscreen", "completely off-screen"))
+            is_solo_scene = (
+                "solo focus" in pose_prompt.lower()
+                or "solo, " in pose_prompt.lower()
+                or ", solo" in pose_prompt.lower()
+                or ("spreading own legs" in pose_prompt.lower() and "partner" not in pose_prompt.lower())
+            )
             is_interactive = (
                 any(k in pose_prompt.lower() for k in partner_keywords)
                 or entry.section in ("h_scenes", "scenes_otokonoko")
-            ) and not is_aftermath
+            ) and not is_aftermath and not is_solo_scene
 
             if is_interactive:
                 male_neg_tokens = {
@@ -251,6 +257,12 @@ def run_batch(
 
             # 사후여운 씬인 경우 모브/남성 파트너 얼굴 및 신체 생성 원천 차단
             if is_aftermath:
+                actual_negative = f"{actual_negative}, ((1boy, 2boys, male, masculine, partner, faceless male, multiple characters, extra face:1.5))"
+                if is_nude_scene:
+                    actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35), (wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)"
+
+            # 솔로 씬인 경우 모브/남성 파트너 얼굴 및 신체 생성 원천 차단
+            if is_solo_scene:
                 actual_negative = f"{actual_negative}, ((1boy, 2boys, male, masculine, partner, faceless male, multiple characters, extra face:1.5))"
                 if is_nude_scene:
                     actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35), (wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)"
