@@ -26,26 +26,30 @@ from generator.prompt import join_tags, validate_prefix
 
 # default_mode 값 → --mode 표현식 기본 매핑
 _DEFAULT_MODE_MAP: dict[str, str] = {
-    "female": "emotions,poses,h_scenes",
-    "otokonoko": "emotions,poses,scenes_otokonoko",
+    "female": "emotions,poses,genit_actions,h_scenes",
+    "otokonoko": "emotions,poses,genit_actions,scenes_otokonoko",
+    "sdxl": "emotions,poses,genit_actions,h_scenes",
+    "all": "all",
 }
 
 
 def _resolve_default_mode(default_mode: str, db: PoseDatabase | None = None) -> str:
     """
     default_mode 문자열을 --mode 표현식으로 변환한다.
-    db 에 로스터 전용 이벤트 섹션(event_*)이 등록되어 있으면 기본 실행 목록 뒤에 자동으로 덧붙인다.
+    db 에 로스터 전용 커스텀 섹션(event_*, spy_* 등)이 등록되어 있으면 기본 실행 목록 뒤에 자동으로 덧붙인다.
     """
-    resolved = _DEFAULT_MODE_MAP.get(default_mode.lower())
+    mode_key = default_mode.lower() if default_mode else "all"
+    resolved = _DEFAULT_MODE_MAP.get(mode_key)
     if resolved is None:
         print(f"[WARN] 알 수 없는 default_mode '{default_mode}' - 'all' 로 폴백")
         return "all"
 
-    # 로스터 전용 이벤트 섹션 자동 병합
-    if db:
-        event_sections = [sec for sec in db.sections if sec.startswith("event_")]
-        if event_sections:
-            resolved = f"{resolved},{','.join(event_sections)}"
+    # 로스터 전용 커스텀 섹션 자동 병합 및 존재하는 섹션만 필터링
+    if db and resolved != "all":
+        base_secs = [s for s in resolved.split(",") if s in db.sections]
+        builtin_sections = {"emotions", "poses", "genit_actions", "h_scenes", "scenes_otokonoko"}
+        custom_sections = [sec for sec in db.sections if sec not in builtin_sections]
+        resolved = ",".join(base_secs + custom_sections)
 
     return resolved
 
@@ -134,8 +138,8 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
     if not isinstance(raw, dict):
         raise ConfigError(f"{path.name} 최상위는 딕셔너리여야 합니다")
 
-    raw_positive = raw.get("positive")
-    raw_negative = raw.get("negative")
+    raw_positive = raw.get("positive") or raw.get("sdxl_positive")
+    raw_negative = raw.get("negative") or raw.get("sdxl_negative")
     positive = raw_positive.strip() if isinstance(raw_positive, str) and raw_positive.strip() else None
     negative = raw_negative.strip() if isinstance(raw_negative, str) and raw_negative.strip() else None
 
@@ -149,6 +153,12 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
     raw_prefix = raw.get("prefix") or name
     prefix = validate_prefix(str(raw_prefix))
 
+    raw_nude = raw.get("nude_positive") or raw.get("sdxl_nude_positive")
+    nude_positive = raw_nude.strip() if isinstance(raw_nude, str) and raw_nude.strip() else None
+    gender = str(raw.get("gender") or "female").strip().lower()
+    raw_outfits = raw.get("outfits")
+    outfits = dict(raw_outfits) if isinstance(raw_outfits, dict) else {}
+
     return CharacterConfig(
         name=name,
         char_prompt=char_prompt,
@@ -160,6 +170,9 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
         negative=negative,
         default_mode=str(raw["default_mode"]).strip() or None if "default_mode" in raw else None,
         background=str(raw["background"]).strip() or None if "background" in raw and isinstance(raw["background"], str) else None,
+        nude_positive=nude_positive,
+        gender=gender,
+        outfits=outfits,
     )
 
 
@@ -226,3 +239,10 @@ def apply_character_to_args(
 
     if cfg.background and not getattr(args, "bg", None):
         args.bg = cfg.background
+
+    if cfg.nude_positive and not getattr(args, "nude_positive", None):
+        args.nude_positive = cfg.nude_positive
+    if getattr(args, "gender", None) is None:
+        args.gender = cfg.gender
+    if getattr(args, "outfits", None) is None:
+        args.outfits = cfg.outfits

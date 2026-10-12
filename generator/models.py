@@ -53,6 +53,9 @@ class PoseEntry:
     height: int | None = None
     label_override: str | None = None  # pose_database.json 의 "label" 필드 (optional)
     description: str = ""              # pose_database.json 의 "description" 필드 (optional)
+    required_outfit: str = ""          # 의상 슬롯 요구사항 (optional)
+    prompt_female: str = ""            # 여성 전용 프롬프트 (optional)
+    prompt_otokonoko: str = ""         # 오토코노코 전용 프롬프트 (optional)
 
     @property
     def label(self) -> str:
@@ -63,6 +66,15 @@ class PoseEntry:
         if self.label_override:
             return self.label_override
         return self.prompt.split(",")[0].strip()
+
+    def get_prompt(self, gender: str = "female") -> str:
+        """성별(female, otokonoko 등)에 맞춘 전용 프롬프트를 반환한다. 미지정 시 기본 prompt 반환."""
+        g = (gender or "").lower().strip()
+        if g == "otokonoko" and self.prompt_otokonoko:
+            return self.prompt_otokonoko
+        if (g in ("female", "girl", "woman") or not g) and self.prompt_female:
+            return self.prompt_female
+        return self.prompt
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +129,9 @@ class CharacterConfig:
     negative: str | None = None
     default_mode: str | None = None
     background: str | None = None  # 캐릭터별 고유 배경 (emotions 씬 치환용)
+    nude_positive: str | None = None  # 탈의/H-씬 전용 프롬프트 (sdxl_nude_positive 호환)
+    gender: str = "female"  # 성별 (female, otokonoko 등)
+    outfits: dict[str, str] = field(default_factory=dict)  # 테마 의상 매핑 (default, swimsuit, maid 등)
 
 
 @dataclass(frozen=True, slots=True)

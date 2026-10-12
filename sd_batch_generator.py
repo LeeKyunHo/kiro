@@ -79,6 +79,7 @@ from generator.pose_db import (
 )
 from generator.prompt import (
     assemble_prompt,
+    clamp_weights,
     find_tag_conflicts,
     join_tags,
     normalize_tag,
@@ -87,6 +88,8 @@ from generator.prompt import (
     validate_prefix,
     validate_ref_weight,
 )
+from generator.precheck import PrecheckReport, run_precheck
+from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
 from generator.reference import (
     build_controlnet_unit,
     find_reference_candidates,
@@ -184,6 +187,14 @@ def build_parser(
         "--bg-preset", default="default",
         help="projects/{roster}/background.json 에서 사용할 프리셋 키 (기본: default)",
     )
+    parser.add_argument(
+        "--nude-positive", "--nude_positive", dest="nude_positive", default=None,
+        help="탈의/H-씬 전용 프롬프트 직접 지정 (생략 시 캐릭터 JSON의 nude_positive 또는 의상 태그 자동 제거)",
+    )
+    parser.add_argument(
+        "--gender", default=None,
+        help="캐릭터 성별 직접 지정 (female, otokonoko 등. 포즈 DB의 prompt_female/prompt_otokonoko 분기용)",
+    )
 
     ref = parser.add_argument_group("참조 이미지 (IP-Adapter)")
     ref.add_argument(
@@ -251,6 +262,32 @@ def build_parser(
         help="Lightning LoRA 파일명 (기본 sdxl_lightning_2step_lora)",
     )
 
+    gen_opts = parser.add_argument_group("생성 파라미터 세부 제어")
+    gen_opts.add_argument(
+        "--steps", type=int, default=None,
+        help="생성 스텝 수 직접 지정 (기본 30)",
+    )
+    gen_opts.add_argument(
+        "--sampler", default=None,
+        help="샘플러 직접 지정 (예: DPM++ 2M, DPM++ 2M SDE, Euler a)",
+    )
+    gen_opts.add_argument(
+        "--scheduler", default=None,
+        help="스케줄러 직접 지정 (예: Karras, Automatic, Exponential, SGM Uniform)",
+    )
+    gen_opts.add_argument(
+        "--cfg-scale", "--cfg_scale", dest="cfg_scale", type=float, default=None,
+        help="CFG Scale 직접 지정 (기본 6.0)",
+    )
+
+    parser.add_argument(
+        "--naming", default="code", choices=["code", "hybrid", "label"],
+        help="에셋 파일명 명명 규칙: code(기본값, prefix_00.webp), hybrid(prefix_000_라벨.webp), label(prefix_라벨.webp)",
+    )
+    parser.add_argument(
+        "--overwrite", "-f", action="store_true",
+        help="이미 존재하는 에셋 파일을 건너뛰지 않고 강제로 덮어쓰기 생성",
+    )
     parser.add_argument(
         "--dry-run", dest="dry_run", action="store_true",
         help="파일 쓰기 없이 대상·파일명·마크다운만 출력",
@@ -261,6 +298,13 @@ def build_parser(
     )
     parser.add_argument(
         "--test", action="store_true", help="데이터·로직 자체 진단 후 종료"
+    )
+    parser.add_argument(
+        "--precheck", action="store_true", help="로스터 및 포즈 DB 사전 점검 후 결과 보고"
+    )
+    parser.add_argument(
+        "--ckpt-profile", "--ckpt_profile", dest="ckpt_profile", default=None,
+        help="체크포인트 최적 파라미터 프로필 적용 (unholy, wai, flatbread, hexmix, pony, animagine 등)",
     )
     return parser
 
@@ -287,7 +331,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"[ERROR] {errmsg}", file=sys.stderr)
         return 1
 
+    if getattr(args, "precheck", False):
+        report = run_precheck(base_dir, roster)
+        print(f"\n[PRECHECK] 로스터 '{report.roster_name}' 사전 점검 결과:")
+        print(f"  - 검사 캐릭터 수: {report.total_characters}명")
+        print(f"  - 검사 포즈 수: {report.total_poses}개")
+        if report.warnings:
+            print("\n  [주의 사항]")
+            for w in report.warnings:
+                print(f"    - {w}")
+        if not report.passed:
+            print("\n  [발견된 오류]")
+            for err in report.errors:
+                print(f"    - {err}")
+            return 1
+        print("\n[PRECHECK] 모든 안전성 및 무결성 점검 통과 (PASS)")
+        return 0
+
     roster.assets_dir.mkdir(parents=True, exist_ok=True)
+
+    if getattr(args, "ckpt_profile", None):
+        ckpt_profiles = load_checkpoint_profiles(base_dir)
+        matched_ckpt = match_checkpoint_profile(ckpt_profiles, args.ckpt_profile)
+        if matched_ckpt:
+            print(f"[CKPT] 프로필 '{matched_ckpt.name}' 매칭 적용 ({matched_ckpt.description})")
+            args.active_ckpt = matched_ckpt
+        else:
+            print(f"[WARN] 체크포인트 프로필 '{args.ckpt_profile}' 을 찾지 못했습니다.", file=sys.stderr)
 
     if args.roster:
         print(f"[ROSTER] '{roster.roster_name}' -> {roster.characters_dir}")
@@ -314,6 +384,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             lightning_steps=args.lightning_steps,
             lightning_cfg=args.lightning_cfg,
             lightning_lora_name=args.lightning_lora_name,
+            steps=args.steps,
+            sampler=args.sampler,
+            scheduler=args.scheduler,
+            cfg_scale=args.cfg_scale,
+            no_ref=args.no_ref,
+            naming=args.naming,
+            overwrite=args.overwrite,
         )
 
     if args.char:

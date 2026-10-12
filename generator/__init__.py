@@ -28,6 +28,7 @@ from generator.pose_db import (
 )
 from generator.prompt import (
     assemble_prompt,
+    clamp_weights,
     find_tag_conflicts,
     join_tags,
     normalize_tag,
@@ -35,6 +36,12 @@ from generator.prompt import (
     split_tags,
     validate_prefix,
     validate_ref_weight,
+)
+from generator.precheck import PrecheckReport, run_precheck
+from generator.checkpoint import (
+    CheckpointProfile,
+    load_checkpoint_profiles,
+    match_checkpoint_profile,
 )
 from generator.reference import build_controlnet_unit, resolve_controlnet_spec, resolve_reference_image
 from generator.reporter import (

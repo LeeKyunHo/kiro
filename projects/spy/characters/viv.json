@@ -1,0 +1,28 @@
+{
+  "prefix": "viv",
+  "name": "Vivian (비비안 / 정부 특수외청 팜므파탈 공무원)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "state_intelligence_diplomatic_corps",
+  "role": "외청 고위 공무원으로 위장한 치명적인 정부 첩보관",
+  "appearance": {
+    "face_and_hair": "gorgeous voluminous wavy dark auburn hair, elegant side-swept bangs framing face, alluring ruby red eyes, half-closed bedroom eyes, tiny beauty mark under left eye, alluring confident demeanor, completely clear spotless forehead",
+    "physique": "flawless hourglass figure, very large pillowy heavy breasts, deeply indented narrow waist, wide shapely hips",
+    "outfit": "alluring government official attire, crisp white unbuttoned collared blouse with deep plunging neckline, cleavage, tight black mini pencil skirt, leather shoulder holster, sheer black thigh-high stockings with garter straps, high heel pumps"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Vivian, alluring government diplomat agent, voluminous wavy auburn hair, elegant side-swept bangs framing face, clear spotless forehead, ruby red eyes, beauty mark under left eye, alluring confident demeanor, very large breasts, tiny waist, wearing crisp white unbuttoned collared blouse with deep plunging neckline, tight black mini pencil skirt, leather shoulder holster, sheer black thigh-high stockings with garters, high heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy coats, thick jacket, armor, sportswear, flat chest, exposed bra, red dress, cape, forehead mark, forehead dot, bindi, forehead jewel, forehead symbol",
+  "sdxl_positive": "art by raita, stylish avant-garde curves, intricate costume details, balanced body proportions, clean smooth forehead, completely clear spotless forehead, neat natural hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, vivian, flawless hourglass figure, very large breasts, narrow waist, wide curvy hips, ((very long flowing wavy dark auburn hair:1.25)), (voluminous long hair draped over shoulders:1.2), (elegant side-swept bangs framing face:1.15), (crimson eyes:1.1), (half-closed bedroom eyes:1.05), (single tiny isolated beauty mark on left cheek under eye:1.0), alluring confident demeanor, ((crisp pure snow-white unbuttoned collared blouse:1.15)), deep plunging neckline, cleavage, ((solid black mini pencil skirt:1.15)), leather shoulder holster, sheer black thigh-high stockings, garter straps, high heels",
+  "sdxl_negative": "((forehead mark, forehead dot, forehead bindi, red dot, white mark, sunburst mark, forehead symbol, star mark, forehead emblem, bindi, third eye, tilak, forehead tattoo, forehead jewel, forehead gem, forehead ornament, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, forehead scar, forehead wound, facial marking, face paint, forehead pattern:1.65)), (short hair, bob cut, shoulder length hair, medium hair, cropped hair, puffy short hair:1.35), keyhole, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), heavy coat, jacket, armor, flat chest, small breasts, exposed bra, exposed bra cup, see-through, multiple moles, colorful blouse, red blouse, blue blouse, green blouse, pink blouse, red dress, red jacket, red suit, red skirt, white skirt, colorful skirt, long skirt, maxi dress, cape, train, from below, low angle, giantess, overly long legs, tiny head, sofa, couch",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, completely clear spotless forehead, neat natural hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, vivian, flawless hourglass figure, very large pillowy breasts, slim waist, wide curvy hips, ((very long flowing wavy dark auburn hair:1.25)), (voluminous long hair draped over shoulders:1.2), (elegant side-swept bangs framing face:1.15), (ruby red eyes:1.15), (half-closed bedroom eyes:1.05), (single tiny isolated beauty mark on left cheek under eye:1.0), alluring confident demeanor",
+  "outfits": {
+    "swimsuit": "glamorous ruby-red and black micro string bikini, gold ring accents",
+    "bunny": "glamorous glossy black bunny girl corset suit, black bunny ears, white collar, crimson bowtie, sheer black thigh-high stockings",
+    "maid": "alluring tight black satin french maid mini dress, tiny white lace apron, lace maid headdress, sheer black thigh-high stockings",
+    "bdsm": "black leather harness with crimson trim, leather collar choker, garter straps, sheer black thigh-high stockings",
+    "underwear": "alluring black sheer lace plunge bra, matching black lace garter belt and panties, sheer black thigh-high stockings",
+    "combat": "disheveled white unbuttoned collared blouse, leather shoulder holster, black mini pencil skirt, torn sheer black thigh-high stockings",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

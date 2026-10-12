@@ -17,6 +17,8 @@ API_HOST = DEFAULT_HOST
 API_URL = f"{API_HOST}/sdapi/v1/txt2img"
 SAMPLERS_URL = f"{API_HOST}/sdapi/v1/samplers"
 
+INTERRUPT_URL = f"{API_HOST}/sdapi/v1/interrupt"
+
 CN_MODULES_URL = f"{API_HOST}/controlnet/module_list"
 CN_MODELS_URL = f"{API_HOST}/controlnet/model_list"
 

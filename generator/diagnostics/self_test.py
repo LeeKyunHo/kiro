@@ -47,12 +47,15 @@ from generator.pose_db import (
 )
 from generator.prompt import (
     assemble_prompt,
+    clamp_weights,
     find_tag_conflicts,
     normalize_tag,
     resolve_background,
     validate_prefix,
     validate_ref_weight,
 )
+from generator.precheck import run_precheck
+from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
 from generator.reference import (
     build_controlnet_unit,
     find_reference_candidates,
@@ -236,6 +239,13 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
         and asset_filename("x", 123, 3) == "x_123.webp",
         asset_filename("x", 7, 2),
     )
+    report.check(
+        "T11b asset_filename 하이브리드/라벨 모드 조립",
+        asset_filename("x", 7, 3, label="미소", naming="hybrid") == "x_007_미소.webp"
+        and asset_filename("x", 7, 3, label="미소", naming="label") == "x_미소.webp"
+        and asset_filename("x", 7, 2, label="수줍은홍조", naming="hybrid") == "x_007_수줍은홍조.webp",
+        asset_filename("x", 7, 3, label="미소", naming="hybrid"),
+    )
 
     codes = synthetic.all_codes
     block = build_genit_block("t", codes, synthetic, code_width(codes))
@@ -257,6 +267,24 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
         "T13b PoseEntry.label 명시적 라벨 및 폴백",
         label_ok,
         f"지정: {entry_with_label.label}, 폴백: {entry_without_label.label}, DB실제: {real_0_label}",
+    )
+
+    entry_gender = PoseEntry(
+        3, "default pose", "scenes",
+        prompt_female="female pose",
+        prompt_otokonoko="otokonoko pose",
+        required_outfit="swimsuit",
+    )
+    gender_ok = (
+        entry_gender.get_prompt("female") == "female pose"
+        and entry_gender.get_prompt("otokonoko") == "otokonoko pose"
+        and entry_gender.get_prompt("other") == "default pose"
+        and entry_gender.required_outfit == "swimsuit"
+    )
+    report.check(
+        "T13c PoseEntry 성별 전용 프롬프트 및 의상 슬롯",
+        gender_ok,
+        f"여성: {entry_gender.get_prompt('female')}, 오토코노코: {entry_gender.get_prompt('otokonoko')}, 슬롯: {entry_gender.required_outfit}",
     )
 
     rejected = []
@@ -298,6 +326,13 @@ def _test_logic(report: TestReport, db: PoseDatabase) -> None:
     ]
     report.check(f"T17 find_tag_conflicts {len(CONFLICT_CASES)}케이스",
                  not bad_conflict, str(bad_conflict) if bad_conflict else "")
+
+    clamped = clamp_weights("(solo:1.45), ((smile:1.20)), test", max_weight=1.15, normalize_brackets=True)
+    report.check(
+        "T17b clamp_weights 가중치 및 다중괄호 클램핑",
+        clamped == "(solo:1.15), (smile:1.15), test",
+        f"결과: {clamped}",
+    )
 
 
 def _test_events_and_prompt(report: TestReport, base_dir: Path, db: PoseDatabase) -> None:
@@ -548,6 +583,20 @@ def _test_characters_and_safety(report: TestReport, base_dir: Path) -> None:
         "빈 args 채움 OK, CLI 오버라이드 보존 OK",
     )
 
+    dummy_nude_cfg = CharacterConfig(
+        name="test_nude",
+        char_prompt="1girl, white dress, blue hair",
+        prefix="tnd",
+        nude_positive="1girl, blue hair, slender body",
+    )
+    empty_nude_args = argparse.Namespace(nude_positive=None)
+    apply_character_to_args(dummy_nude_cfg, empty_nude_args)
+    report.check(
+        "T33b nude_positive 로드 및 우선순위",
+        empty_nude_args.nude_positive == "1girl, blue hair, slender body",
+        f"로드: {empty_nude_args.nude_positive}",
+    )
+
     # T34: 전체 로스터 캐릭터 JSON 문법 및 필수 키 무결성 검사
     projects_dir = base_dir / PROJECTS_DIRNAME
     char_files = list(projects_dir.glob("*/characters/*.json"))
@@ -622,6 +671,19 @@ def _test_characters_and_safety(report: TestReport, base_dir: Path) -> None:
         "00번 감정 씬 치환 OK, 40번 침대 씬 완전 보존 OK",
     )
 
+    # T36: run_precheck 5대 사전 점검 모듈
+    from generator.roster import RosterPathManager
+    rpm = RosterPathManager(base_dir)
+    default_roster = rpm.resolve_roster(None)
+    precheck_res = run_precheck(base_dir, default_roster)
+    report.check(
+        "T36 run_precheck 5대 사전 점검 모듈",
+        precheck_res.passed,
+        f"{precheck_res.roster_name} 점검: 캐릭터 {precheck_res.total_characters}명, 포즈 {precheck_res.total_poses}개, 오류 {len(precheck_res.errors)}개"
+        if precheck_res.passed
+        else f"오류 발견: {precheck_res.errors}",
+    )
+
 
 def _test_background(report: TestReport, base_dir: Path) -> None:
     """T37: 배경 해석 로직 (CLI 우선순위, 파일 프리셋 로드, 기본값 폴백)."""
@@ -640,6 +702,38 @@ def _test_background(report: TestReport, base_dir: Path) -> None:
         report.check("T37d sea night 배경 로드", bool(bg_night and "night" in bg_night), str(bg_night))
         bg_fallback = resolve_background(None, sea_bg_file, "unknown_preset")
         report.check("T37e 없는 프리셋 default 폴백", bool(bg_fallback and "beach bar" in bg_fallback), str(bg_fallback))
+
+
+def _test_checkpoint_profiles(report: TestReport, base_dir: Path) -> None:
+    """T38: 체크포인트 프로필 로드 및 매칭 검증."""
+    print("\n[체크포인트 프로필 검사]")
+    profiles = load_checkpoint_profiles(base_dir)
+    report.check(
+        "T38a checkpoint_profiles.json 로드",
+        len(profiles) >= 5,
+        f"{len(profiles)}개 프로필 로드 완료",
+    )
+
+    unholy = match_checkpoint_profile(profiles, "unholy")
+    report.check(
+        "T38b unholy 패턴 매칭",
+        unholy is not None and "Unholy" in unholy.name and unholy.cfg == 5.0,
+        f"매칭: {unholy.name if unholy else None}",
+    )
+
+    wai = match_checkpoint_profile(profiles, "wai")
+    report.check(
+        "T38c wai 패턴 매칭",
+        wai is not None and "WAI" in wai.name and wai.width == 1024,
+        f"매칭: {wai.name if wai else None}",
+    )
+
+    flatbread = match_checkpoint_profile(profiles, "flatbread")
+    report.check(
+        "T38d flatbread 패턴 매칭",
+        flatbread is not None and "Flatbread" in flatbread.name,
+        f"매칭: {flatbread.name if flatbread else None}",
+    )
 
 
 def _finish_test(report: TestReport) -> int:
@@ -685,4 +779,6 @@ def run_self_test(base_dir: Path) -> int:
     _test_reference(report)
     _test_characters_and_safety(report, base_dir)
     _test_background(report, base_dir)
+    _test_checkpoint_profiles(report, base_dir)
     return _finish_test(report)
+

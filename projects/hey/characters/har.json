@@ -1,0 +1,21 @@
+{
+  "prefix": "har",
+  "name": "하린 (Harin Fortis - 구국의 안경 폭유 마도소녀)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "appearance": {
+    "face_and_hair": "messy jet-black short hair, round glasses, bright cyan-green eyes, gentle warm expression, fair skin",
+    "physique": "voluptuous soft curvy figure, huge breasts, narrow waist, wide soft hips",
+    "outfit": "white sleeveless ribbed knit top with deep plunging v-neckline exposing generous cleavage, denim shorts, burgundy red oversized open knit cardigan casually draped"
+  },
+  "sdxl_positive": "masterpiece, newest, absurdres, incredibly absurdres, best quality, amazing quality, very aesthetic BREAK 1girl, solo, gender bend, (large breasts:1.2), (voluptuous hourglass figure:1.2), ((deep cleavage:1.35)), ((cleavage visible:1.25)), narrow waist, wide soft hips, ((jet-black hair, messy black hair:1.35)), ((short messy hair:1.3)), ((round glasses:1.3)), ((bright cyan-green eyes, light green iris, vivid green eyes:1.2)), fair skin, arms down, arms at sides, ((white sleeveless ribbed knit top:1.3)), ((sleeveless:1.25)), ((bare shoulders:1.2)), ((deep v-neck:1.35)), ((plunging neckline:1.3)), ((thin fabric, skin-tight ribbed knit:1.2)), (blue denim shorts:1.15), (burgundy red open cardigan loosely draped:1.1)",
+  "sdxl_nude_positive": "masterpiece, newest, absurdres, incredibly absurdres, best quality, amazing quality, very aesthetic BREAK 1girl, solo, gender bend, (large breasts:1.2), (voluptuous hourglass figure:1.2), narrow waist, wide soft hips, ((jet-black hair, messy black hair:1.35)), ((short messy hair:1.3)), ((round glasses:1.3)), ((bright cyan-green eyes, light green iris, vivid green eyes:1.2)), fair skin, arms down, arms at sides",
+  "sdxl_negative": "worst quality, low quality, normal quality, lowres, bad anatomy, bad hands, signature, watermarks, (photorealistic:1.4), (depth of field), 3d, render, extra fingers, fewer fingers, motion lines, motion blur, text, logo, multiple views, comic, nude, naked, NSFW, panties visible, loli, child, teen, young, flat chest, small breasts, medium breasts, muscular, masculine features, facial hair, stubble, realistic skin texture, pores, freckles, moles, long sleeves, turtleneck, high collar, covered shoulders, crew neck, round neck, closed neckline, jacket on, buttoned cardigan, turtleneck collar, covered chest, (green clothes:1.3), (green fabric:1.3), (green cloth:1.3), (green dress:1.3), (green top:1.3)",
+  "lora": {
+    "name": "",
+    "strength_model": 0.0,
+    "strength_clip": 0.0
+  },
+  "ref_weight": 0.7,
+  "checkpoint": "flatbreadILV60.safetensors"
+}

@@ -1,0 +1,21 @@
+{
+  "prefix": "rei",
+  "name": "레이나 (Reina)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A cool aristocratic young woman with straight midnight dark-navy hair in a pristine hime cut with blunt bangs, sharp crimson ruby eyes, fair skin, cool dignified expression",
+    "physique": "tall statuesque slender build, toned long legs, shapely large breasts, disciplined upright posture",
+    "outfit": "an elegant Gothic Victorian maid attire featuring a high stiff collar with a velvet brooch, long tailored black sleeves, corset-laced bodice with silver eyelets, layered dark pleated skirt reaching mid-calf, pristine white frilled apron, black leather boots"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (tall statuesque young woman:1.1), slender toned body, large breasts, narrow waist, (midnight dark-navy hair:1.15), (straight hime cut, blunt bangs, long straight hair:1.15), (sharp crimson ruby eyes:1.15), fair skin, cool gaze, (antique cameo brooch at high collar:1.15), high-neck gothic black maid dress, corset-laced bodice, layered pleated miniskirt, white frilled apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (tall statuesque young woman:1.1), slender toned body, large breasts, narrow waist, (midnight dark-navy hair:1.15), (straight hime cut, blunt bangs, long straight hair:1.15), (sharp crimson ruby eyes:1.15), fair skin, cool gaze, (antique cameo brooch at high collar:1.15), high-neck gothic black maid dress, corset-laced bodice, layered pleated miniskirt, white frilled apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry"
+}

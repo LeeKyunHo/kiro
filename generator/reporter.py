@@ -30,9 +30,30 @@ def format_code(code: int, width: int) -> str:
     return f"{code:0{width}d}"
 
 
-def asset_filename(prefix: str, code: int, width: int) -> str:
-    """파일명 조립 단일 진입점."""
-    return f"{prefix}_{format_code(code, width)}.webp"
+def asset_filename(
+    prefix: str,
+    code: int,
+    width: int,
+    label: str | None = None,
+    naming: str = "code",
+) -> str:
+    """
+    파일명 조립 단일 진입점.
+    - naming='code' (기본값): prefix_00.webp 또는 prefix_000.webp (기존 호환)
+    - naming='hybrid': prefix_000_라벨.webp (3자리 정렬 + 한글 라벨)
+    - naming='label': prefix_라벨.webp
+    """
+    formatted_code = format_code(code, width)
+    if naming == "hybrid" and label and label.strip():
+        # 파일명으로 안전하지 않은 문자 제거/치환
+        clean_label = label.strip().replace("/", "_").replace("\\", "_").replace(" ", "")
+        # 하이브리드 표준은 최소 3자리 제로패딩
+        pad_code = format_code(code, max(3, width))
+        return f"{prefix}_{pad_code}_{clean_label}.webp"
+    elif naming == "label" and label and label.strip():
+        clean_label = label.strip().replace("/", "_").replace("\\", "_").replace(" ", "")
+        return f"{prefix}_{clean_label}.webp"
+    return f"{prefix}_{formatted_code}.webp"
 
 
 def mode_badge(dry_run: bool, mock: bool) -> str:
@@ -44,7 +65,11 @@ def mode_badge(dry_run: bool, mock: bool) -> str:
 
 
 def build_section_guide(
-    db: PoseDatabase, codes: Sequence[int], prefix: str, width: int
+    db: PoseDatabase,
+    codes: Sequence[int],
+    prefix: str,
+    width: int,
+    naming: str = "code",
 ) -> str:
     """JSON 실제 구성에서 상태 매핑 가이드를 유도한다."""
     present = set(codes)
@@ -55,7 +80,7 @@ def build_section_guide(
         if not available:
             continue
         rows = "\n".join(
-            f"  {db.entries[code].label:<26} -> {asset_filename(prefix, code, width)}"
+            f"  {db.entries[code].label:<26} -> {asset_filename(prefix, code, width, label=db.entries[code].label, naming=naming)}"
             for code in available
         )
         blocks.append(f"[{section}]\n{rows}")
@@ -69,17 +94,21 @@ def build_genit_block(
     db: PoseDatabase,
     width: int,
     badge: str = "",
+    naming: str = "code",
 ) -> str:
     """
     젠잇 복사용 마크다운 블록을 조립해 문자열로 반환한다.
-    - {{url}}prefix/prefix_NNN.webp 단독 줄 출력
+    - {{url}}prefix/파일명 단독 줄 출력
     """
-    urls = [f"{URL_PLACEHOLDER}{prefix}/{asset_filename(prefix, c, width)}" for c in codes]
+    urls = [
+        f"{URL_PLACEHOLDER}{prefix}/{asset_filename(prefix, c, width, label=db.entries[c].label if c in db.entries else None, naming=naming)}"
+        for c in codes
+    ]
     calls = "\n".join(url for url in urls)
     files = "\n".join(
         f"- `{url}` ({db.entries[code].label})" for code, url in zip(codes, urls)
     )
-    guide = build_section_guide(db, codes, prefix, width)
+    guide = build_section_guide(db, codes, prefix, width, naming=naming)
     status = GENIT_STATUS_TEMPLATE.format(
         name=prefix, title="직책입력", status="현재상태", desc="대사한줄"
     )

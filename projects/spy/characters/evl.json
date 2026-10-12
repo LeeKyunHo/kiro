@@ -1,0 +1,28 @@
+{
+  "prefix": "evl",
+  "name": "Evelyn (에블린 / 살롱 간호 코스프레 엔터테이너)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "salon_vigilante_syndicate",
+  "role": "살롱 내 간호사 콘셉트 엔터테이너 및 자백제 조제 연구관",
+  "appearance": {
+    "face_and_hair": "pastel candy pink hair in twin drill curls, cute soft bangs framing face, luminous pink eyes, half-closed bedroom eyes, seductive enchanting demeanor, bare neck",
+    "physique": "petite voluptuous figure, huge soft breasts, slim doll-like waist, curvy hips",
+    "outfit": "white nurse cap with red cross, tight form-fitting pure white collared nurse mini dress, wide lapel collar, low-cut sweetheart neckline showing cleavage, completely bare neck, bare throat, short sleeves, fitted waist, tight white mini skirt, pure white thigh-high stockings, white high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Evelyn, salon nurse entertainer, pastel pink twin drill hair, cute bangs, luminous pink eyes, seductive enchanting demeanor, huge soft breasts, tiny doll waist, bare neck, bare throat, wearing white nurse cap with red cross, tight form-fitting pure white collared nurse mini dress, wide lapel collar, low-cut neckline showing cleavage, short sleeves, fitted waist, tight white mini skirt, pure white thigh-high stockings, white high heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy winter coat, armor, pink clothes, pink dress, pink top, micro bikini, string bikini, corset lacing, apron, frills, cutout keyhole, deformed hands, choker, collar, neck strap, neck ribbon, bandages, neck bandage, neck wrap, high collar, turtleneck, crossed straps, forehead mark, forehead dot, bandaid, bandage on face, cross mark, x mark",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, neat natural hairline, bare neck, completely bare smooth neck, exposed bare throat, clear collarbone, masterpiece, best quality, absurdres BREAK 1girl, solo, evelyn, petite voluptuous figure, huge breasts, slim doll-like waist, curvy hips, (pastel candy pink hair:1.15), (twin drill curls, twintails:1.15), (soft bangs, styled bangs:1.2), (luminous pink eyes:1.15), (half-closed bedroom eyes:1.05), seductive enchanting demeanor, subtle blush, white nurse cap with red cross, tight form-fitting pure snow-white nurse uniform mini dress, wide lapel collar, low-cut sweetheart neckline, open chest, deep cleavage, short sleeves, fitted waist, tight white mini pencil skirt, pure white thighhighs, zettai ryouiki, white high heels",
+  "sdxl_negative": "((bandaid, bandage, plaster, band-aid, cross bandaid, x bandaid, white bandaid, forehead bandaid, bandage on forehead, sticker on forehead, patch on forehead, medical tape, cross mark, x mark, white cross, forehead mark, forehead dot, red dot, red flower on forehead, forehead emblem, forehead symbol, forehead bindi, bindi, third eye, tilak, forehead tattoo, forehead jewel, forehead gem, forehead ornament, forehead crest, facial mark, forehead scar, forehead wound:1.7)), ((choker, neck choker, collar, neck collar, high collar, high neck, turtleneck, closed collar, red choker, black choker, neck strap, crossed straps, chest straps, strap on neck, neck ribbon, neck tie, neck scarf, red collar, bandages, neck bandage, neck wrap, throat wrap, neck gauze, neck accessory, necklace, torc:1.6)), ((exposed forehead, wide forehead:1.4)), ((keyhole, chest cutout, breast cutout, neck opening, neck cutout:1.35)), bikini, micro bikini, string bikini, bikini top, bra only, corset, lace-up, apron, maid apron, frills, frilled skirt, pleated skirt, garter straps, pink clothes, pink top, pink dress, pink bikini, pink skirt, pink trim, green tint, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), heavy coat, cape, armor, flat chest, small breasts, pants",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, neat natural hairline, bare neck, exposed bare throat, masterpiece, best quality, absurdres BREAK 1girl, solo, evelyn, porcelain skin, huge soft breasts, slender doll waist, curvy hips, (pastel candy pink hair:1.15), (twin drill curls, twintails:1.15), (soft bangs, styled bangs:1.2), (luminous pink eyes:1.15), (half-closed bedroom eyes:1.05), seductive enchanting demeanor",
+  "outfits": {
+    "swimsuit": "pure snow-white micro nurse bikini with red cross emblem, white side-tie bikini bottom",
+    "bunny": "pure snow-white glossy bunny girl bodysuit, white bunny ears with pink inner trim, white collar, red bowtie, white thighhighs",
+    "maid": "pure white and pastel pink sweet french maid mini dress, white frilled apron, lace maid headdress, white thighhighs",
+    "bdsm": "white leather bondage strap harness, pink heart collar choker, white leather cuffs, pure white thighhighs",
+    "underwear": "pure white frilled lace bra, matching white lace panties, white garter belt, pure white thighhighs",
+    "combat": "disheveled pure snow-white nurse uniform mini dress, white nurse cap, torn pure white thighhighs",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "prefix": "vic",
+  "name": "Victoria (빅토리아 / 정보국 수석 지휘관)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "state_intelligence_command",
+  "role": "정보국 수석 지휘관 및 고위 VIP 스폰서 위장",
+  "appearance": {
+    "face_and_hair": "ash blonde hair in neat elegant updo bun, sharp amber golden eyes, stylish dark thin glasses, mature aristocratic beauty, clean forehead",
+    "physique": "tall voluptuous hourglass figure, mature wide hips, large heavy breasts",
+    "outfit": "aristocratic VIP patroness attire, sheer white silk blouse with unbuttoned open collar, tight dark navy tailored corset vest, high-waist black pencil skirt, sheer stockings, high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Victoria, high-ranking intelligence director, ash blonde updo bun, amber golden eyes, dark thin glasses, mature beauty, tall voluptuous hourglass figure, large breasts, wearing sheer white silk blouse with open collar, tight tailored navy corset waistcoat, fitted black pencil skirt, sheer stockings, high heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy coats, military armor, steampunk, dieselpunk, deformed fingers",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, victoria, tall voluptuous hourglass figure, large breasts, wide hips, (ash blonde hair:1.15), (elegant updo bun:1.15), (amber golden eyes:1.15), (thin glasses:1.15), mature aristocratic demeanor, composed gaze, ((pure white silk blouse:1.15)), unbuttoned blouse, ((dark navy corset vest:1.15)), ((solid black pencil skirt:1.15)), sheer stockings, high heels",
+  "sdxl_negative": "forehead mark, forehead jewel, forehead gem, forehead ornament, keyhole, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), heavy coat, armor, flat chest, small breasts, exposed bra, exposed bra cup, see-through, colorful blouse, red blouse, blue blouse, green blouse, colorful vest, red vest, white vest, colorful skirt, red skirt, white skirt",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, victoria, tall voluptuous body, large heavy breasts, wide hips, mature curvy silhouette, (ash blonde hair:1.15), (elegant updo bun:1.15), (amber golden eyes:1.15), (thin glasses:1.15), mature aristocratic demeanor",
+  "outfits": {
+    "swimsuit": "elegant dark navy luxury halterneck bikini, gold buckle accents, sheer black pareo wrap",
+    "bunny": "aristocratic dark navy velvet bunny girl corset suit, black bunny ears, white silk collar, gold bowtie, sheer black stockings",
+    "maid": "elegant Victorian black silk maid dress, crisp white lace apron, lace headdress, sheer black stockings",
+    "bdsm": "dark navy and black leather dominatrix corset harness, gold ring collar, sheer black stockings, high heels",
+    "underwear": "luxury black lace balconette bra, matching high-waist black lace panties, garter belt, sheer stockings",
+    "combat": "disheveled unbuttoned white silk blouse, tight navy corset vest, black pencil skirt, torn sheer stockings",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

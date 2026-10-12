@@ -1,0 +1,28 @@
+{
+  "prefix": "chl",
+  "name": "Chloe (클로에 / 살롱 차이나드레스 엔터테이너 - 아사 스타일)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "salon_vigilante_syndicate",
+  "role": "검은 로우 트윈테일과 시크한 눈매를 지닌 살롱 차이나드레스 엔터테이너 (아사 스타일)",
+  "appearance": {
+    "face_and_hair": "jet-black hair tied in low loose twintails resting over shoulders, messy natural bangs framing face, single white rectangular hairclip on right side of bangs, dark charcoal-grey eyes, half-closed eyes, straight eyebrows, kuudere aloof demeanor, clean smooth forehead",
+    "physique": "slender voluptuous hourglass figure, large shapely breasts, narrow waist, wide hips, long toned bare legs",
+    "outfit": "high-exposure sleeveless black silk cheongsam qipao dress with gold dragon embroidery, deep keyhole chest cutout, extreme pelvic-high double side slits, completely bare long legs, exposed hip bones, black stiletto high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Chloe, salon qipao entertainer, Asa Mitaka style, jet-black hair in low loose twintails resting over shoulders, messy bangs with single white hairclip on side, dark grey half-closed eyes, straight eyebrows, kuudere aloof demeanor, slender voluptuous body, large breasts, wearing sleeveless black silk cheongsam qipao dress with gold embroidery, deep chest cutout, extreme high side slits showing completely bare long legs and hips, black stiletto heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, blonde hair, orange hair, stockings, pantyhose, pants, long pants, heavy coat, deformed forehead",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, chloe, slender voluptuous figure, large breasts, narrow waist, wide curvy hips, bare legs, (pure jet-black hair:1.15), (low twintails, low twin pigtails over shoulders:1.15), (messy bangs:1.15), (single white hairclip on bangs:1.15), (dark grey eyes:1.15), (half-closed eyes:1.1), (straight eyebrows:1.05), kuudere, quiet demeanor, cool composed gaze, ((sleeveless:1.2)), ((bare shoulders, bare arms:1.15)), (solid pitch-black silk cheongsam qipao, pitch-black dress:1.25), black chinese dress, gold embroidery, chest cutout, cleavage, high side slits, pelvic curtain, bare legs, no legwear, black high heels",
+  "sdxl_negative": "forehead mark, forehead jewel, forehead gem, forehead ornament, keyhole, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), orange hair, blonde hair, brown hair, stockings, pantyhose, socks, thighhighs, pants, trousers, flat chest, sleeves, long sleeves, puffy sleeves, (red dress, red clothes, red qipao:1.3), (orange dress, green dress, teal dress, cyan dress, blue dress, purple dress, pink dress, yellow dress, white dress, colorful dress:1.25)",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, chloe, slender voluptuous figure, large shapely breasts, narrow waist, wide curvy hips, long bare legs, pale smooth skin, (pure jet-black hair:1.15), (low twintails, low twin pigtails over shoulders:1.15), (messy bangs:1.15), (single white hairclip on bangs:1.15), (dark grey eyes:1.15), (half-closed eyes:1.1), (straight eyebrows:1.05), kuudere, quiet demeanor, cool composed gaze",
+  "outfits": {
+    "swimsuit": "jet-black silk micro bikini with gold oriental trim, side-tie bikini bottom, bare legs",
+    "bunny": "glossy black velvet bunny girl bodysuit with gold trim, black bunny ears, white collar, black bowtie, bare legs, black stiletto heels",
+    "maid": "sleeveless black silk oriental maid mini dress, white frilled apron, black maid headdress, bare legs",
+    "bdsm": "black leather bondage harness with gold buckles, black leather collar choker, leather thigh straps, bare legs",
+    "underwear": "black silk lace bra with gold embroidery, matching black lace string panties",
+    "combat": "battle-damaged sleeveless black silk cheongsam qipao with gold embroidery, high side slits, bare legs",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

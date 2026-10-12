@@ -1,0 +1,21 @@
+{
+  "prefix": "mia",
+  "name": "미아 (Mia)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A stunning alluring mature woman with crimson wine-red wavy flowing hair, seductive emerald green eyes with dark lashes, beauty mark under left eye, fair skin, confident smile",
+    "physique": "tall voluptuous hourglass body, very large perky breasts, narrow waist, wide feminine hips, mature alluring posture",
+    "outfit": "a provocative off-shoulder black maid dress with sheer black lace sleeves, plunging decollete highlighting abundant cleavage, tight waist cincher bodice, side-slit black skirt, white satin apron tied in a large back bow, black lace garter stockings"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (mature alluring woman:1.15), tall curvy hourglass body, voluptuous, large breasts, deep cleavage, narrow waist, wide hips, (crimson wine-red hair:1.15), (long wavy flowing hair:1.15), (seductive emerald green eyes:1.15), (beauty mark under left eye:1.15), fair skin, (black velvet choker with drop pendant:1.15), off-shoulder black maid dress, plunging neckline, side slit skirt, white satin apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (mature alluring woman:1.15), tall curvy hourglass body, voluptuous, large breasts, deep cleavage, narrow waist, wide hips, (crimson wine-red hair:1.15), (long wavy flowing hair:1.15), (seductive emerald green eyes:1.15), (beauty mark under left eye:1.15), fair skin, (black velvet choker with drop pendant:1.15), off-shoulder black maid dress, plunging neckline, side slit skirt, white satin apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry"
+}

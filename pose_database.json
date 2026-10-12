@@ -1,14 +1,19 @@
 {
-  "_schema": {
-    "purpose": "캐릭터 챗봇용 이미지 에셋 프롬프트 DB (Unholy Nova AI 최적화, 순수 Danbooru 태그)",
-    "structure": "최상위 키 = 섹션명, 값 = { 코드: 프롬프트 }",
-    "number_ranges": "000-019: emotions, 020-039: poses, 040-059: h_scenes, 140-159: scenes_otokonoko"
+  "_schema_version": "2.0",
+  "_description": "Unified KIRO+PLEPA Pose Database (000-099, 148-199): 키로 기존 포즈 + 플에파 B시리즈 8개 + 확장 H씬 52개 + 오토코노코 H씬 52개 (총 152개)",
+  "_total_poses": 152,
+  "_structure": {
+    "emotions": "000-019 (20개, 키로 원본)",
+    "poses": "020-039 (20개, 키로 원본)",
+    "genit_actions": "040-047 (8개, 플에파 B시리즈)",
+    "h_scenes": "048-099 (52개, 키로 고유 + 통합 확장)",
+    "scenes_otokonoko": "148-199 (52개, 오토코노코 전용 H씬 1:1 대칭)"
   },
   "emotions": {
     "000": {
       "label": "평상",
-      "description": "정면을 편안하게 응시하는 차분한 기본 스탠딩 표정. 과도한 감정 기복 없이 단정하고 안정된 기본 인상 연출.",
-      "prompt": "standing, looking at viewer, neutral expression, relaxed, clean background, soft lighting, bust shot, upper body portrait"
+      "description": "자연스러운 체중 이동(컨트라포스토)으로 서서 은은하고 매혹적인 미소로 정면을 응시하는 허벅지 위 반전신(cowboy shot) 대표 스탠딩 포즈.",
+      "prompt": "standing, looking at viewer, natural standing pose, slight weight shift, arms at sides, relaxed hands, alluring gentle smile, captivating gaze, light blush, clean background, soft lighting, cowboy shot"
     },
     "001": {
       "label": "미소",
@@ -21,12 +26,12 @@
       "prompt": "standing, looking at viewer, laughing, open mouth, closed eyes, ^_^, happy, clean background, soft lighting, bust shot, upper body portrait"
     },
     "003": {
-      "label": "홍조",
+      "label": "수줍은홍조",
       "description": "양 볼을 붉게 물들이며 수줍게 시선을 보내는 부끄러운 표정. 설렘과 순수한 부끄러움 연출.",
       "prompt": "standing, looking at viewer, shy glance, heavy blush, intensely flushed cheeks, sweet embarrassed smile, looking at viewer, bust shot, upper body portrait"
     },
     "004": {
-      "label": "뾰로통",
+      "label": "토라짐",
       "description": "볼을 빵빵하게 부풀리고 입술을 삐죽 내민 뾰로통한 토라진 표정. 귀엽게 삐치거나 투정 부리는 연출.",
       "prompt": "standing, looking at viewer, pout, puffed cheeks, crossed arms, annoyed, clean background, soft lighting, bust shot, upper body portrait"
     },
@@ -41,7 +46,7 @@
       "prompt": "standing, looking down at viewer, scornful gaze, half-closed eyes, cold expression, disgust, arrogant, looking at viewer, bust shot, upper body portrait"
     },
     "007": {
-      "label": "슬픔",
+      "label": "울먹임",
       "description": "눈가에 눈물이 글썽이며 입술을 파르르 떠는 애처로운 슬픈 표정. 비련과 보호본능을 자극하는 연출.",
       "prompt": "standing, looking at viewer, teary eyes, sad gaze, quivering lips, heartbroken expression, tears rolling down cheeks, looking at viewer, bust shot, upper body portrait"
     },
@@ -51,12 +56,12 @@
       "prompt": "standing, (turning head slightly away:1.2), (sidelong glance:1.25), (looking at viewer from side:1.2), (shy peeking:1.15), (intensely flushed cheeks:1.2), heavy blush, bashful hesitation, biting lower lip, flustered nervousness, clean background, soft lighting, bust shot, upper body portrait"
     },
     "009": {
-      "label": "놀람",
+      "label": "깜짝놀람",
       "description": "눈을 동그랗게 뜨고 입을 벌린 채 깜짝 놀란 표정. 예상치 못한 상황에 당황한 순간 포착.",
       "prompt": "standing, looking at viewer, surprised, wide eyes, open mouth, shocked, clean background, soft lighting, bust shot, upper body portrait"
     },
     "010": {
-      "label": "자신감",
+      "label": "자신만만",
       "description": "손을 허리에 얹고 당당하고 여유 넘치는 미소를 짓는 자신감 있는 표정. 당찬 매력 연출.",
       "prompt": "standing, looking at viewer, confident, smug, hand on hip, grin, clean background, soft lighting, bust shot, upper body portrait"
     },
@@ -66,7 +71,7 @@
       "prompt": "standing, looking at viewer, thinking, head tilt, curious, question mark, clean background, soft lighting, bust shot, upper body portrait"
     },
     "012": {
-      "label": "장난",
+      "label": "메롱장난",
       "description": "한쪽 눈을 윙크하며 혓바닥을 살짝 내민 장난기 가득한 메롱 표정. 짓궂고 유쾌한 매력.",
       "prompt": "standing, looking at viewer, playful, tongue out, one eye closed, wink, peace sign, clean background, soft lighting, bust shot, upper body portrait"
     },
@@ -76,17 +81,17 @@
       "prompt": "standing, looking at viewer, heart-shaped pupils, blush, happy, excited, clean background, soft lighting, bust shot, upper body portrait"
     },
     "014": {
-      "label": "유혹",
+      "label": "가슴유혹",
       "description": "양손으로 가슴을 모아 올리고 살짝 주무르며 가슴골을 강조하는 도발적이고 치명적인 유혹 포즈.",
       "prompt": "standing, looking at viewer, (hands on own breasts:1.25), (cupping own breasts:1.2), (breast squeeze:1.15), (cleavage:1.25), seductive bedroom eyes, sultry smile, heavy blush, intensely flushed cheeks, parted lips, teasing expression, clean background, soft lighting, bust shot, close-up upper body portrait"
     },
     "015": {
-      "label": "나른",
+      "label": "나른함",
       "description": "턱을 괸 채 게슴츠레한 눈으로 멍하니 바라보는 나른하고 무기력하며 편안한 휴식 표정.",
       "prompt": "sitting, looking at viewer, bored, half-closed eyes, chin rest, tired, clean background, soft lighting, bust shot, upper body portrait"
     },
     "016": {
-      "label": "진지",
+      "label": "진지함",
       "description": "흐트러짐 없는 곧은 자세와 흔들림 없는 날카로운 눈빛의 엄숙하고 결연한 진지한 표정.",
       "prompt": "standing, looking at viewer, serious, expressionless, straight posture, focused, clean background, soft lighting, bust shot, upper body portrait"
     },
@@ -101,19 +106,19 @@
       "prompt": "solo focus, (leaning close towards viewer:1.2), (possessive sweet smile:1.2), (deep heavy blush:1.25), intensely flushed cheeks, (loving intense gaze:1.15), wide affectionate eyes, (hands reaching towards viewer affectionately:1.15), sweet clingy expression, parted lips, romantic lighting, clean background, bust shot, close-up upper body portrait"
     },
     "019": {
-      "label": "키스조름",
+      "label": "뽀뽀조름",
       "description": "상체를 앞으로 쑥 내밀며 눈을 살포시 감고, 볼을 붉힌 채 입술을 동그랗게 오므려 키스를 기다리는 사랑스러운 뽀뽀 구도.",
       "prompt": "standing, solo, (leaning forward towards camera:1.25), (leaning close to viewer:1.2), (from slightly above:1.15), (closed eyes:1.2), (heavy blush:1.25), (intensely flushed cheeks:1.2), (puckered lips:1.2), (small rounded mouth:1.1), (hands resting in front:1.15), sweet romantic mood, clean background, soft lighting, bust shot, close-up upper body portrait"
     }
   },
   "poses": {
     "020": {
-      "label": "윙크",
+      "label": "윙크브이",
       "description": "한쪽 눈을 깜빡이며 손으로 브이(V) 포즈를 그리는 발랄하고 사랑스러운 아이돌풍 제스처.",
       "prompt": "standing, looking at viewer, wink, one eye closed, peace sign, playful cute smile, light blush, cowboy shot"
     },
     "021": {
-      "label": "양손하트",
+      "label": "손하트",
       "description": "양손 손가락을 모아 하트 모양을 만들어 가슴 앞에 내미는 다정하고 사랑스러운 팬서비스 포즈.",
       "prompt": "standing, looking at viewer, heart hands, happy smile, blushing cheeks, affectionate expression, cowboy shot"
     },
@@ -123,7 +128,7 @@
       "prompt": "standing, looking at viewer, waving, raised hand, sweet seductive smile, shy blush, affectionate gaze, parted lips, cowboy shot"
     },
     "023": {
-      "label": "팔짱",
+      "label": "도도한팔짱",
       "description": "가슴 아래로 단단히 팔짱을 껴서 볼륨감을 자연스럽게 강조하며 도도하게 서 있는 포즈.",
       "prompt": "standing, looking at viewer, crossed arms under breasts, cleavage focus, seductive smirk, bedroom eyes, heavy blush, teasing gaze, cowboy shot"
     },
@@ -133,12 +138,12 @@
       "prompt": "fully clothed, (from behind:1.15), (turned back:1.15), back view, (looking back over shoulder:1.15), looking at viewer, seductive glance over shoulder, standing, arched back, heavy blush, bedroom eyes, parted lips, sultry look, cowboy shot"
     },
     "025": {
-      "label": "앉아유혹",
+      "label": "소파유혹",
       "description": "소파나 의자에 깊숙이 기대앉아 다리를 살짝 벌리며 매혹적인 시선으로 유혹하는 자세.",
       "prompt": "sitting on sofa, leaning back, parted legs, parting thighs, provocative pose, hands resting on sofa, looking at viewer, seductive bedroom eyes, heavy blush, flushed cheeks, parted lips, sultry look, cowboy shot"
     },
     "026": {
-      "label": "체벌",
+      "label": "양손결박",
       "description": "침대에 누워 양 손목이 머리 위로 묶인 채 무력하게 누워 있는 구속 및 체벌 연출 포즈.",
       "prompt": "lying on bed, lying on back, arms above head, bound wrists, hands tied, arched back, looking at viewer, heavily flushed face, blushing, teary eyes, biting lip, breathless panting, helpless expression, cowboy shot"
     },
@@ -150,7 +155,7 @@
     "028": {
       "label": "밀착포옹",
       "description": "파트너와 마주 안겨 밀착한 상태에서 상대의 손이 엉덩이를 감싸 쥐는 농밀한 스킨십 포즈.",
-      "prompt": "fully clothed, (hugging partner:1.15), (facing partner:1.15), intimate embrace, (from behind:1.15), (turned back:1.15), back view, (ass grab:1.15), (butt grab:1.15), (fondling buttocks:1.15), groping, hands on buttocks, partner hands on ass, (looking back over shoulder:1.15), looking at viewer, arched back, faceless male, intensely flushed face, heavy blush, bedroom eyes, parted lips, breathless moaning, trembling with pleasure, seductive look, cowboy shot"
+      "prompt": "fully clothed, (hugging partner:1.15), (facing partner:1.15), intimate embrace, (from behind:1.15), (turned back:1.15), back view, (ass grab:1.15), (butt grab:1.15), (fondling buttocks:1.15), groping, hands on buttocks, partner hands on ass, (looking back over shoulder:1.15), looking at viewer, arched back, faceless male, light blush, rosy cheeks, bedroom eyes, parted lips, breathless moaning, trembling with pleasure, seductive look, cowboy shot"
     },
     "029": {
       "label": "도기유혹",
@@ -158,29 +163,29 @@
       "prompt": "fully clothed, on bed, (from behind:1.15), (turned back:1.15), back view, (on all fours:1.15), (ass up:1.15), arched back, kneeling, presenting hindquarters, buttocks focus, (looking back over shoulder:1.15), looking back, seductive glance back, seductive bedroom eyes, teasing smile, heavy blush, flushed cheeks, parted lips, provocative alluring pose, cowboy shot"
     },
     "030": {
-      "label": "전신나체",
+      "label": "알몸스탠딩",
       "description": "실오라기 하나 걸치지 않은 완전한 나체 상태에서 수줍은 듯 정면을 응시하는 스탠딩 누드 씬.",
-      "prompt": "standing, looking at viewer with bashful gaze, completely nude, nude, covering breasts, covering crotch, intense body blush, flushed face, extremely embarrassed, teary eyes, looking at viewer, trembling with arousal, biting lip, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, standing, looking at viewer, (shy bashful gaze:1.15), (heavy body blush:1.15), (intensely flushed face and chest:1.1), teary eyes, trembling slightly, arms at sides, (embarrassed expression:1.1), biting lip, soft lighting, cowboy shot"
     },
     "031": {
-      "label": "후방애무",
+      "label": "후방가슴애무",
       "description": "파트너가 뒤에서 덮쳐 양손으로 가슴을 감싸 쥐며 애무하는 등 뒤 스킨십 제스처.",
-      "prompt": "groping, breast grab, grabbing from behind, partner behind, hands on breasts, arms around waist, faceless male, looking back over shoulder, looking at viewer, heavy blush, embarrassed, teary eyes, protesting, parted lips, arched back, cowboy shot"
+      "prompt": "groping, breast grab, grabbing from behind, partner behind, hands on breasts, arms around waist, faceless male, looking back over shoulder, looking at viewer, soft pink blush, flushed cheeks, embarrassed, teary eyes, protesting, parted lips, arched back, cowboy shot"
     },
     "032": {
       "label": "벽치기",
       "description": "벽에 몰린 채 파트너가 양손으로 벽을 짚어 가두는 긴장감 넘치는 1인칭 카베동 구도.",
-      "prompt": "pov, (trapped against wall:1.25), (cornered against wall:1.25), back against wall, (partner off-screen:1.35), (only partner hands on wall:1.3), (partner arms flanking character on wall:1.25), (hands clutched against own chest:1.2), (hands held in front:1.15), looking at viewer, upturned gaze, rapid breathing, heavy blush, intensely flushed face, wide moist eyes, breathless panting, trembling lips, flustered and aroused, tight bust shot, close-up upper body portrait"
+      "prompt": "pov, (trapped against wall:1.25), (cornered against wall:1.25), back against wall, (partner off-screen:1.35), (only partner hands on wall:1.3), (partner arms flanking character on wall:1.25), (hands clutched against own chest:1.2), (hands held in front:1.15), looking at viewer, upturned gaze, rapid breathing, soft pink blush, flushed cheeks, wide moist eyes, breathless panting, trembling lips, flustered and aroused, tight bust shot, close-up upper body portrait"
     },
     "033": {
-      "label": "턱올리기",
+      "label": "턱들기",
       "description": "화면 밖 파트너의 손가락 끝이 턱을 살짝 들어올려 눈을 맞추며 설레는 로맨틱 구도.",
-      "prompt": "pov, (partner completely off-screen:1.4), (only partner single hand visible:1.35), (single hand reaching from edge of frame:1.25), (fingertips gently lifting character chin:1.3), (hand on another's chin:1.25), (gentle chin lift:1.2), (hands nervously clutched against own chest:1.2), (looking up at viewer:1.25), (upturned gaze:1.2), (smitten expression:1.25), (fluttering romantic smile:1.2), shy loving gaze, sparkling moist eyes, deep tender blush, flushed rosy cheeks, parted smiling lips, sweet romantic mood, tight bust shot, close-up upper body portrait"
+      "prompt": "pov, (partner completely off-screen:1.4), (only partner single hand visible:1.35), (single hand reaching from edge of frame:1.25), (fingertips gently lifting character chin:1.3), (hand on another's chin:1.25), (gentle chin lift:1.2), (hands nervously clutched against own chest:1.2), (looking up at viewer:1.25), (upturned gaze:1.2), (smitten expression:1.25), (fluttering romantic smile:1.2), shy loving gaze, sparkling moist eyes, soft pink blush, flushed rosy cheeks, parted smiling lips, sweet romantic mood, close-up upper body portrait, single view, single shot"
     },
     "034": {
-      "label": "가슴안김",
-      "description": "파트너가 가슴팍에 얼굴을 깊숙이 파묻고 기대며 온기를 나누는 포근하고 농밀한 안김 포즈.",
-      "prompt": "fully clothed, (single partner:1.35), (1boy:1.2), facing viewer, (head in cleavage:1.3), (partner face buried in character breasts:1.35), (partner head resting against chest:1.35), (holding partner head against chest:1.35), (embracing partner head:1.3), (arms wrapped around partner head:1.3), (hands cradling partner head:1.25), (only back of partner head visible:1.3), partner facing away from viewer, looking down at partner with tender smile, loving gaze, sweet blush, flushed rosy cheeks, parted smiling lips, warm romantic atmosphere, tight bust shot, close-up upper body portrait"
+      "label": "가슴파묻힘",
+      "description": "남성이 여자의 풍만한 가슴 위에 안면을 편안하게 얹고 기대며 여자가 그 머리를 포근하게 안아주는 따뜻하고 다정한 스킨십 포즈.",
+      "prompt": "(single view:1.35), (single shot:1.35), (head resting on breasts:1.45), (resting cheek on woman breasts:1.4), (face on breasts:1.35), (nuzzling breasts:1.3), (short dark hair:1.2), (woman gently resting hand on partner head:1.35), (soft intimate hug:1.3), (looking down at partner:1.25), tender gentle smile, soft blush, affectionate gaze, upper body, close-up, bust shot, warm cozy atmosphere"
     },
     "035": {
       "label": "침대덮침",
@@ -188,228 +193,598 @@
       "prompt": "pov, (from above:1.25), (looking down at character on bed:1.25), (lying on back on bed:1.25), pushed down on mattress, (partner off-screen:1.35), (only partner hands visible:1.3), (wrists pinned above head:1.35), (hands held above head:1.3), (hands pinned to bed:1.3), looking up at viewer, upturned pleading gaze, heavy blush, deeply flushed cheeks, breathless panting, parted trembling lips, teary moist eyes, heart eyes, helpless and aroused, arched back against pillow, close-up upper body, bust shot"
     },
     "036": {
-      "label": "공주안기",
+      "label": "공주님안기",
       "description": "파트너의 양팔에 들려 안긴 채 부끄러움에 눈을 감고 고개를 살포시 숙이며 목을 꼭 감싸 안는 공주님 안기 포즈.",
-      "prompt": "princess carry, carried, faceless male, (closed eyes:1.3), (head tilted down:1.25), (head bowed:1.2), (bashful embarrassed expression:1.3), (deep heavy blush:1.3), intensely flushed cheeks, (shy sweet smile:1.15), parted lips, arms wrapped around partner neck, clinging tightly to partner, burying face near partner shoulder, intimate romantic embrace, sweet romance, full body"
+      "prompt": "(single view:1.3), (single shot:1.3), (princess carry:1.35), (carried by male partner:1.3), faceless male, (closed eyes:1.2), (head tilted down:1.2), (bashful embarrassed expression:1.25), (sweet blush:1.2), soft rosy cheeks, shy sweet smile, parted lips, (arms wrapped around partner neck:1.3), clinging tightly to partner, intimate romantic embrace, soft romantic lighting, detailed anime shading, full body"
     },
     "037": {
-      "label": "딥키스",
-      "description": "파트너와 입술을 격렬하게 포개고 타액을 흘리며 열정적으로 나누는 농밀한 딥키스 씬.",
-      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body"
+      "label": "애프터피크",
+      "description": "체액 범벅인 피사체가 의자에 기대어 허공을 응시하며 깊은 여운에 빠진 사후 씬 (키로 050)",
+      "prompt": "solo, (sitting on chair:1.15), leaning back, looking at viewer, (excessive cum:1.15), cum on body, cum puddle, cum on thighs and chest, messy hair, (warm flushed skin:1.1), (rosy cheeks:1.1), (satisfied smile:1.15), (blissful afterglow expression:1.15), soft loving eyes, (gentle smile:1.1), content and fulfilled, relaxed and happy, cowboy shot"
     },
     "038": {
       "label": "샤워뒤태",
       "description": "샤워기 물줄기를 맞으며 젖은 머릿결과 함께 드러나는 매끄러운 뒷태 나체 실루엣.",
-      "prompt": "completely nude, full nudity, bare skin, back focus, from behind, standing in shower, clear glass shower stall, water droplets on skin, (looking back over shoulder at viewer:1.15), looking at viewer, wet hair, arched back, buttocks focus, seductive glance, parted lips, clean background, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, back focus, from behind, standing in shower, clear glass shower stall, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), water droplets on skin, dripping water, (steam:1.1), steamy, (looking back over shoulder at viewer:1.15), looking at viewer, arched back, buttocks focus, seductive glance, parted lips, clean background, cowboy shot"
     },
     "039": {
-      "label": "유리밀착",
+      "label": "샤워창밀착",
       "description": "샤워실 투명 유리벽에 맨가슴과 맨몸을 밀착시키며 밖을 도발적으로 바라보는 섹슈얼 씬.",
-      "prompt": "completely nude, full nudity, bare skin, breasts pressed against glass, hands pressed on glass, looking at viewer through glass, seductive gaze, heavy blush, breathless expression, biting lip, condensation on glass, water droplets, clear glass shower stall, intimate close-up, upper body focus"
+      "prompt": "completely nude, full nudity, bare skin, breasts pressed against glass, hands pressed on glass, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, looking at viewer through glass, seductive gaze, heavy blush, breathless expression, biting lip, condensation on glass, clear glass shower stall, intimate close-up, upper body focus"
+    }
+  },
+  "genit_actions": {
+    "040": {
+      "label": "상대방덮치기",
+      "description": "침대 위에서 유저를 내려다보며 다가오는 씬 (B08)",
+      "required_outfit": "default",
+      "prompt": "((kneeling on bed, looking down at viewer:1.25)), ((leaning forward with seductive confident smile:1.2)), hands on sheets, bed"
+    },
+    "041": {
+      "label": "손잡고끌려감",
+      "description": "유저에게 손을 잡힌 채 이끌려가는 씬 (B09)",
+      "required_outfit": "default",
+      "prompt": "((pov holding viewer's hand:1.25)), looking back flustered, being pulled forward, dynamic walking angle, light blush"
+    },
+    "042": {
+      "label": "손잡고이끌기",
+      "description": "신나서 유저의 손을 잡고 앞장서서 이끄는 씬 (B10)",
+      "required_outfit": "default",
+      "prompt": "((pov holding viewer's hand:1.25)), ((looking back over shoulder with bright cheerful smile:1.25)), follow me angle, walking"
+    },
+    "043": {
+      "label": "침대숙면",
+      "description": "침대에서 알몸으로 이불을 덮고 곤히 잠들어 있는 평온한 모습 (B11)",
+      "required_outfit": "nude",
+      "prompt": "((sleeping peacefully in bed:1.25)), ((nude under white duvet blanket:1.25)), ((bare shoulders, soft sheets covering body:1.2)), head resting on white pillow, closed eyes, calm gentle expression, soft morning light"
+    },
+    "044": {
+      "label": "목욕중",
+      "description": "욕조 안 따뜻한 물에 몸을 담그고 휴식하는 씬 (B16)",
+      "required_outfit": "nude",
+      "prompt": "completely nude, full nudity, bare skin, ((relaxing in warm bathtub:1.25)), water up to chest, steam, peaceful contented smile, wet hair, indoor bath"
+    },
+    "045": {
+      "label": "목욕들켜부끄러움",
+      "description": "목욕 도중 인기척에 놀라 웅크리는 씬 (B17)",
+      "required_outfit": "nude",
+      "prompt": "completely nude, full nudity, bare skin, ((hugging knees in bathtub:1.25)), ((splashing water, screaming blush:1.25)), startled wide eyes, caught in bath"
+    },
+    "046": {
+      "label": "결혼식",
+      "description": "고급스럽고 세련된 순백의 웨딩드레스를 입고 부케를 든 행복한 결혼식 (B20)",
+      "required_outfit": "wedding",
+      "prompt": "solo, cowboy shot, ((wearing luxurious haute couture pure white bridal wedding dress, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal gown:1.25)), ((holding bridal bouquet of white roses with both hands in front of waist:1.25)), sheer white bridal veil, delicate pearl tiara, radiant joyful smile, happy loving eyes, warm blush, sunlit cathedral stained glass background, soft romantic lighting, wedding day"
+    },
+    "047": {
+      "label": "쓰다듬받는",
+      "description": "머리를 쓰다듬받으며 기분 좋아하는 1인칭 씬 (B21)",
+      "required_outfit": "default",
+      "prompt": "((pov hand patting head:1.25)), ((leaning into hand, blissful smiling face:1.25)), closed eyes in contentment"
     }
   },
   "h_scenes": {
-    "040": {
-      "label": "정상위",
-      "description": "침대에 등을 대고 누워 파트너를 마주 보며 결합하는 클래식한 대면 체위. 시선 교감과 깊은 호흡.",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary position, legs spread wide, from side view, looking at partner, heavy body blush, intensely flushed face, open mouth panting, moaning, heavy-lidded pleasure gaze, teary eyes, breathless expression, trembling with ecstasy, cowboy shot"
-    },
-    "041": {
-      "label": "정면절정",
-      "description": "정상위 또는 대면 결합 상태에서 등을 젖히고 입을 벌려 신음하며 맞이하는 정면 황홀경 절정.",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, missionary position, climax, (excessive cum:1.15), (thick cum covering body:1.15), cum pool on bedsheets, cum on stomach, cum dripping between thighs, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, trembling body, heavy full body blush, lost in overwhelming orgasm, cowboy shot"
-    },
-    "042": {
-      "label": "후배위",
-      "description": "침대 위에 엎드려 엉덩이를 든 사족보행 자세에서 파트너가 뒤에서 진입하는 도기스타일 체위.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, doggystyle, from side view, looking back over shoulder, heavy body blush, intensely flushed cheeks, parted lips gasping, heavy-lidded intoxicated gaze, biting lip, trembling with pleasure, teary eyes, desperate moaning expression, cowboy shot"
-    },
-    "043": {
-      "label": "후방절정",
-      "description": "후배위 또는 스푸닝 상태에서 허리를 둥글게 꺾고 시트를 쥐어뜯으며 뒤돌아 절정에 빠져드는 순간.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, deeply arched back, deep doggystyle climax, (excessive cum:1.15), (thick cum dripping from buttocks:1.15), cum on back and thighs, cum pool, looking back, (intense ahegao:1.15), rolling eyes, tongue out, drooling, heavy body blush, trembling arms and legs, screams of ecstasy, lost in pleasure, cowboy shot"
-    },
-    "044": {
-      "label": "기승위",
-      "description": "파트너의 골반 위에 올라타 허리를 곧게 세우고 스스로 허리를 움직이며 주도하는 상위 체위.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, cowgirl position, looking down at partner, hands on partner chest, heavy body blush, flushed face and chest, parted lips moaning, heavy-lidded seductive gaze, breathless panting, arched back, trembling with arousal, sensual pleasure expression, teary eyes, cowboy shot"
-    },
-    "045": {
-      "label": "상위절정",
-      "description": "기승위 상태에서 극도의 쾌감에 허리를 뒤로 젖히고 가슴을 앞으로 내밀며 도달하는 강렬한 절정.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, deep cowgirl sex climax, (excessive cum covering lower body:1.15), (thick cum covering genitals:1.15), cum on stomach and inner thighs, cum dripping between thighs, cum pool on bedsheets, head thrown back in ecstasy, deeply arched back, (intense ahegao:1.15), eyes rolled back, parted lips moaning, breathless panting, tears of pleasure, heavy body blush, intensely flushed face, trembling thighs, overwhelming orgasm, cowboy shot"
-    },
-    "046": {
-      "label": "개각유혹",
-      "description": "침대에 기대어 스스로 양손으로 다리를 넓게 벌려 관람자를 향해 유혹하는 관능적인 1인 M자 개각 포즈.",
-      "prompt": "completely nude, full nudity, bare skin, solo, 1girl, solo focus, on bed, reclining on bed, leaning back against pillows, (spreading own legs:1.3), (holding own thighs:1.25), (legs spread wide:1.25), m-shaped legs, knees up, crotch focus, looking at viewer, seductive bedroom eyes, confident alluring gaze, sultry smile, deep heavy blush, intensely flushed cheeks, parted lips, breathless with desire, longing expression, cowboy shot"
-    },
-    "047": {
-      "label": "대면좌위",
-      "description": "앉아있는 파트너의 무릎 위에 마주 앉아 다리로 허리를 감싸 안고 깊게 밀착하는 좌위 체위.",
-      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, facing partner, hugging tightly, intimate embrace, arms around neck, chest to chest, gazing into partner eyes, looking at partner, heavy body blush, flushed cheeks, parted lips moaning into ear, heavy-lidded intoxicated gaze, streaming tears of pleasure, deeply aroused expression, breathless panting, upper body"
-    },
     "048": {
-      "label": "밀착절정",
-      "description": "무릎을 가슴까지 깊이 접어 올려 파트너의 무게로 짓눌리며 가장 깊숙한 곳에서 맞이하는 결합 절정.",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, knees folded to chest, deep mating press climax, (excessive cum:1.15), (thick cum covering body:1.15), cum pool on bedsheets, cum dripping between thighs, looking up, (intense ahegao:1.15), eyes rolled back, open mouth, tongue out, streaming tears of ecstasy, trembling uncontrollably, flushed body, completely broken by pleasure, cowboy shot"
+      "label": "M자개각",
+      "description": "침대에 기대어 스스로 양손으로 다리를 넓게 벌려 관람자를 향해 유혹하는 관능적인 1인 M자 개각 포즈 (키로 046)",
+      "prompt": "completely nude, full nudity, bare skin, solo, solo focus, on bed, reclining on bed, leaning back against pillows, (spreading own legs:1.3), (holding own thighs:1.25), (legs spread wide:1.25), m-shaped legs, knees up, crotch focus, looking at viewer, seductive bedroom eyes, confident alluring gaze, sultry smile, deep heavy blush, intensely flushed cheeks, parted lips, breathless with desire, longing expression, cowboy shot"
     },
     "049": {
-      "label": "스푸닝",
-      "description": "침대에 옆으로 함께 나란히 누운 상태에서 뒤에서 감싸 안으며 진입하는 안락하고 포근한 체위.",
-      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, spooning position, partner arm around waist, intimate embrace, heavy body blush, intensely flushed face and neck, head tilted back, parted lips soft moaning, heavy-lidded eyes half-closed in bliss, trembling with arousal, sensual pleasure expression, breathless, cowboy shot"
+      "label": "대면좌위",
+      "description": "앉아있는 파트너의 무릎 위에 마주 앉아 팔로 목을 감싸고 카메라를 향해 표정을 드러내는 좌위 체위 (키로 047)",
+      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, (from behind partner:1.2), (partner back view:1.2), faceless male back, bald male back, arms around partner neck, (facing viewer:1.2), face visible, looking at viewer over partner shoulder, heavy body blush, flushed cheeks and chest, parted lips moaning, heavy-lidded intoxicated gaze, streaming tears of pleasure, deeply aroused expression, breathless panting, cowboy shot"
     },
     "050": {
-      "label": "가슴밀착",
-      "description": "풍만한 양 가슴으로 파트너의 신체 부위를 감싸 쥐고 조이며 시선을 맞추는 가슴 애무 씬.",
-      "prompt": "completely nude, full nudity, bare skin, sitting on bed, paizuri titfuck, cleavage penetration, looking down at partner, heavy body blush, intensely flushed face, breathless panting, open mouth gasping, heavy-lidded intoxicated gaze, biting lip, tears at corner of eyes, trembling with intense pleasure, deeply aroused expression, upper body"
+      "label": "밀착절정",
+      "description": "무릎을 가슴까지 깊이 접어 올려 파트너의 무게로 짓눌리며 가장 깊숙한 곳에서 맞이하는 결합 절정 (키로 048)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, knees folded to chest, deep mating press climax, (excessive cum:1.15), (thick cum covering body:1.15), cum pool on bedsheets, cum dripping between thighs, looking up, (intense ahegao:1.15), eyes rolled back, open mouth, tongue out, streaming tears of ecstasy, trembling uncontrollably, flushed body, completely broken by pleasure, cowboy shot"
     },
     "051": {
-      "label": "가슴절정",
-      "description": "가슴 애무 중 가슴골과 쇄골 위로 백탁의 액체가 분출되는 순간을 올려다보는 절정 씬.",
-      "prompt": "completely nude, full nudity, bare skin, pov, looking down, paizuri titfuck climax, intimate close-up, kneeling between partner legs, chest pressed against partner, (excessive cum:1.15), (huge cumshot:1.15), cum on breasts and cleavage, cum dripping down chest, looking down at partner affectionately, loving gaze, tender affectionate smile, gentle smile, soft loving eyes, sweet fond expression, blushing softly, flushed cheeks, parted lips, pleased and devoted, upper body close-up"
+      "label": "스푸닝",
+      "description": "침대에 옆으로 함께 나란히 누운 상태에서 뒤에서 감싸 안으며 진입하는 안락하고 포근한 체위 (키로 049)",
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, spooning position, partner arm around waist, intimate embrace, heavy body blush, intensely flushed face and neck, head tilted back, parted lips soft moaning, heavy-lidded eyes half-closed in bliss, trembling with arousal, sensual pleasure expression, breathless, cowboy shot"
     },
     "052": {
-      "label": "구강봉사",
-      "description": "파트너 앞에 무릎을 꿇고 눈을 올려다보며 입술과 혀로 섬세하게 봉사하는 구강 성교 씬.",
-      "prompt": "completely nude, full nudity, bare skin, fellatio oral sex, kneeling between partner legs, intimate close-up, mouth wide open taking shaft, looking up at partner, heavy-lidded intoxicated gaze, heavily flushed face, tears at corner of eyes, submissive pleasure expression, saliva dripping, drooling, heavily aroused, trembling with excitement, upper body close-up"
+      "label": "침대누워사후여운",
+      "description": "모든 행위가 끝나고 땀과 체액에 젖은 채 침대에 나른하게 누워 거친 숨을 고르는 사후 여운 (키로 058)",
+      "prompt": "solo, completely nude, full nudity, bare skin, aftersex aftermath, lying on bed, messy white sheets, looking at viewer, (excessive cum:1.15), cum pool on bedsheets, cum dripping on inner thighs, messy hair, (warm flushed skin:1.1), (rosy cheeks:1.1), (satisfied smile:1.15), (blissful afterglow expression:1.15), soft loving eyes, tender happy gaze, (gentle smile:1.1), content and fulfilled expression, warm glowing skin, basking in afterglow, completely melted by pleasure, relaxed and happy, cowboy shot"
     },
     "053": {
-      "label": "결합키스",
-      "description": "파트너와 완전히 밀착하여 목덜미를 끌어안고 혀를 깊게 얽으며 타액을 나누는 농밀한 딥키스 절정 씬.",
-      "prompt": "completely nude, full nudity, bare skin, french kiss, deep kiss, tongue entanglement, (intertwined tongues:1.25), saliva trail between lips, lips pressed together, intimate embrace, arms wrapped tightly around partner neck, hugging partner, chest to chest, faceless male, (partner off-screen:1.15), closed eyes in bliss, heavy body blush, intensely flushed face, breathless moaning into kiss, tears at corner of eyes, overwhelmed by intense pleasure, trembling with ecstasy, tight bust shot, close-up upper body portrait"
+      "label": "침대엎드려사후",
+      "description": "행위 후 침대에 완전히 엎드려 엉덩이와 허벅지에 체액이 흐르는 채 나른하게 뒤돌아보는 여운 (키로 059)",
+      "prompt": "solo, completely nude, full nudity, bare skin, (from behind:1.15), (back view:1.15), (lying prone on bed:1.15), buttocks focus, (looking back over shoulder at viewer:1.15), looking at viewer, ass slightly raised, exhausted aftersex aftermath, legs spread, (excessive cum:1.15), (thick cum dripping between thighs:1.15), cum pool on bedsheets, cum dripping down inner thighs, trembling legs, heavily flushed back, heavy-lidded dazed expression, parted lips moaning, completely broken and melted by pleasure, cowboy shot"
     },
     "054": {
-      "label": "딥스로트",
-      "description": "머리채를 잡힌 채 목구멍 깊숙이 파트너를 받아들이며 눈물을 글썽이는 강렬한 구강 결합 씬.",
-      "prompt": "completely nude, full nudity, bare skin, deepthroat irrumatio, kneeling between partner legs, partner hand on head, shaft deep in throat, throat bulge, streaming tears of ecstasy, gagging on shaft, eyes rolled back in pleasure, heavy body blush, saliva dripping, messy drooling, intoxicated ecstasy expression, upper body close-up"
+      "label": "정상위약",
+      "description": "침대에 등을 대고 누워 파트너와 눈을 맞추며 부드럽게 시작하는 정상위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, ((missionary position:1.3)), ((lying on back on bed, legs spread wide:1.25)), ((from side view angle:1.2)), looking up at partner with soft loving gaze, heavy body blush, flushed cheeks, soft parted lips, breathless gentle expression, disheveled sheets, soft ambient bedroom light, cowboy shot"
     },
     "055": {
-      "label": "구강사후",
-      "description": "봉사가 끝난 후 입가에 액체를 흘리며 혀를 살짝 내밀고 만족스레 올려다보는 사후 여운 씬.",
-      "prompt": "solo, completely nude, full nudity, bare skin, oral aftermath, kneeling on bed, hands on mattress, head tilted up, looking up at viewer, (excessive cum:1.15), (thick cum overflowing from mouth, dripping from chin down chest:1.15), cum on breasts, cum on collarbone, completely dazed expression, heavy-lidded gazing at viewer with pleasure, open mouth, tongue out, saliva and cum dripping, tears of ecstasy, heavy body blush, messy hair, exhausted from overwhelming pleasure, upper body portrait"
+      "label": "정상위강",
+      "description": "침대에 등을 대고 누워 진행되는 격렬한 정상위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, ((missionary position:1.35)), ((lying on back on bed, female on bottom:1.35)), ((single male partner on top between her thighs:1.25)), ((from front-center view angle:1.2)), legs spread wide, completely nude, intense pleasure, arched back, open mouth, looking up intensely at partner, heavy blush, bed, disheveled sheets, cowboy shot"
     },
     "056": {
-      "label": "벽밀착",
-      "description": "벽에 등이나 가슴을 밀착당해 한쪽 다리를 들어 올린 상태로 선 채 결합하는 격렬한 스탠딩 섹스.",
-      "prompt": "completely nude, full nudity, bare skin, standing sex, pinned against wall, one leg raised, vaginal penetration, hands on wall, looking back at partner, heavy body blush, intensely flushed face, open mouth gasping, moaning loudly, heavy-lidded teary pleasure eyes, trembling legs, breathless panting, overwhelming arousal expression, cowboy shot"
+      "label": "정상위절정",
+      "description": "정상위 결합 상태에서 등을 젖히고 입을 벌려 신음하며 맞이하는 정면 황홀경 절정 (키로 041)",
+      "prompt": "completely nude, full nudity, bare skin, (lying on bed:1.2), (missionary position:1.25), (vaginal penetration:1.2), legs spread wide, (climax:1.2), (excessive cum:1.15), (thick cum covering body:1.15), cum puddle on sheets, cum stain on bedsheets, cum on stomach, cum dripping between thighs, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, (arched back:1.15), trembling body, heavy full body blush, lost in overwhelming orgasm, cowboy shot"
     },
     "057": {
-      "label": "샤워씬",
-      "description": "샤워실 젖은 타일 벽에 기대어 쏟아지는 온수 물줄기 속에서 나누는 농밀한 수중 결합 씬.",
-      "prompt": "completely nude, full nudity, bare skin, shower sex, standing against clear glass wall, pinned against glass, one leg wrapped around partner waist, vaginal penetration, clear glass shower stall, heavy body blush, intensely flushed face, parted lips gasping, head tilted back against glass, heavy-lidded pleasure eyes, trembling with intense arousal, sensual moaning expression, teary eyes, clean background, cowboy shot"
+      "label": "후배위약",
+      "description": "침대에 엎드려 뒤에서 부드럽게 진입하는 후배위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((on all fours:1.3)), ((arched back, hips raised:1.25)), ((partner gripping hips firmly from behind:1.2)), from side view, looking back over shoulder at partner, heavy body blush, intensely flushed cheeks, parted lips gasping, teary gentle pleasure gaze, soft bedding, cowboy shot"
     },
     "058": {
-      "label": "침대사후",
-      "description": "모든 행위가 끝나고 땀과 체액에 젖은 채 침대에 나른하게 누워 거친 숨을 고르는 사후 여운.",
-      "prompt": "solo, completely nude, full nudity, bare skin, aftersex aftermath, lying on bed, messy white sheets, looking at viewer, (excessive cum:1.15), cum pool on bedsheets, cum dripping on inner thighs, messy hair, heavy-lidded intoxicated eyes, parted lips, drool at mouth corner, flushed skin, trembling afterglow, dazed pleasure smile, completely melted by orgasm, relaxed, cowboy shot"
+      "label": "후배위강",
+      "description": "침대에 엎드려 깊은 결합과 전율을 느끼는 격렬한 후배위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((deep doggystyle position, intensely arched back:1.35)), ((on all fours, face buried in pillow:1.3)), trembling body, heavy full body blush, open mouth gasping, ecstasy expression, tears of intense pleasure, disheveled bedsheets, cowboy shot"
     },
     "059": {
-      "label": "후방사후",
-      "description": "행위 후 침대에 완전히 엎드려 엉덩이와 허벅지에 체액이 흐르는 채 나른하게 뒤돌아보는 여운.",
-      "prompt": "solo, completely nude, full nudity, bare skin, (from behind:1.15), (back view:1.15), (lying prone on bed:1.15), buttocks focus, (looking back over shoulder at viewer:1.15), looking at viewer, ass slightly raised, exhausted aftersex aftermath, legs spread, (excessive cum:1.15), (thick cum dripping between thighs:1.15), cum pool on bedsheets, cum dripping down inner thighs, trembling legs, heavily flushed back, heavy-lidded dazed expression, parted lips moaning, completely broken and melted by pleasure, cowboy shot"
+      "label": "후배위절정",
+      "description": "후배위 상태에서 허리를 둥글게 꺾고 시트를 쥐어뜯으며 뒤돌아 절정에 빠져드는 순간 (키로 043)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, deeply arched back, deep doggystyle climax, (excessive cum:1.15), (thick cum dripping from buttocks:1.15), cum on back and thighs, cum pool, looking back, (intense ahegao:1.15), rolling eyes, tongue out, drooling, heavy body blush, trembling arms and legs, screams of ecstasy, lost in pleasure, cowboy shot"
+    },
+    "060": {
+      "label": "기승위약",
+      "description": "파트너 위에 올라타 위에서 부드럽게 리드하는 기승위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((cowgirl position, straddling partner:1.3)), ((hands resting on partner's chest:1.25)), upright posture, looking down at partner with seductive smile, heavy blush, disheveled sheets, warm soft lighting, cowboy shot"
+    },
+    "061": {
+      "label": "기승위강",
+      "description": "파트너 위에서 자발적으로 격렬하게 움직이는 기승위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((intense cowgirl position:1.35)), ((leaning back, head thrown back, throat exposed:1.3)), hands resting on own thighs, arched back, open mouth breathless moan, heavy full body blush, overwhelming ecstasy, bed, cowboy shot"
+    },
+    "062": {
+      "label": "기승위절정",
+      "description": "기승위 상태에서 극도의 쾌감에 허리를 뒤로 젖히고 가슴을 앞으로 내밀며 도달하는 강렬한 절정 (키로 045)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, deep cowgirl sex climax, (excessive cum covering lower body:1.15), (thick cum covering genitals:1.15), cum on stomach and inner thighs, cum dripping between thighs, cum pool on bedsheets, head thrown back in ecstasy, deeply arched back, (intense ahegao:1.15), eyes rolled back, parted lips moaning, breathless panting, tears of pleasure, heavy body blush, intensely flushed face, trembling thighs, overwhelming orgasm, cowboy shot"
+    },
+    "063": {
+      "label": "알몸섹스절정",
+      "description": "정상위/후배위/기승위 등 결합 상태에서 맞이하는 범용 절정 마무리 (체액 표현 포함)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, (climax:1.2), (excessive cum:1.15), (thick cum covering body:1.15), cum puddle on sheets, cum stain on bedsheets, cum on stomach, cum dripping between thighs, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, (arched back:1.15), trembling body, heavy full body blush, lost in overwhelming orgasm, cowboy shot"
+    },
+    "064": {
+      "label": "파이즈리약",
+      "description": "가슴으로 감싸기 시작하는 부드러운 파이즈리 (약)",
+      "prompt": "completely nude, full nudity, bare skin, sitting on bed, ((paizuri titfuck, gentle rhythm:1.3)), cleavage penetration, looking up at partner with teasing smile, soft blush, parted lips, bedroom eyes, tender expression, upper body"
+    },
+    "065": {
+      "label": "파이즈리강",
+      "description": "격렬한 마찰로 사정 임박한 파이즈리 (강)",
+      "prompt": "completely nude, full nudity, bare skin, sitting on bed, ((intense paizuri titfuck, rapid rhythm:1.35)), cleavage penetration, looking down at partner, heavy body blush, intensely flushed face, breathless panting, open mouth gasping, heavy-lidded intoxicated gaze, biting lip, tears at corner of eyes, trembling with intense pleasure, upper body"
+    },
+    "066": {
+      "label": "가슴사정",
+      "description": "가슴 애무 중 가슴골과 쇄골 위로 백탁의 액체가 분출되는 순간을 올려다보는 절정 씬 (키로 051, 피니시)",
+      "prompt": "completely nude, full nudity, bare skin, pov, from above, solo focus, looking up at viewer, paizuri titfuck climax, intimate close-up, (excessive cum:1.15), (huge cumshot:1.15), cum on breasts and cleavage, cum dripping down chest, loving gaze upward, tender affectionate smile, gentle smile, soft loving eyes, sweet fond expression, blushing softly, flushed cheeks, parted lips, pleased and devoted, upper body close-up"
+    },
+    "067": {
+      "label": "남근핥기",
+      "description": "남성기를 혀로 천천히 핥아 올리며 올려다보는 애무 장면",
+      "prompt": "completely nude, full nudity, bare skin, kneeling between partner legs, ((licking shaft slowly with tongue:1.35)), ((tongue extended along length:1.3)), looking up at partner with seductive eyes, saliva trail glistening, heavy blush, teasing playful expression, bedroom eyes, intimate close-up, upper body"
+    },
+    "068": {
+      "label": "펠라치오약",
+      "description": "무릎 꿇고 봉사를 시작하며 올려다보는 펠라치오 (약)",
+      "prompt": "completely nude, full nudity, bare skin, ((kneeling between partner's legs, fellatio:1.35)), ((looking up submissively with deeply devoted affectionate gaze:1.3)), open mouth, licking tip, saliva trail, heavy facial blush, teary eyes, intimate tender bedroom atmosphere, upper body close-up"
+    },
+    "069": {
+      "label": "펠라치오강",
+      "description": "깊은 몰입과 빠른 봉사로 진행되는 펠라치오 (강)",
+      "prompt": "completely nude, full nudity, bare skin, fellatio oral sex, ((deep blowjob, head bobbing:1.35)), kneeling between partner legs, mouth wide open taking shaft, looking up at partner, heavy-lidded intoxicated gaze, heavily flushed face, tears at corner of eyes, hands on thighs, intense, saliva dripping, heavily aroused, upper body close-up"
+    },
+    "070": {
+      "label": "펠라사후",
+      "description": "구강 봉사 후 입가에 백탁의 액체를 묻히고 혀를 내밀어 만족스레 올려다보는 사후 여운 (키로 055, 피니시)",
+      "prompt": "solo, completely nude, full nudity, bare skin, oral aftermath, kneeling on bed, hands on mattress, head tilted up, looking up at viewer, (excessive cum:1.15), (thick cum overflowing from mouth, dripping from chin down chest:1.15), cum on breasts, cum on collarbone, completely dazed expression, heavy-lidded gazing at viewer with pleasure, open mouth, tongue out, saliva and cum dripping, tears of ecstasy, heavy body blush, messy hair, exhausted from overwhelming pleasure, upper body portrait"
+    },
+    "071": {
+      "label": "딥스로트",
+      "description": "머리채를 잡힌 채 목구멍 깊숙이 파트너를 받아들이며 눈물을 글썽이는 강렬한 구강 결합 씬 (키로 054)",
+      "prompt": "completely nude, full nudity, bare skin, deepthroat irrumatio, kneeling between partner legs, partner hand on head, shaft deep in throat, throat bulge, streaming tears of ecstasy, gagging on shaft, eyes rolled back in pleasure, heavy body blush, saliva dripping, messy drooling, intoxicated ecstasy expression, upper body close-up"
+    },
+    "072": {
+      "label": "입위약",
+      "description": "벽에 기댄 채 진행되는 부드러운 스탠딩 결합 (약, 키로 056 기반)",
+      "prompt": "completely nude, full nudity, bare skin, ((standing sex:1.25)), ((against wall, one leg up:1.2)), embrace, partner holding leg gently, looking at partner, soft blush, kissing, tender intimate moment, cowboy shot"
+    },
+    "073": {
+      "label": "입위강",
+      "description": "벽에 밀착되어 매달린 채 진행되는 격렬한 입위 (강, 키로 056 기반)",
+      "prompt": "completely nude, full nudity, bare skin, ((standing sex:1.25)), ((pinned to wall:1.3)), ((legs wrapped tightly around partner waist:1.25)), clinging desperately, intense breathless gasps, open mouth moaning, heavy full body blush, ecstasy expression, cowboy shot"
+    },
+    "074": {
+      "label": "샤워실섹스약",
+      "description": "샤워실 젖은 타일 벽에 기대어 부드럽게 시작하는 수중 결합 씬 (약, 키로 057 기반)",
+      "prompt": "completely nude, full nudity, bare skin, shower sex, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, standing against clear glass wall, gentle rhythm, one leg wrapped around partner waist, vaginal penetration, partner behind, faceless male, male hands on waist, clear glass shower stall, soft blush, parted lips, tender moaning, clean background, cowboy shot"
+    },
+    "075": {
+      "label": "샤워실섹스강",
+      "description": "샤워실 젖은 타일 벽에 기대어 쏟아지는 온수 물줄기 속에서 격렬하게 나누는 수중 결합 씬 (강, 키로 057 기반)",
+      "prompt": "completely nude, full nudity, bare skin, shower sex, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, standing against clear glass wall, pinned against glass, one leg wrapped around partner waist, vaginal penetration, partner behind, faceless male, male hands on waist, clear glass shower stall, heavy body blush, intensely flushed face, parted lips gasping, head tilted back against glass, heavy-lidded pleasure eyes, trembling with intense arousal, sensual moaning expression, teary eyes, clean background, cowboy shot"
+    },
+    "076": {
+      "label": "측위약",
+      "description": "옆으로 나란히 누워 마주보며 천천히 결합하는 측위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, ((side by side sex:1.25)), leg over partner hip, gentle slow rhythm, looking at partner with loving gaze, intimate embrace, soft blush, parted lips, tender expression, cowboy shot"
+    },
+    "077": {
+      "label": "측위강",
+      "description": "허리를 꽉 쥐고 옆에서 강하게 몰아붙이는 측위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, ((intense side by side sex:1.35)), partner gripping waist firmly, head pressed into pillow, gasping breathlessly, open mouth moaning, heavy blush, trembling body, disheveled sheets, cowboy shot"
+    },
+    "078": {
+      "label": "커닐링구스",
+      "description": "하체 부위에 입을 맞추며 애무하는 씬",
+      "prompt": "completely nude, full nudity, bare skin, ((cunnilingus:1.3)), lying on bed, legs spread, partner between legs, clutching sheets, heavy blush, parted lips, moaning, bed, cowboy shot"
+    },
+    "079": {
+      "label": "보지애무약",
+      "description": "은밀한 부위를 손가락으로 부드럽게 애무하는 씬 (약)",
+      "prompt": "completely nude, full nudity, bare skin, ((fingering, gentle petting:1.3)), lying on bed, partner hand on lower body, soft arched back, trembling knees, blushing sweetly, parted lips, tender pleasure, bed, cowboy shot"
+    },
+    "080": {
+      "label": "보지애무강",
+      "description": "하체 부위를 강렬하게 자극하여 절정에 이르는 씬 (강)",
+      "prompt": "completely nude, full nudity, bare skin, ((intense fingering:1.35)), lying on bed, partner hand vigorously stimulating, deeply arched hips, gasping desperately, open mouth moaning, ecstasy expression, heavy blush, trembling body, bed, cowboy shot"
+    },
+    "081": {
+      "label": "착의섹스약",
+      "description": "옷을 입은 채 치마만 걷어올리고 나누는 착의 씬 (약)",
+      "prompt": "((clothed sex:1.25)), skirt lifted, underwear aside, fully dressed, standing or sitting, gentle rhythm, soft blush, looking at partner, thrilling secret encounter, soft lighting"
+    },
+    "082": {
+      "label": "착의섹스강",
+      "description": "옷깃이 흐트러진 채 책상이나 벽에서 진행되는 격렬한 착의 씬 (강)",
+      "prompt": "((intense clothed sex:1.35)), unbuttoned shirt, skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal"
+    },
+    "083": {
+      "label": "샤워섹스중",
+      "description": "샤워실 유리벽에 손과 가슴을 밀착시키며 온수 속에서 리듬을 타는 결합 씬 (N27)",
+      "prompt": "completely nude, full nudity, bare skin, ((shower sex, hands pressed against clear glass wall:1.3)), ((steamy glass, water running down body:1.25)), wet skin, wet hair, partner behind her, standing sex, arched back, panting, heavy blush, condensation on glass, cowboy shot"
+    },
+    "084": {
+      "label": "샤워섹스강",
+      "description": "쏟아지는 물줄기 아래 한쪽 다리를 들어올려 안긴 채 절정에 달하는 격렬한 샤워 결합 (N28)",
+      "prompt": "completely nude, full nudity, bare skin, ((intense shower sex, one leg lifted and wrapped around partner:1.3)), ((clinging to partner shoulders in shower:1.25)), wet skin, wet hair, heavy water droplets, steam, ecstasy, open mouth, head tilted back, drenched, cowboy shot"
+    },
+    "085": {
+      "label": "파일드라이버",
+      "description": "어깨만 바닥에 닿고 허리와 엉덩이를 수직으로 치켜올려 무릎을 얼굴 옆에 접은 채 위에서 내리꽂듯 결합하는 역전 파일드라이버 자세 (N30)",
+      "prompt": "completely nude, full nudity, bare skin, ((piledriver position, vertical piledriver sex:1.35)), ((upside-down, inverted position:1.3)), ((shoulders and upper back on bed, hips raised vertically in air:1.35)), ((knees folded to sides of head:1.3)), ((legs spread wide in air:1.25)), partner standing above thrusting downward, partner gripping her hips, from side view, ((intense ecstasy expression:1.2)), eyes rolled back, open mouth moaning, tears of overwhelming pleasure, flushed face, trembling body, extreme deep penetration, bed, cowboy shot"
+    },
+    "086": {
+      "label": "대딸",
+      "description": "손으로 부드럽고 능숙하게 상대의 중심을 자극하는 대딸 (N33)",
+      "prompt": "completely nude, full nudity, bare skin, ((handjob, stroking delicately:1.3)), ((hands gripping partner firmly:1.25)), looking up with sweet bashful smile, rhythmic motion, heavy blush, bedroom, from front angle, teary blushing eyes, cowboy shot"
+    },
+    "087": {
+      "label": "교배프레스",
+      "description": "다리를 가슴까지 접어 올리고 깊숙이 누르는 교배프레스 (N24)",
+      "prompt": "completely nude, full nudity, bare skin, ((mating press position:1.35)), ((legs folded up to chest, pressed down firmly:1.35)), deep intimate union, hands clutching bedsheets, flushed breathless face, open mouth moaning, tears of ecstasy, disheveled mattress, cowboy shot"
+    },
+    "088": {
+      "label": "들박",
+      "description": "공중에 완전히 안아 들어올린 채 진행되는 들박 (N25)",
+      "prompt": "completely nude, full nudity, bare skin, ((suspended sex, carried off floor:1.3)), ((legs wrapped tightly around partner's waist:1.25)), ((partner gripping thighs firmly:1.2)), intense breathless gasps, open mouth, heavy full body blush, tears of pleasure, from front angle showing intimate union, disheveled, cowboy shot"
+    },
+    "089": {
+      "label": "수유대딸",
+      "description": "가슴에 젖꼭지를 물려 수유하듯 하면서 동시에 한 손으로 아래를 쓰다듬어주는 수유대딸 (N34)",
+      "prompt": "completely nude, full nudity, bare skin, ((nursing handjob, breastfeeding and handjob simultaneously:1.35)), ((partner sucking on nipple, mouth on breast:1.3)), ((one hand stroking partner penis with delicate grip:1.35)), ((handjob while nursing:1.3)), sitting, partner lying with head on lap, looking down with sweet maternal affectionate smile, gentle loving blush, tender bedroom intimacy, cowboy shot"
+    },
+    "090": {
+      "label": "뒷스마타",
+      "description": "엎드린 채 허벅지 사이에 끼워 마찰하는 뒷스마타 (N35)",
+      "prompt": "completely nude, full nudity, bare skin, ((rear sumata, back thigh sex:1.35)), ((lying on stomach, hips raised slightly, legs squeezed tight:1.3)), ((partner rubbing between her thighs from behind:1.3)), thigh friction without insertion, looking back over shoulder, flushed cheeks, heavy blush, bed, cowboy shot"
+    },
+    "091": {
+      "label": "스팽킹",
+      "description": "엉덩이를 찰싹 때려 붉은 손자국을 남기는 스팽킹 (N36)",
+      "prompt": "completely nude, full nudity, bare skin, spanking, red marks on rear, bent over bed, biting lip, teary eyes, submission, blushing, cowboy shot"
+    },
+    "092": {
+      "label": "배복종자세",
+      "description": "배를 보이고 드러누워 복종을 맹세하는 배복종 자세 (N37)",
+      "prompt": "completely nude, full nudity, bare skin, solo, belly exposure, lying on back, submissive pose, hands up, showing stomach, adoring smile, cowboy shot"
+    },
+    "093": {
+      "label": "애널섹스",
+      "description": "후방 아날 통로로 진입하는 애널 섹스 (N42)",
+      "prompt": "completely nude, full nudity, bare skin, ((doggystyle anal, on hands and knees on bed:1.3)), ((partner gripping hips firmly from behind:1.25)), looking back over shoulder, teary gasping face, heavy blush, bed, cowboy shot"
+    },
+    "094": {
+      "label": "풋잡",
+      "description": "발가락과 발바닥으로 능숙하게 비비는 풋잡 (N43)",
+      "prompt": "completely nude, full nudity, bare skin, footjob, bare feet, toes, soles, teasing smile, couch, POV, looking at partner"
+    },
+    "095": {
+      "label": "씻겨주기",
+      "description": "샤워실에서 거품 스펀지로 상대를 정성껏 씻겨주는 씬 (N46)",
+      "prompt": "completely nude, full nudity, bare skin, washing partner, shower, soapy bubbles, sponge, steam, wet hair, smiling, caring, cowboy shot"
+    },
+    "096": {
+      "label": "착의펠라약",
+      "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
+      "prompt": "fully clothed, clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body"
+    },
+    "097": {
+      "label": "착의펠라강",
+      "description": "옷을 입은 채 깊이 삼키는 착의 딥스로트 (강: N73)",
+      "prompt": "fully clothed, clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body"
+    },
+    "098": {
+      "label": "알몸키스",
+      "description": "파트너와 완전히 밀착하여 목덜미를 끌어안고 혀를 깊게 얽으며 타액을 나누는 농밀한 딥키스 절정 씬 (나체 상태, 키로 053)",
+      "prompt": "completely nude, full nudity, bare skin, french kiss, deep kiss, tongue entanglement, (intertwined tongues:1.25), saliva trail between lips, lips pressed together, intimate embrace, arms wrapped tightly around partner neck, hugging partner, chest to chest, faceless male, (partner off-screen:1.15), closed eyes in bliss, heavy body blush, intensely flushed face, breathless moaning into kiss, tears at corner of eyes, overwhelmed by intense pleasure, trembling with ecstasy, tight bust shot, close-up upper body portrait"
+    },
+    "099": {
+      "label": "딥키스",
+      "description": "파트너와 입술을 격렬하게 포개고 타액을 흘리며 열정적으로 나누는 농밀한 딥키스 씬 (옷 입은 상태, 키로 037 - poses에서 이동)",
+      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body"
     }
   },
   "scenes_otokonoko": {
-    "140": {
-      "label": "정상위",
-      "description": "침대에 누워 파트너를 마주 보며 다리를 벌린 남성/오토코노코 대상 클래식 대면 아날 결합 체위.",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, anal missionary, legs spread wide, from side view, looking at partner, heavy body blush, intensely flushed face, open mouth panting, moaning, heavy-lidded pleasure gaze, teary eyes, breathless expression, trembling with ecstasy, cowboy shot"
-    },
-    "141": {
-      "label": "정면절정",
-      "description": "대면 결합 상태에서 파트너의 손을 쥐고 등을 젖히며 맞이하는 황홀한 정면 아날 클라이맥스.",
-      "prompt": "completely nude, full nudity, bare skin, lying on bed, anal missionary, climax, (excessive cum:1.15), (thick cum covering body:1.15), cum pool on bedsheets, cum on stomach, cum dripping between thighs, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, trembling body, heavy full body blush, lost in overwhelming orgasm, cowboy shot"
-    },
-    "142": {
-      "label": "후배위",
-      "description": "침대에 사족보행으로 엎드린 슬렌더 체형의 등 뒤에서 파트너가 진입하는 도기스타일 아날 체위.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, arched back, anal doggystyle, from side view, looking back over shoulder, heavy body blush, intensely flushed cheeks, parted lips gasping, heavy-lidded intoxicated gaze, biting lip, trembling with pleasure, teary eyes, desperate moaning expression, cowboy shot"
-    },
-    "143": {
-      "label": "후방절정",
-      "description": "후배위 상태에서 허리를 활처럼 휘며 시트를 쥐어뜯고 절정에 도달하는 후방 결합 클라이맥스.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, deeply arched back, deep anal doggystyle climax, (excessive cum:1.15), (thick cum dripping from buttocks:1.15), cum on back and thighs, cum pool, looking back, (intense ahegao:1.15), rolling eyes, tongue out, drooling, heavy body blush, trembling arms and legs, screams of ecstasy, lost in pleasure, cowboy shot"
-    },
-    "144": {
-      "label": "기승위",
-      "description": "파트너의 골반 위에 올라타 마주 보며 스스로 허리를 흔들어 주도하는 상위 아날 체위.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, anal cowgirl, looking down at partner, hands on partner chest, heavy body blush, flushed face and chest, parted lips moaning, heavy-lidded seductive gaze, breathless panting, arched back, trembling with arousal, sensual pleasure expression, teary eyes, cowboy shot"
-    },
-    "145": {
-      "label": "상위절정",
-      "description": "기승위 결합 중 극도의 자극에 가슴을 젖히고 목을 뒤로 젖히며 맞이하는 상위 아날 절정.",
-      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, deep anal cowgirl climax, (excessive cum covering lower body:1.15), (thick cum covering genitals:1.15), cum on stomach and inner thighs, cum dripping between thighs, cum pool on bedsheets, head thrown back in ecstasy, deeply arched back, (intense ahegao:1.15), eyes rolled back, parted lips moaning, breathless panting, tears of pleasure, heavy body blush, intensely flushed face, trembling thighs, overwhelming orgasm, cowboy shot"
-    },
-    "146": {
-      "label": "개각유혹",
+    "148": {
+      "label": "M자개각",
       "description": "침대에 기대어 스스로 양손으로 다리를 넓게 벌려 관람자를 향해 유혹하는 관능적인 1인 M자 개각 포즈.",
       "prompt": "completely nude, full nudity, bare skin, solo, solo focus, on bed, reclining on bed, leaning back against pillows, (spreading own legs:1.3), (holding own thighs:1.25), (legs spread wide:1.25), m-shaped legs, knees up, subtle bulge, looking at viewer, seductive bedroom eyes, confident alluring gaze, sultry smile, deep heavy blush, intensely flushed cheeks, parted lips, breathless with desire, longing expression, cowboy shot"
     },
-    "147": {
+    "149": {
       "label": "대면좌위",
-      "description": "파트너의 무릎 위에 마주 앉아 팔로 목을 감싸 안고 깊게 밀착하여 결합하는 대면 좌위 체위.",
-      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, facing partner, hugging tightly, intimate embrace, arms around neck, chest to chest, gazing into partner eyes, looking at partner, heavy body blush, flushed cheeks, parted lips moaning into ear, heavy-lidded intoxicated gaze, streaming tears of pleasure, deeply aroused expression, breathless panting, upper body"
+      "description": "파트너의 무릎 위에 마주 앉아 팔로 목을 감싸고 카메라를 향해 표정을 드러내는 좌위 체위.",
+      "prompt": "completely nude, full nudity, bare skin, sitting on lap, straddling, (from behind partner:1.2), (partner back view:1.2), faceless male back, bald male back, arms around partner neck, (otokonoko facing viewer:1.2), face visible, looking at viewer over partner shoulder, heavy body blush, flushed cheeks and chest, parted lips moaning, heavy-lidded intoxicated gaze, streaming tears of pleasure, deeply aroused expression, breathless panting, cowboy shot"
     },
-    "148": {
+    "150": {
       "label": "밀착절정",
       "description": "다리를 가슴 쪽으로 접어 파트너의 체중으로 강하게 밀착 압박당하며 도달하는 극한의 절정.",
       "prompt": "completely nude, full nudity, bare skin, lying on bed, knees folded to chest, deep anal mating press climax, (excessive cum:1.15), (thick cum covering body:1.15), cum pool on bedsheets, cum dripping between thighs, looking up, (intense ahegao:1.15), eyes rolled back, open mouth, tongue out, streaming tears of ecstasy, trembling uncontrollably, flushed body, completely broken by pleasure, cowboy shot"
     },
-    "149": {
+    "151": {
       "label": "스푸닝",
       "description": "침대에 옆으로 나란히 누워 뒤에서 부드럽게 감싸 안기며 결합하는 밀착 스푸닝 아날 체위.",
       "prompt": "completely nude, full nudity, bare skin, lying on side on bed, anal spooning, partner arm around waist, intimate embrace, heavy body blush, intensely flushed face and neck, head tilted back, parted lips soft moaning, heavy-lidded eyes half-closed in bliss, trembling with arousal, sensual pleasure expression, breathless, cowboy shot"
     },
-    "150": {
-      "label": "상호자극",
-      "description": "침대에 마주 앉아 서로의 손으로 서로의 신체 부위를 부드럽고 섬세하게 애무하는 핸드잡 씬.",
-      "prompt": "completely nude, full nudity, bare skin, sitting on bed, leaning back on hands, hands pressed on mattress, hands gripping bedsheets, handjob receiving, legs spread wide, partner kneeling between legs, faceless male partner stroking shaft, looking down at partner hand, heavy body blush, intensely flushed face, breathless panting, open mouth gasping, heavy-lidded intoxicated gaze, biting lip, tears at corner of eyes, trembling with intense pleasure, deeply aroused expression, cowboy shot"
-    },
-    "151": {
-      "label": "상호절정",
-      "description": "서로의 손놀림에 절정에 다다르며 복부와 침대 위로 동시에 사정하고 떨며 느끼는 상호 절정.",
-      "prompt": "completely nude, full nudity, bare skin, lying back on bed, deeply arched back, head thrown back, hands gripping bedsheets tightly, hands clutching mattress, handjob climax, (excessive cum:1.15), (huge cumshot:1.15), cum on stomach and inner thighs, cum pool on bedsheets, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, trembling violently, heavy full body blush, overwhelming orgasm, cowboy shot"
-    },
     "152": {
-      "label": "구강봉사",
-      "description": "파트너 앞에 무릎을 꿇고 올려다보며 입술과 혀로 정성스럽게 애무하는 구강 성교 씬.",
-      "prompt": "completely nude, full nudity, bare skin, fellatio oral sex, kneeling between partner legs, intimate close-up, mouth wide open taking shaft, looking up at partner, heavy-lidded intoxicated gaze, heavily flushed face, tears at corner of eyes, submissive pleasure expression, saliva dripping, drooling, heavily aroused, trembling with excitement, upper body close-up"
-    },
-    "153": {
-      "label": "결합키스",
-      "description": "파트너와 완전히 밀착하여 목덜미를 끌어안고 혀를 깊게 얽으며 타액을 나누는 농밀한 딥키스 절정 씬.",
-      "prompt": "completely nude, full nudity, bare skin, french kiss, deep kiss, tongue entanglement, (intertwined tongues:1.25), saliva trail between lips, lips pressed together, intimate embrace, arms wrapped tightly around partner neck, hugging partner, chest to chest, faceless male, (partner off-screen:1.15), closed eyes in bliss, heavy body blush, intensely flushed face, breathless moaning into kiss, tears at corner of eyes, overwhelmed by intense pleasure, trembling with ecstasy, tight bust shot, close-up upper body portrait"
-    },
-    "154": {
-      "label": "딥스로트",
-      "description": "머리를 잡힌 채 목구멍 깊숙이 파트너를 받아들이며 눈물을 글썽이는 강렬한 구강 결합 씬.",
-      "prompt": "completely nude, full nudity, bare skin, deepthroat irrumatio, kneeling between partner legs, partner hand on head, shaft deep in throat, throat bulge, streaming tears of ecstasy, gagging on shaft, eyes rolled back in pleasure, heavy body blush, saliva dripping, messy drooling, intoxicated ecstasy expression, upper body close-up"
-    },
-    "155": {
-      "label": "구강사후",
-      "description": "구강 봉사 직후 입가에 백탁의 액체를 묻힌 채 혀를 내밀고 만족스레 올려다보는 사후 여운.",
-      "prompt": "solo, completely nude, full nudity, bare skin, oral aftermath, kneeling on bed, hands on mattress, head tilted up, looking up at viewer, (excessive cum:1.15), (thick cum overflowing from mouth, dripping from chin down chest:1.15), cum on breasts, cum on collarbone, completely dazed expression, heavy-lidded gazing at viewer with pleasure, open mouth, tongue out, saliva and cum dripping, tears of ecstasy, heavy body blush, messy hair, exhausted from overwhelming pleasure, upper body portrait"
-    },
-    "156": {
-      "label": "벽밀착",
-      "description": "벽에 몸을 기댄 채 한쪽 다리를 들고 선 자세로 결합하는 격렬하고 거친 스탠딩 아날 씬.",
-      "prompt": "completely nude, full nudity, bare skin, standing anal sex, pinned against wall, one leg raised, anal penetration, hands on wall, looking back at partner, heavy body blush, intensely flushed face, open mouth gasping, moaning loudly, heavy-lidded teary pleasure eyes, trembling legs, breathless panting, overwhelming arousal expression, cowboy shot"
-    },
-    "157": {
-      "label": "샤워씬",
-      "description": "샤워실 쏟아지는 물줄기 아래 벽을 짚고 서서 젖은 몸으로 나누는 농밀한 수중 아날 결합 씬.",
-      "prompt": "completely nude, full nudity, bare skin, shower anal sex, standing against clear glass wall, pinned against glass, one leg wrapped around partner waist, anal penetration, clear glass shower stall, heavy body blush, intensely flushed face, parted lips gasping, head tilted back against glass, heavy-lidded pleasure eyes, trembling with intense arousal, sensual moaning expression, teary eyes, clean background, cowboy shot"
-    },
-    "158": {
       "label": "침대사후",
       "description": "격렬한 정사 후 땀과 체액에 젖은 채 침대에 나른하게 누워 숨을 헐떡이는 나태한 사후 여운.",
       "prompt": "solo, completely nude, full nudity, bare skin, aftersex aftermath, lying on bed, messy white sheets, looking at viewer, (excessive cum:1.15), cum pool on bedsheets, cum dripping on inner thighs, messy hair, heavy-lidded intoxicated eyes, parted lips, drool at mouth corner, flushed skin, trembling afterglow, dazed pleasure smile, completely melted by orgasm, relaxed, cowboy shot"
     },
-    "159": {
+    "153": {
       "label": "후방사후",
       "description": "행위 후 침대에 완전히 엎드린 채 허벅지를 타고 흐르는 체액과 함께 뒤돌아보는 사후 여운.",
       "prompt": "solo, completely nude, full nudity, bare skin, (from behind:1.15), (back view:1.15), (lying prone on bed:1.15), buttocks focus, (looking back over shoulder at viewer:1.15), looking at viewer, ass slightly raised, exhausted aftersex aftermath, legs spread, (excessive cum:1.15), (thick cum dripping between thighs:1.15), cum pool on bedsheets, cum dripping down inner thighs, trembling legs, heavily flushed back, heavy-lidded dazed expression, parted lips moaning, completely broken and melted by pleasure, cowboy shot"
+    },
+    "154": {
+      "label": "정상위약",
+      "description": "침대에 등을 대고 누워 파트너와 눈을 맞추며 부드럽게 시작하는 정상위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, ((anal missionary position:1.3)), ((lying on back on bed, legs spread wide:1.25)), ((from side view angle:1.2)), looking up at partner with soft loving gaze, heavy body blush, flushed cheeks, soft parted lips, breathless gentle expression, disheveled sheets, soft ambient bedroom light, cowboy shot"
+    },
+    "155": {
+      "label": "정상위강",
+      "description": "침대에 등을 대고 누워 진행되는 격렬한 정상위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, ((anal missionary position:1.35)), ((lying on back on bed, otokonoko on bottom:1.35)), ((single male partner on top between thighs:1.25)), ((from front-center view angle:1.2)), legs spread wide, completely nude, intense pleasure, arched back, open mouth, looking up intensely at partner, heavy blush, bed, disheveled sheets, cowboy shot"
+    },
+    "156": {
+      "label": "정상위절정",
+      "description": "대면 결합 상태에서 파트너의 손을 쥐고 등을 젖히며 맞이하는 황홀한 정면 아날 클라이맥스.",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, anal missionary, climax, (excessive cum:1.15), (thick cum covering body:1.15), cum pool on bedsheets, cum on stomach, cum dripping between thighs, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, trembling body, heavy full body blush, lost in overwhelming orgasm, cowboy shot"
+    },
+    "157": {
+      "label": "후배위약",
+      "description": "침대에 엎드려 뒤에서 부드럽게 진입하는 후배위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((anal doggystyle, on all fours:1.3)), ((arched back, hips raised:1.25)), ((partner gripping hips firmly from behind:1.2)), from side view, looking back over shoulder at partner, heavy body blush, intensely flushed cheeks, parted lips gasping, teary gentle pleasure gaze, soft bedding, cowboy shot"
+    },
+    "158": {
+      "label": "후배위강",
+      "description": "침대에 엎드려 깊은 결합과 전율을 느끼는 격렬한 후배위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((deep anal doggystyle position, intensely arched back:1.35)), ((on all fours, face buried in pillow:1.3)), trembling body, heavy full body blush, open mouth gasping, ecstasy expression, tears of intense pleasure, disheveled bedsheets, cowboy shot"
+    },
+    "159": {
+      "label": "후배위절정",
+      "description": "후배위 상태에서 허리를 활처럼 휘며 시트를 쥐어뜯고 절정에 도달하는 후방 결합 클라이맥스.",
+      "prompt": "completely nude, full nudity, bare skin, on bed, on all fours, deeply arched back, deep anal doggystyle climax, (excessive cum:1.15), (thick cum dripping from buttocks:1.15), cum on back and thighs, cum pool, looking back, (intense ahegao:1.15), rolling eyes, tongue out, drooling, heavy body blush, trembling arms and legs, screams of ecstasy, lost in pleasure, cowboy shot"
+    },
+    "160": {
+      "label": "기승위약",
+      "description": "파트너 위에 올라타 위에서 부드럽게 리드하는 기승위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((anal cowgirl position, straddling partner:1.3)), ((hands resting on partner's chest:1.25)), upright posture, looking down at partner with seductive smile, heavy blush, disheveled sheets, warm soft lighting, cowboy shot"
+    },
+    "161": {
+      "label": "기승위강",
+      "description": "파트너 위에서 자발적으로 격렬하게 움직이는 기승위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, on bed, ((intense anal cowgirl position:1.35)), ((leaning back, head thrown back, throat exposed:1.3)), hands resting on own thighs, arched back, open mouth breathless moan, heavy full body blush, overwhelming ecstasy, bed, cowboy shot"
+    },
+    "162": {
+      "label": "기승위절정",
+      "description": "기승위 결합 중 극도의 자극에 가슴을 젖히고 목을 뒤로 젖히며 맞이하는 상위 아날 절정.",
+      "prompt": "completely nude, full nudity, bare skin, on bed, straddling, deep anal cowgirl climax, (excessive cum covering lower body:1.15), (thick cum covering genitals:1.15), cum on stomach and inner thighs, cum dripping between thighs, cum pool on bedsheets, head thrown back in ecstasy, deeply arched back, (intense ahegao:1.15), eyes rolled back, parted lips moaning, breathless panting, tears of pleasure, heavy body blush, intensely flushed face, trembling thighs, overwhelming orgasm, cowboy shot"
+    },
+    "163": {
+      "label": "알몸섹스절정",
+      "description": "정상위/후배위/기승위 등 결합 상태에서 맞이하는 범용 절정 마무리 (체액 표현 포함)",
+      "prompt": "completely nude, full nudity, bare skin, lying on bed, anal missionary, (climax:1.2), (excessive cum:1.15), (thick cum covering body:1.15), cum puddle on sheets, cum stain on bedsheets, cum on stomach, cum dripping between thighs, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, (arched back:1.15), trembling body, heavy full body blush, lost in overwhelming orgasm, cowboy shot"
+    },
+    "164": {
+      "label": "핸드잡약",
+      "description": "침대에 기대어 앉아 파트너의 부드러운 손길로 애무를 받으며 수줍게 미소 짓는 핸드잡 (약)",
+      "prompt": "completely nude, full nudity, bare skin, sitting on bed, leaning back on hands, hands pressed on mattress, (handjob receiving, gentle slow rhythm:1.3), legs spread, faceless male partner stroking shaft, looking at partner with teasing shy smile, soft blush, parted lips, bedroom eyes, tender expression, cowboy shot"
+    },
+    "165": {
+      "label": "핸드잡강",
+      "description": "침대에 기대어 파트너의 격렬하고 빠른 손길에 온몸을 떨며 신음하는 핸드잡 (강)",
+      "prompt": "completely nude, full nudity, bare skin, sitting on bed, leaning back on hands, hands gripping bedsheets, (intense handjob receiving, rapid rhythm:1.35), legs spread wide, faceless male partner stroking shaft, looking down at partner hand, heavy body blush, intensely flushed face, breathless panting, open mouth gasping, heavy-lidded intoxicated gaze, biting lip, tears at corner of eyes, trembling with intense pleasure, cowboy shot"
+    },
+    "166": {
+      "label": "동시사정",
+      "description": "서로의 손놀림에 절정에 다다르며 복부와 침대 위로 동시에 사정하고 떨며 느끼는 상호 절정.",
+      "prompt": "completely nude, full nudity, bare skin, lying back on bed, deeply arched back, head thrown back, hands gripping bedsheets tightly, hands clutching mattress, handjob climax, (excessive cum:1.15), (huge cumshot:1.15), cum on stomach and inner thighs, cum pool on bedsheets, (intense ahegao:1.15), eyes rolled back, tongue out, drooling, tears of ecstasy, trembling violently, heavy full body blush, overwhelming orgasm, cowboy shot"
+    },
+    "167": {
+      "label": "남근핥기",
+      "description": "남성기를 혀로 천천히 핥아 올리며 올려다보는 애무 장면",
+      "prompt": "completely nude, full nudity, bare skin, kneeling between partner legs, ((licking shaft slowly with tongue:1.35)), ((tongue extended along length:1.3)), looking up at partner with seductive eyes, saliva trail glistening, heavy blush, teasing playful expression, bedroom eyes, intimate close-up, upper body"
+    },
+    "168": {
+      "label": "펠라치오약",
+      "description": "무릎 꿇고 봉사를 시작하며 올려다보는 펠라치오 (약)",
+      "prompt": "completely nude, full nudity, bare skin, ((kneeling between partner's legs, fellatio:1.35)), ((looking up submissively with deeply devoted affectionate gaze:1.3)), open mouth, licking tip, saliva trail, heavy facial blush, teary eyes, intimate tender bedroom atmosphere, upper body close-up"
+    },
+    "169": {
+      "label": "펠라치오강",
+      "description": "깊은 몰입과 빠른 봉사로 진행되는 펠라치오 (강)",
+      "prompt": "completely nude, full nudity, bare skin, fellatio oral sex, ((deep blowjob, head bobbing:1.35)), kneeling between partner legs, mouth wide open taking shaft, looking up at partner, heavy-lidded intoxicated gaze, heavily flushed face, tears at corner of eyes, hands on thighs, intense, saliva dripping, heavily aroused, upper body close-up"
+    },
+    "170": {
+      "label": "펠라사후",
+      "description": "구강 봉사 직후 입가에 백탁의 액체를 묻힌 채 혀를 내밀고 만족스레 올려다보는 사후 여운.",
+      "prompt": "solo, completely nude, full nudity, bare skin, oral aftermath, kneeling on bed, hands on mattress, head tilted up, looking up at viewer, (excessive cum:1.15), (thick cum overflowing from mouth, dripping from chin down chest:1.15), cum on flat chest, cum on collarbone, completely dazed expression, heavy-lidded gazing at viewer with pleasure, open mouth, tongue out, saliva and cum dripping, tears of ecstasy, heavy body blush, messy hair, exhausted from overwhelming pleasure, upper body portrait"
+    },
+    "171": {
+      "label": "딥스로트",
+      "description": "머리를 잡힌 채 목구멍 깊숙이 파트너를 받아들이며 눈물을 글썽이는 강렬한 구강 결합 씬.",
+      "prompt": "completely nude, full nudity, bare skin, deepthroat irrumatio, kneeling between partner legs, partner hand on head, shaft deep in throat, throat bulge, streaming tears of ecstasy, gagging on shaft, eyes rolled back in pleasure, heavy body blush, saliva dripping, messy drooling, intoxicated ecstasy expression, upper body close-up"
+    },
+    "172": {
+      "label": "입위약",
+      "description": "벽에 기댄 채 진행되는 부드러운 스탠딩 결합 (약, 키로 056 기반)",
+      "prompt": "completely nude, full nudity, bare skin, ((standing anal sex:1.25)), ((against wall, one leg up:1.2)), embrace, partner holding leg gently, looking at partner, soft blush, kissing, tender intimate moment, cowboy shot"
+    },
+    "173": {
+      "label": "입위강",
+      "description": "벽에 밀착되어 매달린 채 진행되는 격렬한 입위 (강, 키로 056 기반)",
+      "prompt": "completely nude, full nudity, bare skin, ((standing anal sex:1.25)), ((pinned to wall:1.3)), ((legs wrapped tightly around partner waist:1.25)), clinging desperately, intense breathless gasps, open mouth moaning, heavy full body blush, ecstasy expression, cowboy shot"
+    },
+    "174": {
+      "label": "샤워실섹스약",
+      "description": "샤워실 젖은 타일 벽에 기대어 부드럽게 시작하는 수중 결합 씬 (약, 키로 057 기반)",
+      "prompt": "completely nude, full nudity, bare skin, shower anal sex, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, standing against clear glass wall, gentle rhythm, one leg wrapped around partner waist, anal penetration, partner behind, faceless male, male hands on waist, clear glass shower stall, soft blush, parted lips, tender moaning, clean background, cowboy shot"
+    },
+    "175": {
+      "label": "샤워실섹스강",
+      "description": "샤워실 쏟아지는 물줄기 아래 벽을 짚고 서서 젖은 몸으로 나누는 농밀한 수중 아날 결합 씬.",
+      "prompt": "completely nude, full nudity, bare skin, shower anal sex, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, standing against clear glass wall, pinned against glass, one leg wrapped around partner waist, anal penetration, partner behind, faceless male, male hands on waist, clear glass shower stall, heavy body blush, intensely flushed face, parted lips gasping, head tilted back against glass, heavy-lidded pleasure eyes, trembling with intense arousal, sensual moaning expression, teary eyes, clean background, cowboy shot"
+    },
+    "176": {
+      "label": "측위약",
+      "description": "옆으로 나란히 누워 마주보며 천천히 결합하는 측위 (약)",
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, ((side by side anal sex:1.25)), leg over partner hip, gentle slow rhythm, looking at partner with loving gaze, intimate embrace, soft blush, parted lips, tender expression, cowboy shot"
+    },
+    "177": {
+      "label": "측위강",
+      "description": "허리를 꽉 쥐고 옆에서 강하게 몰아붙이는 측위 (강)",
+      "prompt": "completely nude, full nudity, bare skin, lying on side on bed, ((intense side by side anal sex:1.35)), partner gripping waist firmly, head pressed into pillow, gasping breathlessly, open mouth moaning, heavy blush, trembling body, disheveled sheets, cowboy shot"
+    },
+    "178": {
+      "label": "구강애무받기",
+      "description": "침대에 누워 다리를 벌린 채 다리 사이에서 파트너의 입술과 혀로 은밀한 애무를 받는 씬",
+      "prompt": "completely nude, full nudity, bare skin, (receiving oral stimulation:1.3), lying on bed, legs spread wide, partner head between legs, hands clutching sheets, heavy blush, parted lips, breathless moaning, trembling thighs, bed, cowboy shot"
+    },
+    "179": {
+      "label": "후방애무약",
+      "description": "침대에 누워 파트너의 손가락으로 부드럽게 후방 애무를 받으며 수줍게 몸을 떠는 씬 (약)",
+      "prompt": "completely nude, full nudity, bare skin, ((anal fingering, gentle petting:1.3)), lying on bed, legs raised slightly, partner hand on lower body, soft arched back, trembling knees, blushing sweetly, parted lips, tender pleasure, bed, cowboy shot"
+    },
+    "180": {
+      "label": "후방애무강",
+      "description": "파트너의 격렬한 후방 손가락 애무에 허리를 깊게 들썩이며 절정에 달하는 씬 (강)",
+      "prompt": "completely nude, full nudity, bare skin, ((intense anal fingering, prostate stimulation:1.35)), lying on bed, partner hand vigorously stimulating, deeply arched hips, gasping desperately, open mouth moaning, ecstasy expression, heavy blush, trembling body, bed, cowboy shot"
+    },
+    "181": {
+      "label": "착의섹스약",
+      "description": "옷을 입은 채 치마만 걷어올리고 나누는 착의 씬 (약)",
+      "prompt": "((clothed anal sex:1.25)), skirt lifted, underwear aside, fully dressed, standing or sitting, gentle rhythm, soft blush, looking at partner, thrilling secret encounter, soft lighting"
+    },
+    "182": {
+      "label": "착의섹스강",
+      "description": "옷깃이 흐트러진 채 책상이나 벽에서 진행되는 격렬한 착의 씬 (강)",
+      "prompt": "((intense clothed anal sex:1.35)), unbuttoned shirt, skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal"
+    },
+    "183": {
+      "label": "샤워섹스중",
+      "description": "샤워실 유리벽에 손과 가슴을 밀착시키며 온수 속에서 리듬을 타는 결합 씬 (N27)",
+      "prompt": "completely nude, full nudity, bare skin, ((shower anal sex, hands pressed against clear glass wall:1.3)), ((steamy glass, water running down body:1.25)), wet skin, wet hair, partner behind, standing anal sex, arched back, panting, heavy blush, condensation on glass, cowboy shot"
+    },
+    "184": {
+      "label": "샤워섹스강",
+      "description": "쏟아지는 물줄기 아래 한쪽 다리를 들어올려 안긴 채 절정에 달하는 격렬한 샤워 결합 (N28)",
+      "prompt": "completely nude, full nudity, bare skin, ((intense shower anal sex, one leg lifted and wrapped around partner:1.3)), ((clinging to partner shoulders in shower:1.25)), wet skin, wet hair, heavy water droplets, steam, ecstasy, open mouth, head tilted back, drenched, cowboy shot"
+    },
+    "185": {
+      "label": "파일드라이버",
+      "description": "어깨만 바닥에 닿고 허리와 엉덩이를 수직으로 치켜올려 무릎을 얼굴 옆에 접은 채 위에서 내리꽂듯 결합하는 역전 파일드라이버 자세 (N30)",
+      "prompt": "completely nude, full nudity, bare skin, ((piledriver position, vertical anal piledriver:1.35)), ((upside-down, inverted position:1.3)), ((shoulders and upper back on bed, hips raised vertically in air:1.35)), ((knees folded to sides of head:1.3)), ((legs spread wide in air:1.25)), partner standing above thrusting downward, partner gripping hips, from side view, ((intense ecstasy expression:1.2)), eyes rolled back, open mouth moaning, tears of overwhelming pleasure, flushed face, trembling body, extreme deep penetration, bed, cowboy shot"
+    },
+    "186": {
+      "label": "대딸",
+      "description": "손으로 부드럽고 능숙하게 상대의 중심을 자극하는 대딸 (N33)",
+      "prompt": "completely nude, full nudity, bare skin, ((handjob, stroking delicately:1.3)), ((hands gripping partner firmly:1.25)), looking up with sweet bashful smile, rhythmic motion, heavy blush, bedroom, from front angle, teary blushing eyes, cowboy shot"
+    },
+    "187": {
+      "label": "교배프레스",
+      "description": "다리를 가슴까지 접어 올리고 깊숙이 누르는 교배프레스 (N24)",
+      "prompt": "completely nude, full nudity, bare skin, ((anal mating press position:1.35)), ((legs folded up to chest, pressed down firmly:1.35)), deep intimate union, hands clutching bedsheets, flushed breathless face, open mouth moaning, tears of ecstasy, disheveled mattress, cowboy shot"
+    },
+    "188": {
+      "label": "들박",
+      "description": "공중에 완전히 안아 들어올린 채 진행되는 들박 (N25)",
+      "prompt": "completely nude, full nudity, bare skin, ((suspended anal sex, carried off floor:1.3)), ((legs wrapped tightly around partner's waist:1.25)), ((partner gripping thighs firmly:1.2)), intense breathless gasps, open mouth, heavy full body blush, tears of pleasure, from front angle showing intimate union, disheveled, cowboy shot"
+    },
+    "189": {
+      "label": "가슴애무대딸",
+      "description": "파트너에게 평평한 가슴을 애무받으며 동시에 한 손으로 파트너를 부드럽게 자극하는 씬 (N34 오토코노코 변형)",
+      "prompt": "completely nude, full nudity, bare skin, ((chest licking and handjob simultaneously:1.35)), ((partner kissing flat chest:1.3)), ((one hand stroking partner shaft with delicate grip:1.35)), sitting on bed, partner lying with head on lap, looking down with sweet affectionate smile, gentle loving blush, tender bedroom intimacy, cowboy shot"
+    },
+    "190": {
+      "label": "뒷스마타",
+      "description": "엎드린 채 허벅지 사이에 끼워 마찰하는 뒷스마타 (N35)",
+      "prompt": "completely nude, full nudity, bare skin, ((rear sumata, back thigh sex:1.35)), ((lying on stomach, hips raised slightly, legs squeezed tight:1.3)), ((partner rubbing between thighs from behind:1.3)), thigh friction without insertion, looking back over shoulder, flushed cheeks, heavy blush, bed, cowboy shot"
+    },
+    "191": {
+      "label": "스팽킹",
+      "description": "엉덩이를 찰싹 때려 붉은 손자국을 남기는 스팽킹 (N36)",
+      "prompt": "completely nude, full nudity, bare skin, spanking, red marks on rear, bent over bed, biting lip, teary eyes, submission, blushing, cowboy shot"
+    },
+    "192": {
+      "label": "배복종자세",
+      "description": "배를 보이고 드러누워 복종을 맹세하는 배복종 자세 (N37)",
+      "prompt": "completely nude, full nudity, bare skin, solo, belly exposure, lying on back, submissive pose, hands up, showing stomach, adoring smile, cowboy shot, subtle bulge"
+    },
+    "193": {
+      "label": "애널섹스",
+      "description": "후방 아날 통로로 진입하는 애널 섹스 (N42)",
+      "prompt": "completely nude, full nudity, bare skin, ((doggystyle anal, on hands and knees on bed:1.3)), ((partner gripping hips firmly from behind:1.25)), looking back over shoulder, teary gasping face, heavy blush, bed, cowboy shot"
+    },
+    "194": {
+      "label": "풋잡",
+      "description": "발가락과 발바닥으로 능숙하게 비비는 풋잡 (N43)",
+      "prompt": "completely nude, full nudity, bare skin, footjob, bare feet, toes, soles, teasing smile, couch, POV, looking at partner"
+    },
+    "195": {
+      "label": "씻겨주기",
+      "description": "샤워실에서 거품 스펀지로 상대를 정성껏 씻겨주는 씬 (N46)",
+      "prompt": "completely nude, full nudity, bare skin, washing partner, shower, soapy bubbles, sponge, steam, wet hair, smiling, caring, cowboy shot"
+    },
+    "196": {
+      "label": "착의펠라약",
+      "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
+      "prompt": "fully clothed, clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body"
+    },
+    "197": {
+      "label": "착의펠라강",
+      "description": "옷을 입은 채 깊이 삼키는 착의 딥스로트 (강: N73)",
+      "prompt": "fully clothed, clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body"
+    },
+    "198": {
+      "label": "결합딥키스",
+      "description": "파트너와 완전히 밀착하여 목덜미를 끌어안고 혀를 깊게 얽으며 타액을 나누는 농밀한 딥키스 절정 씬.",
+      "prompt": "completely nude, full nudity, bare skin, french kiss, deep kiss, tongue entanglement, (intertwined tongues:1.25), saliva trail between lips, lips pressed together, intimate embrace, arms wrapped tightly around partner neck, hugging partner, chest to chest, faceless male, (partner off-screen:1.15), closed eyes in bliss, heavy body blush, intensely flushed face, breathless moaning into kiss, tears at corner of eyes, overwhelmed by intense pleasure, trembling with ecstasy, tight bust shot, close-up upper body portrait"
+    },
+    "199": {
+      "label": "딥키스",
+      "description": "파트너와 입술을 격렬하게 포개고 타액을 흘리며 열정적으로 나누는 농밀한 딥키스 씬 (옷 입은 상태, 키로 037 - poses에서 이동)",
+      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body"
     }
   }
 }

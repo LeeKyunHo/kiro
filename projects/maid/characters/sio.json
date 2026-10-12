@@ -1,0 +1,21 @@
+{
+  "prefix": "sio",
+  "name": "시온 (Sion)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A poised cool young woman with sleek platinum silver bob cut, straight fringe bangs, cool ice-blue eyes, fair skin, calm aloof expression",
+    "physique": "tall slender and elegant silhouette, refined posture, modest firm medium breasts, narrow waist, graceful poised demeanor",
+    "outfit": "a dignified Victorian antique black maid gown, modest high-collar white ruffled neck, long elegant sleeves with lace cuffs, fitted dark corset vest, flowing floor-length black skirt, pristine long white starched apron, dark grey ribbon necktie"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (tall elegant young woman:1.15), (platinum silver hair:1.15), (chin-length sleek bob cut:1.15), (straight fringe bangs:1.15), (cool ice-blue eyes:1.15), fair skin, calm expression, (black lace fingerless gloves:1.15), Victorian style black maid dress, high lace ruffle collar, corset vest, side slit skirt, white starched apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (tall elegant young woman:1.15), (platinum silver hair:1.15), (chin-length sleek bob cut:1.15), (straight fringe bangs:1.15), (cool ice-blue eyes:1.15), fair skin, calm expression, (black lace fingerless gloves:1.15), Victorian style black maid dress, high lace ruffle collar, corset vest, side slit skirt, white starched apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry"
+}

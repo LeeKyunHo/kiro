@@ -1,0 +1,21 @@
+{
+  "prefix": "cyo",
+  "name": "치요 (Chiyo)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A gentle and elegant young woman with warm chocolate-brown hair styled in a loose side braid over shoulder, wispy soft bangs, warm amber eyes, fair skin, serene mature smile",
+    "physique": "slender curvaceous feminine body, tall elegant posture, shapely breasts, narrow waist, graceful composed poise",
+    "outfit": "a cozy traditional frilled maid uniform with a wide scoop neckline showing soft cleavage, puffy ruffled short sleeves, chocolate-brown pinafore dress over a cream blouse, broad white ruffled bib apron tied into a fluffy bow at the back, white frilled ankle socks with brown Mary Jane shoes"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (mature elegant young woman:1.1), slender curvaceous body, graceful posture, (warm chocolate-brown hair:1.15), (loose side braid over shoulder:1.15), (wispy bangs:1.15), (gentle warm amber eyes:1.15), fair skin, soft serene smile, (frilled white maid headband:1.15), classic black maid dress, sweetheart collar, puffy short sleeves, white ruffled apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (mature elegant young woman:1.1), slender curvaceous body, graceful posture, (warm chocolate-brown hair:1.15), (loose side braid over shoulder:1.15), (wispy bangs:1.15), (gentle warm amber eyes:1.15), fair skin, soft serene smile, (frilled white maid headband:1.15), classic black maid dress, sweetheart collar, puffy short sleeves, white ruffled apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry"
+}

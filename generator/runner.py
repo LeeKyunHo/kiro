@@ -9,7 +9,7 @@ import argparse
 import sys
 import time
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Sequence
 
 import requests
 
@@ -60,6 +60,7 @@ from generator.webui_client import (
     fetch_vram_peak,
     generate_image,
     inject_alwayson_scripts,
+    interrupt_forge,
     make_dummy_png,
     resolve_sampler,
     save_as_webp,
@@ -90,9 +91,20 @@ def run_batch(
     lightning_steps: int = 2,
     lightning_cfg: float = 1.0,
     lightning_lora_name: str = "sdxl_lightning_2step_lora",
+    steps: int | None = None,
+    sampler: str | None = None,
+    scheduler: str | None = None,
+    cfg_scale: float | None = None,
+    naming: str = "code",
+    overwrite: bool = False,
     active_bg: str | None = None,
+    nude_positive: str | None = None,
+    gender: str = "female",
+    outfits: dict[str, str] | None = None,
     dry_run: bool = False,
     mock: bool = False,
+    progress_callback: Callable[[int, str, Path, int, int], None] | None = None,
+    is_cancelled: Callable[[], bool] | None = None,
 ) -> BatchResult:
     result = BatchResult(dry_run=dry_run)
 
@@ -102,10 +114,16 @@ def run_batch(
         else None
     )
 
-    for code in targets:
+    total_targets = len(targets)
+    for idx, code in enumerate(targets, 1):
+        if is_cancelled and is_cancelled():
+            interrupt_forge()
+            print("\n[INFO] 생성이 중단되었습니다.")
+            result.aborted = True
+            break
         entry = db.entries[code]
         tag = format_code(code, width)
-        filename = asset_filename(prefix, code, width)
+        filename = asset_filename(prefix, code, width, label=entry.label, naming=naming)
         save_path = save_dir / filename
 
         if dry_run:
@@ -114,41 +132,71 @@ def run_batch(
             print(f"  [{tag}] (계획) {filename}  <- {entry.label}{bg_info}")
             continue
 
-        if save_path.exists():
+        if save_path.exists() and not overwrite:
             print(f"  [{tag}] 이미 존재 (건너뜀) -> {filename}")
             result.skipped.append(code)
+            if progress_callback:
+                progress_callback(code, f"{entry.label} (기존 파일 건너뜀)", save_path, idx, total_targets)
             continue
 
-        print(f"  [{tag}] {'모의 생성' if mock else '생성'} 중... ", end="", flush=True)
+        actual_sampler = sampler or sampler_name
+        actual_steps = steps
+        actual_cfg = cfg_scale
+        actual_scheduler = scheduler
+        actual_freeu = enable_freeu
+
+        step_display = f" ({actual_steps or 30}스텝, CFG {actual_cfg or 6.0})" if not mock else ""
+        print(f"  [{tag}] {'모의 생성' if mock else '생성'} 중...{step_display} ", end="", flush=True)
 
         started = time.perf_counter()
         try:
-            pose_prompt = entry.prompt
+            pose_prompt = entry.get_prompt(gender)
             if active_bg and entry.section == "emotions":
                 if "clean background" in pose_prompt:
                     pose_prompt = pose_prompt.replace("clean background", active_bg)
                 else:
                     pose_prompt = join_tags(pose_prompt, active_bg)
 
-            # 탈의/H-씬인 경우 캐릭터 기본 프롬프트에서 의상 태그를 자동 제거하여 목/팔 잔재 방지
+            # 탈의/H-씬 또는 테마 의상 스왑 분기:
             active_base_pos = base_positive
             active_char_prompt = char_prompt
             is_nude_scene = entry.section in ("h_scenes", "scenes_otokonoko") or any(
                 kw in pose_prompt.lower() for kw in ("nude", "unclothed", "bare skin", "bare body")
             )
             if is_nude_scene:
-                active_base_pos = strip_outfit_tags(base_positive)
-                active_char_prompt = strip_outfit_tags(char_prompt)
+                if nude_positive and nude_positive.strip():
+                    if not char_prompt and base_positive:
+                        active_base_pos = f"{nude_positive.strip()}, nude, completely nude"
+                        active_char_prompt = ""
+                    else:
+                        active_base_pos = strip_outfit_tags(base_positive)
+                        active_char_prompt = f"{nude_positive.strip()}, nude, completely nude"
+                else:
+                    active_base_pos = strip_outfit_tags(base_positive)
+                    active_char_prompt = strip_outfit_tags(char_prompt)
+            elif entry.required_outfit and entry.required_outfit not in ("default", "nude"):
+                # 테마 의상(wedding, swimsuit, bunny, maid 등) 스왑
+                theme_outfit = (
+                    outfits[entry.required_outfit].strip()
+                    if (outfits and entry.required_outfit in outfits)
+                    else ""
+                )
+                if nude_positive and nude_positive.strip():
+                    cleaned_nude = strip_outfit_tags(nude_positive.strip())
+                    if not char_prompt and base_positive:
+                        active_base_pos = f"{cleaned_nude}, {theme_outfit}" if theme_outfit else cleaned_nude
+                        active_char_prompt = ""
+                    else:
+                        active_base_pos = strip_outfit_tags(base_positive)
+                        active_char_prompt = f"{cleaned_nude}, {theme_outfit}" if theme_outfit else cleaned_nude
+                else:
+                    active_base_pos = strip_outfit_tags(base_positive)
+                    stripped_char = strip_outfit_tags(char_prompt)
+                    active_char_prompt = f"{stripped_char}, {theme_outfit}".strip(", ") if theme_outfit else stripped_char
 
             full_prompt = assemble_prompt(
                 active_base_pos, active_char_prompt, pose_prompt, f"{prefix}_{tag}"
             )
-            
-            actual_sampler = sampler_name
-            actual_steps = None
-            actual_cfg = None
-            actual_scheduler = None
-            actual_freeu = enable_freeu
             
             if enable_lightning:
                 actual_sampler = "DPM++ SDE"
@@ -245,12 +293,17 @@ def run_batch(
 
                     # 모브 남성 파트너 무특징화: BREAK를 통한 여주인공과 모브의 Attention 완전 격리 (이염 원천 차단)
                     # 착의 스킨십 씬(단색 블랙 팬츠 고정) vs 탈의 성인 씬(완전 탈의) 하의 정밀 분기
+                    # featureless silhouette 제거(암전/가면 결함 방지), 순수 음영 및 구도 중심 모브화
+                    is_rear_scene = any(kw in pose_prompt.lower() for kw in ("behind", "doggystyle", "sumata", "rear", "prone"))
+                    rear_direction = "(from behind:1.15), " if is_rear_scene else ""
+                    male_face_suppression = "(detailed male face:1.4), (detailed eyes on male:1.35), (handsome male:1.4), (attractive male face:1.3), (expressive male face:1.3), male hair, male bangs, male haircut"
+
                     if is_nude_scene:
-                        mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (naked male:1.2), (shirtless male:1.15), (bottomless male:1.2), muscular build, featureless silhouette"
-                        mob_negative = "male clothes, male shirt, pants, trousers, jeans, shorts, underwear, male hair, male bangs, male haircut"
+                        mob_positive = f"BREAK (single faceless male partner:1.15), (obscured male face:1.15), (male head out of frame:1.15), (shadow over male eyes:1.1), {rear_direction}(naked male:1.15), (bottomless male:1.15), muscular build"
+                        mob_negative = f"{male_face_suppression}, male clothes, male shirt, pants, trousers, jeans, shorts, underwear, (mask, white mask, noh mask, blank face, pupil-less:1.3), (2boys:1.6), (multiple boys:1.6), (multiple males:1.6), (extra male:1.6)"
                     else:
-                        mob_positive = "BREAK (faceless male:1.2), (bald male:1.2), (shirtless male:1.15), (bare shoulders:1.1), (solid black pants:1.2), muscular build, featureless silhouette"
-                        mob_negative = "male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, male hair, male bangs, male haircut"
+                        mob_positive = f"BREAK (single faceless male partner:1.15), (obscured male face:1.15), (male head out of frame:1.15), (shadow over male eyes:1.1), {rear_direction}(shirtless male:1.1), (bare shoulders:1.1), (solid black pants:1.2), muscular build"
+                        mob_negative = f"{male_face_suppression}, male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, (mask, white mask, noh mask, blank face, pupil-less:1.3), (2boys:1.6), (multiple boys:1.6), (multiple males:1.6), (extra male:1.6)"
 
                     full_prompt = f"{full_prompt} {mob_positive}"
                     actual_negative = f"{actual_negative}, {mob_negative}"
@@ -267,6 +320,30 @@ def run_batch(
                 if is_nude_scene:
                     actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35), (wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)"
 
+            # 웨딩드레스(wedding) 테마 의상인 경우:
+            # 1) 캐릭터 기본 네거티브에 걸려 있는 흰색 드레스/스커트/긴소매/티아라/프릴 억제 태그를 자동 해제
+            # 2) 과도한 노출/란제리/비키니/가슴골/슬릿 요소를 네거티브로 강력 차단하여 품격 있는 웨딩드레스 보장
+            if entry.required_outfit == "wedding":
+                wedding_conflict_neg = {
+                    "white dress", "white clothes", "white sweater", "white skirt", "white bodice",
+                    "white chest", "two-tone dress", "bicolored clothes", "half white", "white robe",
+                    "white vest", "white blouse", "long skirt", "maxi dress", "train", "cape",
+                    "sleeves", "long sleeves", "puffy sleeves", "frills", "frilled skirt", "pleated skirt",
+                    "tiara", "circlet", "hair ornament", "headwear"
+                }
+                neg_parts = [t.strip() for t in actual_negative.split(",") if t.strip()]
+                cleaned_neg_parts = [
+                    t for t in neg_parts if normalize_tag(t) not in wedding_conflict_neg
+                ]
+                actual_negative = ", ".join(cleaned_neg_parts)
+                actual_negative = (
+                    f"{actual_negative}, ((cleavage, deep cleavage, exposed breasts, plunging neckline, "
+                    f"strapless, low-cut, bare breasts, nipples, lingerie, bikini, micro bikini, corset, "
+                    f"garter belt, garter straps, thighhighs, black stockings, cutout, chest cutout, "
+                    f"side slit, pelvic curtain, navel, midriff, short dress, micro skirt, mini skirt, "
+                    f"see-through breasts:1.4))"
+                )
+
             payload = build_txt2img_payload(
                 prompt=full_prompt,
                 negative_prompt=actual_negative,
@@ -281,8 +358,9 @@ def run_batch(
             controlnet_units: list[dict] = []
             if controlnet_unit is not None:
                 unit = dict(controlnet_unit)
-                # 탈의 씬인 경우 참조 이미지의 의상(블랙 드레스 등)이 강제 투영되지 않도록 IP-Adapter 가중치를 0.5로 완화
-                if is_nude_scene and unit.get("weight", 0) > 0.5:
+                # 탈의 씬 또는 테마 의상(웨딩드레스 등) 스왑인 경우 참조 이미지의 기본 의상이 강제 투영되지 않도록 IP-Adapter 가중치를 0.5로 완화
+                is_theme_swap = bool(entry.required_outfit and entry.required_outfit not in ("default", "nude"))
+                if (is_nude_scene or is_theme_swap) and unit.get("weight", 0) > 0.5:
                     unit["weight"] = 0.5
                 controlnet_units.append(unit)
 
@@ -323,6 +401,10 @@ def run_batch(
                         print(f"  [{tag}] 재시도 성공 (순정 모드)", end=" ")
                     else:
                         raise
+            if is_cancelled and is_cancelled():
+                print("중단됨 (미완성 이미지 저장 안 함)")
+                result.aborted = True
+                break
             save_as_webp(png_bytes, save_path)
         except requests.exceptions.ConnectionError:
             print("실패: WebUI 연결 불가 (--api 옵션 실행 여부 확인)")
@@ -338,6 +420,9 @@ def run_batch(
         result.durations.append((code, elapsed))
         print(f"완료 ({elapsed:.1f}초) -> {filename}")
         result.success.append(code)
+
+        if progress_callback:
+            progress_callback(code, entry.label, save_path, idx, total_targets)
 
     return result
 
@@ -468,6 +553,10 @@ def _setup_sampler(
         # Lightning 모드는 전용 샘플러를 강제 사용
         print("[SAMPLER] Lightning 모드 → 'DPM++ SDE' 고정")
         return "DPM++ SDE"
+    if getattr(args, "sampler", None):
+        user_sampler = args.sampler
+        print(f"[SAMPLER] 사용자 지정 '{user_sampler}' 적용")
+        return user_sampler
     return resolve_sampler()
 
 
@@ -491,7 +580,22 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     )
 
     # ── 대상 코드 / 저장 경로 ──────────────────────
-    targets = resolve_targets(db, args.mode, args.codes)
+    # mode가 'all'이고 특정 codes가 없을 때, 캐릭터의 default_mode/gender를 기반으로 여성 100장 또는 오토코노코 100장으로 자동 라우팅
+    target_mode = args.mode
+    if target_mode == "all" and not getattr(args, "codes", None):
+        char_gender = getattr(args, "gender", "female")
+        is_otk = str(char_gender).lower() in ("otokonoko", "femboy")
+        base_secs = (
+            ["emotions", "poses", "genit_actions", "scenes_otokonoko"]
+            if is_otk
+            else ["emotions", "poses", "genit_actions", "h_scenes"]
+        )
+        active_secs = [s for s in base_secs if s in db.sections]
+        builtin_sections = {"emotions", "poses", "genit_actions", "h_scenes", "scenes_otokonoko"}
+        custom_sections = [sec for sec in db.sections if sec not in builtin_sections]
+        target_mode = ",".join(active_secs + custom_sections)
+
+    targets = resolve_targets(db, target_mode, args.codes)
     if not targets:
         raise ConfigError(
             "생성 대상 코드가 없습니다.", "--mode / --codes 값을 확인하세요."
@@ -514,9 +618,19 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     active_bg = resolve_background(cli_bg, roster.background_file, bg_preset)
 
     # ── 작업 요약 출력 ─────────────────────────────
+    active_steps = getattr(args, "steps", 30) or 30
+    active_sampler_str = getattr(args, "sampler", None) or sampler_name
+    active_sched_str = getattr(args, "scheduler", None) or "Automatic"
+    active_cfg_val = getattr(args, "cfg_scale", 6.0) or 6.0
+    ref_status_str = "비활성화 (--no_ref)" if getattr(args, "no_ref", False) else f"활성화 (강도 {ref_weight})"
+
     print(
         f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile_label} | "
         f"모드: {args.mode} ({len(targets)}장) | 폭: {width}"
+    )
+    print(
+        f"[파라미터] 스텝: {active_steps} | 샘플러: {active_sampler_str} | "
+        f"스케줄러: {active_sched_str} | CFG: {active_cfg_val} | 레퍼런스: {ref_status_str}"
     )
     print(f"[저장] {save_dir}")
     if active_bg:
@@ -547,10 +661,20 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         enable_lightning=args.enable_lightning,
         lightning_steps=args.lightning_steps,
         lightning_cfg=args.lightning_cfg,
-        lightning_lora_name=args.lightning_lora_name,
+        steps=getattr(args, "steps", None),
+        sampler=getattr(args, "sampler", None),
+        scheduler=getattr(args, "scheduler", None),
+        cfg_scale=getattr(args, "cfg_scale", None),
+        naming=getattr(args, "naming", "code"),
+        overwrite=getattr(args, "overwrite", False),
         active_bg=active_bg,
+        nude_positive=getattr(args, "nude_positive", None),
+        gender=getattr(args, "gender", "female"),
+        outfits=getattr(args, "outfits", None),
         dry_run=dry_run,
         mock=mock,
+        progress_callback=getattr(args, "progress_callback", None),
+        is_cancelled=getattr(args, "is_cancelled", None),
     )
 
     vram = None if (mock or dry_run) else fetch_vram_peak()
@@ -564,7 +688,8 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     if not dry_run:
         open_in_explorer(save_dir)
 
-    print(build_genit_block(prefix, existing, db, width, badge))
+    naming_mode = getattr(args, "naming", "code")
+    print(build_genit_block(prefix, existing, db, width, badge, naming=naming_mode))
     return 1 if result.aborted else 0
 
 
@@ -574,6 +699,8 @@ def run_all_chars(
     codes_expr: str | None,
     dry_run: bool,
     mock: bool,
+    naming: str = "code",
+    overwrite: bool = False,
     cli_bg: str | None = None,
     bg_preset: str = "default",
     enable_freeu: bool = False,
@@ -586,6 +713,11 @@ def run_all_chars(
     lightning_steps: int = 2,
     lightning_cfg: float = 1.0,
     lightning_lora_name: str = "sdxl_lightning_2step_lora",
+    steps: int | None = None,
+    sampler: str | None = None,
+    scheduler: str | None = None,
+    cfg_scale: float | None = None,
+    no_ref: bool = False,
 ) -> int:
     """로스터의 모든 캐릭터를 순서대로 생성한다."""
     chars_dir = roster.characters_dir
@@ -632,7 +764,7 @@ def run_all_chars(
             bg_preset=bg_preset,
             ref_image=None,
             ref_weight=cfg.ref_weight if cfg.ref_weight is not None else REF_WEIGHT_DEFAULT,
-            no_ref=False,
+            no_ref=no_ref,
             cn_module=None,
             cn_model=None,
             dry_run=dry_run,
@@ -647,6 +779,15 @@ def run_all_chars(
             lightning_steps=lightning_steps,
             lightning_cfg=lightning_cfg,
             lightning_lora_name=lightning_lora_name,
+            steps=steps,
+            sampler=sampler,
+            scheduler=scheduler,
+            cfg_scale=cfg_scale,
+            naming=naming,
+            overwrite=overwrite,
+            nude_positive=cfg.nude_positive,
+            gender=cfg.gender,
+            outfits=cfg.outfits,
         )
         # 캐릭터 설정 적용 시 db를 함께 전달하여 이벤트 섹션 자동 병합 반영
         apply_character_to_args(cfg, args, db)

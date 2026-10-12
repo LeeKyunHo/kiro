@@ -1,0 +1,28 @@
+{
+  "prefix": "srh",
+  "name": "Sarah (사라 / 주인공 파견 파트너 요원)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "state_intelligence_partner",
+  "role": "주인공과 함께 잠입 파견된 수석 파트너 바니걸 요원",
+  "appearance": {
+    "face_and_hair": "sleek jet-black hair in high ponytail, center-parted natural bangs framing face, clean smooth porcelain forehead, sharp obsidian eyes, cool alluring beauty",
+    "physique": "slender toned athletic body, long slender legs, graceful curves, perky firm medium breasts",
+    "outfit": "luxury black velvet bunny girl suit with cropped bolero jacket, form-fitting strapless corset bodysuit, deep sweetheart neckline, black bunny ears, sheer black pantyhose, high heel pumps"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Sarah, undercover intelligence partner agent, sleek jet-black high ponytail, center-parted bangs, clean forehead, sharp obsidian eyes, cool beauty, slender body, perky breasts, wearing luxury black velvet bunny girl suit with cropped bolero, strapless corset bodysuit, black bunny ears, sheer black pantyhose, stiletto heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy coats, thick jacket, armor, casual clothes, deformed limbs",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, sarah, slender athletic body, medium breasts, narrow waist, long legs, (sleek jet-black high ponytail:1.15), (center-parted natural bangs:1.15), (sharp obsidian eyes:1.15), cool beauty, composed gaze, ((solid black velvet corset bunny suit:1.15)), black cropped bolero jacket, black bunny ears, sheer black pantyhose, black high heels",
+  "sdxl_negative": "forehead mark, forehead jewel, forehead gem, forehead ornament, keyhole, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), heavy coat, armor, flat chest, pants, exposed bra, exposed bra cup, see-through, white bunny suit, red bunny suit, blue bunny suit, pink bunny suit, colorful suit, colorful clothes",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, sarah, slender athletic body, pale porcelain skin, medium perk breasts, narrow waist, toned belly, (sleek jet-black high ponytail:1.15), (center-parted natural bangs:1.15), (sharp obsidian eyes:1.15), cool beauty",
+  "outfits": {
+    "swimsuit": "sleek jet-black athletic micro bikini, metallic silver buckle accents, toned midriff",
+    "bunny": "luxury black velvet bunny girl suit with cropped bolero jacket, strapless corset bodysuit, black bunny ears, sheer black pantyhose",
+    "maid": "sleek form-fitting black tactical maid mini dress, crisp white apron, white lace headdress, sheer black pantyhose",
+    "bdsm": "sleek black leather tactical bondage harness, black collar choker, leather arm straps, sheer black pantyhose",
+    "underwear": "sleek black satin lace bra, matching black satin panties, sheer black pantyhose",
+    "combat": "battle-damaged sleek black velvet bunny girl corset suit, cropped bolero jacket, torn sheer black pantyhose",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

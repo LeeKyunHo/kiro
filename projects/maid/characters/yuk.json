@@ -1,0 +1,21 @@
+{
+  "prefix": "yuk",
+  "name": "유키 (Yuki)",
+  "gender": "otokonoko",
+  "default_mode": "otokonoko",
+  "appearance": {
+    "face_and_hair": "A mystical and refined androgynous youth with snow-white long hair in a half-up ponytail tied with black ribbon, luminous ruby-red eyes, fair skin, modest blush",
+    "physique": "slender and graceful androgynous frame, flat chest, narrow shoulders, delicate waist, tall elegant silhouette, quiet gentle demeanor",
+    "outfit": "an elegant sister-style black maid dress with a modest white lace collar, long bell sleeves with delicate white frills, flowing ankle-length pleated black skirt, crisp white bib apron, silver cross pendant on a thin black velvet choker, white stockings"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), (refined delicate young adult, androgynous youth:1.15), slender graceful build, flat chest, narrow waist, (snow-white hair:1.15), (long hair with half-up ponytail, black ribbon:1.15), (face-framing strands:1.15), (luminous ruby-red eyes:1.15), fair skin, bashful blush, (silver cross pendant necklace:1.15), gothic lolita maid minidress, white wide collar, short flared skirt, small white apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, visible panties, see-through, visible penis, large penis, erection, testicles, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1girl, female, (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, cameltoe, muscular, bulky, manly, beard, mustache, long dress, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), (refined delicate young adult, androgynous youth:1.15), slender graceful build, flat chest, narrow waist, (snow-white hair:1.15), (long hair with half-up ponytail, black ribbon:1.15), (face-framing strands:1.15), (luminous ruby-red eyes:1.15), fair skin, bashful blush, (silver cross pendant necklace:1.15), gothic lolita maid minidress, white wide collar, short flared skirt, small white apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, visible panties, see-through, visible penis, large penis, erection, testicles, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1girl, female, (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, cameltoe, muscular, bulky, manly, beard, mustache, long dress, cat ears, fox ears, dog ears, wolf ears, furry"
+}

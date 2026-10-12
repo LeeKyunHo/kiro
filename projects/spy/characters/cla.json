@@ -1,0 +1,28 @@
+{
+  "prefix": "cla",
+  "name": "Clara (클라라 / 정보국 감사원 공무원)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "state_intelligence_civil_service",
+  "role": "정부 감사원 출신 신입 사무관 위장 요원",
+  "appearance": {
+    "face_and_hair": "silky straight brown hair with neat bangs, gentle intelligent hazel eyes, round silver glasses, warm intellectual demeanor, clean smooth forehead",
+    "physique": "slender voluptuous figure, large soft breasts, narrow waist, delicate curves",
+    "outfit": "1960s retro undercover auditor uniform, crisp pure snow-white unbuttoned collared blouse with pure white sleeves, deep cleavage, fitted slate-navy corset vest, tight navy micro pencil skirt, sheer black pantyhose, high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Clara, government auditor in secret salon, silky brown long hair with neat bangs, round glasses, hazel eyes, warm intellectual demeanor, slender voluptuous body, large soft breasts, wearing crisp pure snow-white unbuttoned collared blouse with pure white sleeves, deep cleavage, fitted slate-navy corset vest, tight navy micro pencil skirt, sheer black pantyhose, black high heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy coats, military armor, weapons, fantasy, deformed fingers, exposed bra, green shirt, greenish tint",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, clara, slender voluptuous figure, large breasts, narrow waist, (long straight brown hair:1.15), (neat bangs:1.15), (hazel eyes:1.15), (round glasses:1.15), warm intellectual demeanor, crisp pure snow-white unbuttoned collared blouse, pure white shirt sleeves, deep cleavage, fitted slate-navy blue corset vest, tight navy micro pencil skirt, sheer black pantyhose, high heels",
+  "sdxl_negative": "green shirt, green blouse, teal shirt, cyan blouse, greenish white, green tint, green sleeves, forehead mark, forehead jewel, forehead gem, forehead ornament, keyhole, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), heavy jacket, armor, weapons, flat chest, small breasts, exposed bra, exposed bra cup, see-through, fluorescent light, arms behind head",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, clara, slender voluptuous body, large soft breasts, narrow waist, feminine hips, (long straight brown hair:1.15), (neat bangs:1.15), (hazel eyes:1.15), (round glasses:1.15), warm intellectual demeanor",
+  "outfits": {
+    "swimsuit": "pure snow-white and slate-navy two-piece halterneck bikini, neat ribbon ties",
+    "bunny": "slate-navy velvet bunny girl corset bodysuit, black bunny ears, crisp pure white collar, navy bowtie, sheer black pantyhose",
+    "maid": "classic slate-navy and crisp pure snow-white maid uniform dress, white frilled apron, maid headband, sheer black pantyhose",
+    "bdsm": "black leather strap harness over bare skin, leather collar choker, wrist cuffs, sheer black pantyhose",
+    "underwear": "crisp pure snow-white lace bra, matching pure white lace panties, sheer black pantyhose",
+    "combat": "disheveled pure snow-white unbuttoned collared blouse, slate-navy corset vest, navy micro pencil skirt, torn sheer black pantyhose",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

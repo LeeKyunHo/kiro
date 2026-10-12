@@ -73,6 +73,17 @@ def resolve_sampler() -> str:
     return SAMPLER_CANDIDATES[0]
 
 
+def interrupt_forge() -> bool:
+    """WebUI Forge 백엔드에 즉시 생성 중단(Interrupt) 신호를 전송한다."""
+    try:
+        from generator.config import INTERRUPT_URL
+        res = get_session().post(INTERRUPT_URL, timeout=3.0)
+        return res.status_code == 200
+    except Exception as e:
+        print(f"[WARN] Forge 중단 신호 전송 실패: {e}")
+        return False
+
+
 def save_as_webp(
     png_bytes: bytes, save_path: Path, quality: int = WEBP_QUALITY
 ) -> None:

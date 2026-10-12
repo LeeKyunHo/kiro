@@ -6,6 +6,7 @@ generator.prompt
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -17,6 +18,27 @@ from generator.config import (
     WEIGHT_SUFFIX_PATTERN,
     ConfigError,
 )
+
+
+def clamp_weights(prompt_text: str, max_weight: float = 1.15, normalize_brackets: bool = False) -> str:
+    """
+    SDXL/Illustrious CLIP 인코더 최적화:
+    1. 지정된 max_weight 를 초과하는 과도한 가중치를 안전 한계치로 클램핑하여 색상 과포화/번아웃 방지.
+    2. normalize_brackets=True 시 다중 괄호((...)) 누적으로 인한 비정상 가중치 증폭을 단일화.
+    """
+    if not prompt_text:
+        return ""
+
+    def _clamp_match(m: re.Match) -> str:
+        w = float(m.group(1))
+        return f":{min(w, max_weight):.2f}"
+
+    text = re.sub(r":([0-9]+\.[0-9]+)", _clamp_match, prompt_text)
+    if normalize_brackets:
+        text = re.sub(r"\({2,}", "(", text)
+        text = re.sub(r"\){2,}", ")", text)
+    return text
+
 
 
 def normalize_tag(raw: str) -> str:
@@ -45,13 +67,15 @@ def join_tags(*parts: str) -> str:
 
 
 _OUTFIT_KEYWORDS = frozenset({
-    "dress", "skirt", "bodycon", "knit", "high-neck", "turtleneck", "sleeves", "sleeved",
+    "dress", "skirt", "bodycon", "knit", "high-neck", "turtleneck", "sleeves", "sleeved", "sleeveless",
     "cutout", "shirt", "blouse", "pants", "jeans", "trousers", "slacks", "jacket", "coat", "sweater", "cardigan",
     "uniform", "suit", "collar", "cuffs", "tie", "necktie", "bowtie", "necklace", "pendant", "choker",
     "bracelet", "gloves", "socks", "stockings", "pantyhose", "shoes", "boots", "heels",
     "bra", "panties", "underwear", "swimwear", "bikini", "swimsuit", "leotard", "one-piece",
     "apron", "shorts", "robe", "kimono", "hoodie", "top", "camisole",
-    "underboob", "underbust", "corset", "bodice", "bustier", "straps", "suspender", "garter"
+    "underboob", "underbust", "corset", "bodice", "bustier", "straps", "strap", "suspender", "garter",
+    "lingerie", "qipao", "cheongsam", "slit", "slits", "curtain", "bolero", "holster", "cleavage",
+    "fishnet", "latex", "harness", "bodysuit", "pasties", "thong", "legwear", "vest"
 })
 
 _HAIR_KEYWORDS = (

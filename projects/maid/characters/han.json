@@ -1,0 +1,21 @@
+{
+  "prefix": "han",
+  "name": "하나 (Hana)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "An intelligent young woman with sleek dark navy-blue hair in a neat angled bob cut, straight fringe bangs, warm caramel-brown eyes behind red-framed spectacles, fair skin, composed expression",
+    "physique": "slender toned feminine silhouette, graceful posture, shapely medium breasts, narrow waist, poised intelligent demeanor",
+    "outfit": "a classic black and white maid dress with crisp white frilled apron, puffy short sleeves, modest white ruffled neckline, black ribbon tie, knee-length black skirt, white lace petticoat, black thigh-high stockings with white frilled top, white lace maid headband"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (mature intelligent young woman:1.1), slender toned figure, graceful proportions, medium breasts, narrow waist, (dark navy-blue hair:1.15), (neat angled bob cut:1.15), (straight fringe bangs:1.15), (warm caramel-brown eyes:1.15), fair skin, subtle blush, (red-framed glasses with thin gold glasses chain:1.2), neat collared shirt, fitted vest, black pencil miniskirt, crisp white apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (mature intelligent young woman:1.1), slender toned figure, graceful proportions, medium breasts, narrow waist, (dark navy-blue hair:1.15), (neat angled bob cut:1.15), (straight fringe bangs:1.15), (warm caramel-brown eyes:1.15), fair skin, subtle blush, (red-framed glasses with thin gold glasses chain:1.2), neat collared shirt, fitted vest, black pencil miniskirt, crisp white apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), small breasts, flat chest, dark skin, tan, long skirt, cat ears, fox ears, dog ears, wolf ears, furry"
+}

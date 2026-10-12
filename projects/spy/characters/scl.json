@@ -1,0 +1,28 @@
+{
+  "prefix": "scl",
+  "name": "Scarlett (스칼렛 / 정부 세무국 특수조사관)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "state_intelligence_treasury_investigation",
+  "role": "정부 세무조사국 소속 언더커버 바텐더 요원",
+  "appearance": {
+    "face_and_hair": "sleek silver-white short bob cut hair with asymmetrical long bangs covering one eye, cold slate-purple eyes, sharp half-closed kuudere eyes, flat straight eyebrows, emotionless icy beauty, soft healthy fair skin tone, clean smooth forehead, no hair accessories",
+    "physique": "slender voluptuous hourglass figure, large firm breasts, narrow waist, toned flat stomach, curvy hips",
+    "outfit": "tight form-fitting off-shoulder red cable-knit sweater dress hugging curves, long sleeves, folded off-shoulder collar, bare shoulders, clavicle, entirely solid crimson red knit dress, sheer black pantyhose, dark ankle boots"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Scarlett, icy undercover spy agent, sleek silver-white short bob cut hair, asymmetrical long bangs covering one eye, cold slate-purple eyes, sharp half-closed kuudere eyes, emotionless stoic beauty, soft healthy fair skin, large firm breasts, narrow waist, wearing tight form-fitting off-shoulder solid crimson red knit sweater dress hugging curves, folded neckline, bare shoulders, clavicle, long sleeves, entirely crimson red clothes, sheer black pantyhose, ankle boots",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy winter coat, long coat, armor, tan skin, red hair, purple hair, wide grin, deformed hands, headband, hairband, white clothes, white dress, two-tone dress, bicolored clothes, keyhole, chest cutout, zipper on chest, pale white corpse skin",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, scarlett, soft healthy fair skin, slender voluptuous figure, large firm breasts, narrow waist, toned flat stomach, curvy hips, ((sleek silver bob hair:1.3)), ((platinum silver hair:1.2)), ((silver-white hair:1.15)), (asymmetrical long bangs covering one eye, hair over one eye:1.15), (cold slate-purple eyes:1.15), (sharp half-closed kuudere eyes, flat straight eyebrows, cool stoic gaze:1.15), kuudere, quiet demeanor, cool composed gaze, ((solid red tight form-fitting off-shoulder cable-knit sweater dress:1.25)), (entirely crimson red dress, completely red knit:1.2), (folded collar, wide off-shoulder, bare shoulders, clavicle:1.15), (long knit sleeves:1.15), (hugging curves, narrow waist:1.2), (thin black strap:0.95), ((solid sheer black pantyhose:1.2)), black high-heel ankle boots",
+  "sdxl_negative": "((headband, hairband, white headband, cloth headband, headwear, hair ornament, hair ribbon, forehead band:1.55)), ((white dress, white clothes, white sweater, two-tone dress, bicolored clothes, half white, white bodice, white chest:1.45)), purple hair, dark hair, black hair, violet hair, red hair, crimson hair, tan skin, dark skin, sickly pale, corpse pale, ghostly pale, chalk white skin, keyhole, chest cutout, cutout top, keyhole cutout, zipper on chest, buckle strap, chest harness, jacket, leather jacket, biker jacket, shorts, leather shorts, long coat, trench coat, baggy pants, long pants, wide grin, open mouth smile, forehead mark, forehead jewel, forehead gem, forehead ornament, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), armor, flat chest, small breasts, sunglasses, glasses, eyewear, holding glass, from below, low angle, giantess, overly long legs, tiny head, sofa, couch",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, scarlett, soft healthy fair skin, slender voluptuous figure, large firm breasts, narrow waist, curvy hips, ((sleek silver bob hair:1.3)), ((platinum silver hair:1.2)), ((silver-white hair:1.15)), (asymmetrical long bangs covering one eye, hair over one eye:1.15), (cold slate-purple eyes:1.15), (sharp half-closed kuudere eyes, flat straight eyebrows, cool stoic gaze:1.15), kuudere, quiet demeanor, cool composed gaze",
+  "outfits": {
+    "swimsuit": "sleek dark purple and black micro halter bikini, bare shoulders",
+    "bunny": "glossy dark navy and black leather bunny girl bodysuit, black bunny ears, white collar, dark purple bowtie, sheer black thighhighs",
+    "maid": "cool dark navy and black gothic maid mini dress, crisp white apron, lace headdress, sheer black thighhighs",
+    "bdsm": "black and brown leather tactical bondage strap harness, leather buckle collar, sheer black thighhighs",
+    "underwear": "dark purple satin luxury plunge bra, matching dark purple lace panties, sheer black pantyhose",
+    "combat": "disheveled solid crimson red knit sweater dress, torn sheer black pantyhose",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "prefix": "kzk",
+  "name": "Kozuka (코즈카 / 살롱 의무실 전담 엔터테이너)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "salon_vigilante_syndicate",
+  "role": "살롱 의무실에서 활동하는 쿨하고 과묵한 슬렌더 글래머 엔터테이너",
+  "appearance": {
+    "face_and_hair": "light lavender-purple sleek straight hair tucked behind ears, sharp golden-amber eyes, half-closed eyes, straight eyebrows, kuudere quiet demeanor, cool composed gaze, fair porcelain skin",
+    "physique": "slender balanced curvy hourglass body, large firm voluptuous breasts, deep cleavage, narrow slim waist, delicate collarbone, graceful slim frame, elegant long legs",
+    "outfit": "unbuttoned crisp pure white doctor coat worn over bare skin, black micro halter bikini top, thin black strap, ultra-short black micro mini skirt, white lace garter belt, sheer white thigh-high stockings, white high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Kozuka, salon medical entertainer, light lavender-purple sleek straight hair tucked behind ears, sharp golden-amber eyes, half-closed eyes, straight eyebrows, kuudere quiet demeanor, fair porcelain skin, slender curvy body, large firm breasts, narrow waist, wearing unbuttoned crisp pure white doctor coat over bare skin, black micro halter bikini top, ultra-short black micro mini skirt, white lace garter belt, sheer white thigh-high stockings",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, flat chest, small breasts, heavy armor, casual messy clothes, deformed forehead, scar on forehead, forehead mark, cross scar, headband, forehead band, armband, bandages, id badge, name tag, card on clothes",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, neat natural hairline, clear facial skin, masterpiece, best quality, absurdres BREAK 1girl, solo, kozuka, fair porcelain skin, slender curvy hourglass body, large firm breasts, voluminous breasts, shapely deep cleavage, narrow waist, delicate collarbone, graceful slim frame, (lavender purple sleek straight hair:1.15), (hair tucked behind ears:1.15), (sharp golden-amber eyes:1.15), (half-closed eyes:1.1), (straight eyebrows:1.05), kuudere, quiet demeanor, cool composed gaze, ((unbuttoned pure white doctor coat:1.15)) over bare skin, ((solid black micro halter bikini top:1.15)), (thin black strap:0.95), ((solid black micro mini skirt:1.15)), white lace garter belt, sheer white thighhighs, white high heels",
+  "sdxl_negative": "((id badge, id card, badge, name tag, name badge, card, lanyard, neck strap, tag on clothes, clip, pinned card, floating badge, card on chest, badge on pocket:1.6)), ((forehead scar, scar on forehead, cross scar, x scar, x mark, cross mark, scar across forehead, forehead scratch, forehead cut, forehead injury, forehead wound, bandaid, bandage on forehead, sticker on forehead, forehead mark, forehead tattoo, forehead dot, bindi, third eye, tilak, forehead jewel, forehead symbol, facial mark, forehead crest:1.65)), ((exposed forehead, wide forehead, barren forehead:1.35)), headband, forehead band, hachimaki, sweatband, tiara, circlet, armband, arm strap, bandages, wrist bandages, hand wraps, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), flat chest, small breasts, heavy coat, pants, slacks, armor, furrowed brow, crying, sad, colorful coat, black coat, blue coat, colorful bikini, colorful skirt, white skirt, red skirt",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, neat natural hairline, clear facial skin, masterpiece, best quality, absurdres BREAK 1girl, solo, kozuka, fair porcelain skin, slender curvy hourglass body, large firm breasts, voluminous breasts, shapely cleavage, delicate slim waist, graceful feminine silhouette, (lavender purple sleek straight hair:1.15), (hair tucked behind ears:1.15), (sharp golden-amber eyes:1.15), (half-closed eyes:1.1), (straight eyebrows:1.05), kuudere, quiet demeanor, cool composed gaze",
+  "outfits": {
+    "swimsuit": "sleek black halterneck micro bikini, thin white medical cross accent, bare midriff",
+    "bunny": "glossy white and black reverse bunny girl leotard, white bunny ears, sheer white thighhighs, white bow tie",
+    "maid": "crisp black and white clinical maid dress, white frilled apron, maid headdress, sheer white thighhighs",
+    "bdsm": "black leather strap harness, silver ring collar choker, leather wrist cuffs, sheer white thighhighs",
+    "underwear": "pure white sheer lace bra, matching white lace panties, white garter belt, sheer white thighhighs",
+    "combat": "disheveled unbuttoned white doctor coat, black micro halter bikini top, torn sheer white thighhighs",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

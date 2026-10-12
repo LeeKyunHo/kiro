@@ -1,0 +1,9 @@
+{
+  "steps": 30,
+  "sampler": "DPM++ 2M",
+  "scheduler": "Karras",
+  "cfg_scale": 8.0,
+  "use_reference": true,
+  "naming": "hybrid",
+  "overwrite": false
+}

@@ -1,0 +1,21 @@
+{
+  "prefix": "ren",
+  "name": "렌 (Ren)",
+  "gender": "otokonoko",
+  "default_mode": "otokonoko",
+  "appearance": {
+    "face_and_hair": "A lovely and charming androgynous youth with silky pastel pink chin-length bob cut, airy bangs, sparkling vivid green eyes, fair skin, gentle blush",
+    "physique": "slender and graceful androgynous frame, flat chest, narrow shoulders, soft feminine waist, toned slender legs, poised feminine charm",
+    "outfit": "a super cute frilly pastel-pink and black maid minidress with puffed cap sleeves, heart-shaped chest cut-out detail, frilly white lace apron with a big back bow, pink satin ribbon choker, white lace-trimmed thigh-high stockings with pink garters"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), (refined delicate feminine face, young adult:1.15), slender graceful build, flat chest, narrow waist, (pastel pink hair:1.15), (chin-length bob cut, airy bangs:1.15), (sparkling vivid green eyes:1.15), fair skin, blush, (pink ribbon hairclip:1.15), cute frilly maid minidress, puffed sleeves, short flared miniskirt, white ruffled mini apron with bow, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, visible panties, see-through, visible penis, large penis, erection, testicles, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1girl, female, (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, cameltoe, muscular, bulky, manly, beard, mustache, long dress, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), (refined delicate feminine face, young adult:1.15), slender graceful build, flat chest, narrow waist, (pastel pink hair:1.15), (chin-length bob cut, airy bangs:1.15), (sparkling vivid green eyes:1.15), fair skin, blush, (pink ribbon hairclip:1.15), cute frilly maid minidress, puffed sleeves, short flared miniskirt, white ruffled mini apron with bow, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, pantyshot, exposed panties, visible panties, see-through, visible penis, large penis, erection, testicles, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1girl, female, (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, cameltoe, muscular, bulky, manly, beard, mustache, long dress, cat ears, fox ears, dog ears, wolf ears, furry"
+}

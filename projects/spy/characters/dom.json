@@ -1,0 +1,28 @@
+{
+  "prefix": "dom",
+  "name": "Dominica (도미니카 / 비밀 코스프레 살롱 마담 총수)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "salon_vigilante_syndicate",
+  "role": "코스프레 살롱의 여왕이자 배후의 비질란테 총수",
+  "appearance": {
+    "face_and_hair": "pitch black sleek straight hair with hime-cut bangs and blunt sidelocks, golden cat eyes, half-closed eyes, arched eyebrows, beauty mark under left eye, regal confident demeanor, clean smooth forehead",
+    "physique": "statuesque mature hourglass figure, massive heavy breasts, narrow waist, wide voluptuous hips",
+    "outfit": "off-shoulder sheer black lace robe draped loosely over arms, crimson satin cutout micro corset lingerie, deep plunging neckline, gold body chain, high-cut lace garter belt, sheer black stockings, gold high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Dominica, grand madame of secret salon, pitch black hime-cut straight hair, golden cat eyes, beauty mark under left eye, regal confident demeanor, massive heavy breasts, wide voluptuous hips, wearing off-shoulder sheer black lace robe draped loosely, crimson satin cutout micro corset lingerie, gold body chain, high-cut lace garter belt, sheer black stockings, gold heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, heavy winter coat, armor, casual clothes, flat chest",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, dominica, statuesque mature hourglass figure, massive breasts, narrow waist, wide voluptuous hips, (pitch black sleek straight hair:1.15), (hime cut, blunt sidelocks:1.15), (golden cat eyes:1.15), (half-closed eyes:1.05), (arched eyebrows:1.05), (single beauty mark under left eye:1.15), regal confident demeanor, composed gaze, ((off-shoulder sheer black lace robe:1.15)), ((crimson red satin cutout micro corset lingerie:1.15)), (thin crimson strap:0.95), gold body chain, high-cut lace garter belt, sheer black stockings, gold high heels",
+  "sdxl_negative": "forehead mark, forehead jewel, forehead gem, forehead ornament, keyhole, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), heavy coat, armor, flat chest, small breasts, pants, white robe, colorful robe, blue lingerie, green lingerie, white lingerie, yellow lingerie, colorful lingerie",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, dominica, statuesque hourglass body, massive heavy breasts, narrow waist, wide voluptuous hips, mature feminine curves, (pitch black sleek straight hair:1.15), (hime cut, blunt sidelocks:1.15), (golden cat eyes:1.15), (half-closed eyes:1.05), (arched eyebrows:1.05), (single beauty mark under left eye:1.15), regal confident demeanor",
+  "outfits": {
+    "swimsuit": "luxury crimson and black micro string bikini, gold chain accents, sheer black beach wrap",
+    "bunny": "luxury crimson velvet and black lace bunny girl corset suit, black bunny ears, gold bowtie, sheer black stockings",
+    "maid": "seductive sheer black lace french maid lingerie dress, mini white apron, black lace headdress, sheer black stockings",
+    "bdsm": "crimson and black leather queen harness corset, gold chain collar, black leather thigh garters, sheer black stockings",
+    "underwear": "crimson satin luxury plunge bra, matching crimson lace garter panties, sheer black stockings",
+    "combat": "disheveled sheer black lace robe, crimson satin micro corset lingerie, torn sheer black stockings",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

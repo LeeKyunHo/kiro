@@ -1,0 +1,21 @@
+{
+  "prefix": "aoi",
+  "name": "아오이 (Aoi)",
+  "gender": "otokonoko",
+  "default_mode": "otokonoko",
+  "appearance": {
+    "face_and_hair": "A handsome and refined androgynous youth with sleek jet-black hair tied into a low ponytail at the nape of the neck with wispy bangs framing cool confident sapphire-blue eyes, fair skin, subtle blush",
+    "physique": "slender and refined androgynous silhouette, tall proportions, flat chest, narrow waist, graceful long legs, poised composed posture",
+    "outfit": "a boyish butler-maid hybrid ensemble featuring a crisp white dress shirt with rolled-up cuffs, a fitted black vest with silver buttons, black silk ribbon tie, frilled black pumpkin shorts with a small white half-apron, sheer black thigh-high socks with garter straps"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), refined handsome feminine face, (slender toned young adult build:1.1), tall proportions, flat chest, narrow waist, (jet-black hair:1.15), (low ponytail at nape:1.15), (wispy bangs:1.15), (sharp sapphire blue eyes:1.15), fair skin, subtle blush, (black silk ribbon tie:1.15), white collared shirt, fitted black vest with silver buttons, form-fitting black shorts, small white half-apron, (black leather thigh straps, sock garters:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, underwear over clothes, garter belt, pantyshot, exposed panties, visible panties, see-through, visible penis, large penis, erection, testicles, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1girl, female, (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, cameltoe, muscular, bulky, manly, beard, mustache, long dress, cat ears, fox ears, dog ears, wolf ears, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), refined handsome feminine face, (slender toned young adult build:1.1), tall proportions, flat chest, narrow waist, (jet-black hair:1.15), (low ponytail at nape:1.15), (wispy bangs:1.15), (sharp sapphire blue eyes:1.15), fair skin, subtle blush, (black silk ribbon tie:1.15), white collared shirt, fitted black vest with silver buttons, form-fitting black shorts, small white half-apron, (black leather thigh straps, sock garters:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, underwear over clothes, garter belt, pantyshot, exposed panties, visible panties, see-through, visible penis, large penis, erection, testicles, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1girl, female, (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, cameltoe, muscular, bulky, manly, beard, mustache, long dress, cat ears, fox ears, dog ears, wolf ears, furry"
+}

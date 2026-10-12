@@ -1,0 +1,28 @@
+{
+  "prefix": "rvn",
+  "name": "Raven (레이븐 / 정부 보안국 공무원 요원 - 코베니 스타일)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "state_intelligence_security_bureau",
+  "role": "정부 보안국 소속 소심하고 어딘가 불안해 보이는 신입 잠입 공무원 (코베니 스타일)",
+  "appearance": {
+    "face_and_hair": "dark brown hair tied in a short stubby ponytail at the back with a single long sidelock hanging down one side of face, short bangs with two red hairclips on left side, dark brown droopy eyes, small beauty mark under eye, shy nervous flustered demeanor, clean smooth forehead",
+    "physique": "slender curvy feminine body, shapely medium-large breasts, narrow waist, wide hips",
+    "outfit": "revealing government office uniform, tight white collared dress shirt with deeply unbuttoned open neckline showing cleavage, loose black necktie hanging between breasts, cropped shirt hem exposing bare midriff, ultra-short tight black office micro pencil skirt, sheer black pantyhose, black office high heels"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Raven, Kobeni Higashiyama style, government security office agent, dark brown hair in short stubby back ponytail with single long sidelock hanging on one side, two red hairclips on bangs, dark brown droopy eyes, small mole under eye, shy nervous flustered expression, slender curvy body, medium-large breasts, wearing tight white collared dress shirt with deeply unbuttoned neckline showing cleavage, loose black necktie, exposed midriff, ultra-short tight black micro pencil skirt, sheer black pantyhose, black high heels",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, silver hair, blonde hair, heavy coat, armor, deformed limbs",
+  "sdxl_positive": "art by raita, balanced body proportions, stylish avant-garde curves, intricate costume details, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, raven, slender curvy body, medium-large breasts, narrow waist, wide hips, (dark brown hair:1.15), (short stubby ponytail:1.15), (single long sidelock on one side:1.15), (two red hairclips on bangs:1.15), (dark brown eyes, tareme droopy eyes:1.15), (small mole under eye:1.1), shy nervous demeanor, slight blush, ((pure white collared shirt:1.15)), unbuttoned shirt, deep open neckline, cleavage, loose black necktie, exposed midriff, navel peeking, ((solid black micro pencil skirt:1.15)), sheer black pantyhose, black high heels",
+  "sdxl_negative": "forehead mark, forehead jewel, forehead gem, forehead ornament, keyhole, forehead tattoo, forehead dot, third eye, bindi, forehead crest, forehead socket, forehead accessory, head jewel, head ornament on forehead, ugly forehead, deformed limbs, worst quality, low quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), silver hair, white hair, blonde hair, long back hair, heavy coat, jacket, blazer, armor, flat chest, colorful shirt, blue shirt, red shirt, pink shirt, yellow shirt, green shirt, colorful skirt, red skirt, blue skirt, white skirt",
+  "sdxl_nude_positive": "art by raita, balanced body proportions, stylish avant-garde curves, clean smooth forehead, neat hairline, masterpiece, best quality, absurdres BREAK 1girl, solo, raven, slender curvy body, medium-large breasts, narrow waist, wide hips, pale smooth skin, (dark brown hair:1.15), (short stubby ponytail:1.15), (single long sidelock on one side:1.15), (two red hairclips on bangs:1.15), (dark brown eyes, tareme droopy eyes:1.15), (small mole under eye:1.1), shy nervous demeanor, slight blush",
+  "outfits": {
+    "swimsuit": "dark navy halterneck bikini top, matching navy side-tie bikini bottom, shy modest fit",
+    "bunny": "classic glossy black bunny girl suit, black bunny ears, white collar, red bowtie, sheer black pantyhose, black high heels",
+    "maid": "classic black maid uniform dress, crisp white ruffled apron, white lace maid headband, sheer black pantyhose",
+    "bdsm": "black leather strap harness, black leather choker collar, leather wrist cuffs, sheer black pantyhose",
+    "underwear": "simple white cotton and lace bra, matching white lace panties, sheer black pantyhose",
+    "combat": "disheveled tight white collared office shirt, loose black necktie, black micro pencil skirt, torn sheer black pantyhose",
+    "wedding": "luxurious haute couture pure snow-white bridal wedding gown, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal skirt, sheer white bridal veil"
+  }
+}

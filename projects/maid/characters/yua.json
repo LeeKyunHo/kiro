@@ -1,0 +1,21 @@
+{
+  "prefix": "yua",
+  "name": "유아 (Yua)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A charming youthful young woman with pastel lavender hair styled in neat low twintails, straight fringe bangs, clear violet eyes, fair skin, sweet gentle smile",
+    "physique": "slender youthful feminine silhouette, graceful balanced proportions, modest neat bust, narrow waist, charming lively posture",
+    "outfit": "a playful pastel-accented maid outfit featuring a cute frilled shoulder capelet with a lavender bow, black bodice, puffed ruffled mini skirt, white apron, black thighhighs with uniform garter belt, lavender ribbon choker"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, flat vibrant cel-shading, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (youthful young woman:1.15), (slender graceful build:1.1), modest bust, narrow waist, (pastel lavender hair:1.15), (low twintails:1.15), (straight fringe bangs:1.15), (soft round violet eyes:1.15), fair skin, rosy cheeks, (lavender silk ribbon choker:1.15), mini capelet maid dress, shoulder capelet with bow, puffy sleeves, short flared skirt, white ruffled apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "sdxl_negative": "child, loli, kid, baby, toddler, chibi, immature, elementary schooler, middle schooler, (large breasts, huge breasts, cleavage:1.3), rabbit ears, bunny ears, animal ears, cat ears, elf ears, pointed ears, fake animal ears, animal ear headband, headband, headwear, hair ornament, hair buns, odango, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), dark skin, tan, long skirt, furry",
+  "ref_weight": 0.68,
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest, BREAK 1girl, solo, (youthful young woman:1.15), (slender graceful build:1.1), modest bust, narrow waist, (pastel lavender hair:1.15), (low twintails:1.15), (straight fringe bangs:1.15), (soft round violet eyes:1.15), fair skin, rosy cheeks, (lavender silk ribbon choker:1.15), mini capelet maid dress, shoulder capelet with bow, puffy sleeves, short flared skirt, white ruffled apron, (uniform black garter belt, attached garter straps:1.15), black thighhighs, (thigh compression:1.1)",
+  "negative": "child, loli, kid, baby, toddler, chibi, immature, elementary schooler, middle schooler, (large breasts, huge breasts, cleavage:1.3), rabbit ears, bunny ears, animal ears, cat ears, elf ears, pointed ears, fake animal ears, animal ear headband, headband, headwear, hair ornament, hair buns, odango, pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through, lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, (comic:1.2), (multiple views:1.2), (panel layout:1.2), dark skin, tan, long skirt, furry"
+}
