@@ -160,8 +160,17 @@ def run_batch(
             # 탈의/H-씬 또는 테마 의상 스왑 분기:
             active_base_pos = base_positive
             active_char_prompt = char_prompt
-            is_nude_scene = entry.section in ("h_scenes", "scenes_otokonoko") or any(
-                kw in pose_prompt.lower() for kw in ("nude", "unclothed", "bare skin", "bare body")
+            is_clothed_scene = (
+                entry.required_outfit == "default"
+                or code in (81, 82, 96, 97, 99, 181, 182, 196, 197, 199)
+            )
+            is_nude_scene = (
+                not is_clothed_scene
+                and (
+                    entry.section in ("h_scenes", "scenes_otokonoko")
+                    or entry.required_outfit == "nude"
+                    or any(kw in pose_prompt.lower() for kw in ("nude", "unclothed", "bare skin", "bare body"))
+                )
             )
             if is_nude_scene:
                 if nude_positive and nude_positive.strip():
@@ -223,7 +232,7 @@ def run_batch(
                 "hetero", "missionary", "cowgirl", "doggystyle", "cunnilingus", "fingering",
                 "groping", "ass grab"
             )
-            is_aftermath = any(kw in pose_prompt.lower() for kw in ("aftermath", "aftersex"))
+            is_aftermath = any(kw in pose_prompt.lower() for kw in ("aftermath", "aftersex", "afterglow"))
             is_offscreen_partner = any(kw in pose_prompt.lower() for kw in ("off-screen", "offscreen", "completely off-screen"))
             is_solo_scene = (
                 "solo focus" in pose_prompt.lower()

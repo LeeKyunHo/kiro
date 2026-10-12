@@ -165,7 +165,8 @@
     "030": {
       "label": "알몸스탠딩",
       "description": "실오라기 하나 걸치지 않은 완전한 나체 상태에서 수줍은 듯 정면을 응시하는 스탠딩 누드 씬.",
-      "prompt": "completely nude, full nudity, bare skin, standing, looking at viewer, (shy bashful gaze:1.15), (heavy body blush:1.15), (intensely flushed face and chest:1.1), teary eyes, trembling slightly, arms at sides, (embarrassed expression:1.1), biting lip, soft lighting, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, standing, looking at viewer, (shy bashful gaze:1.15), (heavy body blush:1.15), (intensely flushed face and chest:1.1), teary eyes, trembling slightly, arms at sides, (embarrassed expression:1.1), biting lip, soft lighting, cowboy shot",
+      "required_outfit": "nude"
     },
     "031": {
       "label": "후방가슴애무",
@@ -200,17 +201,20 @@
     "037": {
       "label": "애프터피크",
       "description": "체액 범벅인 피사체가 의자에 기대어 허공을 응시하며 깊은 여운에 빠진 사후 씬 (키로 050)",
-      "prompt": "solo, (sitting on chair:1.15), leaning back, looking at viewer, (excessive cum:1.15), cum on body, cum puddle, cum on thighs and chest, messy hair, (warm flushed skin:1.1), (rosy cheeks:1.1), (satisfied smile:1.15), (blissful afterglow expression:1.15), soft loving eyes, (gentle smile:1.1), content and fulfilled, relaxed and happy, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, solo, (sitting on chair:1.15), leaning back, looking at viewer, (excessive cum:1.15), cum on body, cum puddle, cum on thighs and chest, messy hair, (warm flushed skin:1.1), (rosy cheeks:1.1), (satisfied smile:1.15), (blissful afterglow expression:1.15), soft loving eyes, (gentle smile:1.1), content and fulfilled, relaxed and happy, cowboy shot",
+      "required_outfit": "nude"
     },
     "038": {
       "label": "샤워뒤태",
       "description": "샤워기 물줄기를 맞으며 젖은 머릿결과 함께 드러나는 매끄러운 뒷태 나체 실루엣.",
-      "prompt": "completely nude, full nudity, bare skin, back focus, from behind, standing in shower, clear glass shower stall, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), water droplets on skin, dripping water, (steam:1.1), steamy, (looking back over shoulder at viewer:1.15), looking at viewer, arched back, buttocks focus, seductive glance, parted lips, clean background, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, back focus, from behind, standing in shower, clear glass shower stall, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), water droplets on skin, dripping water, (steam:1.1), steamy, (looking back over shoulder at viewer:1.15), looking at viewer, arched back, buttocks focus, seductive glance, parted lips, clean background, cowboy shot",
+      "required_outfit": "nude"
     },
     "039": {
       "label": "샤워창밀착",
       "description": "샤워실 투명 유리벽에 맨가슴과 맨몸을 밀착시키며 밖을 도발적으로 바라보는 섹슈얼 씬.",
-      "prompt": "completely nude, full nudity, bare skin, breasts pressed against glass, hands pressed on glass, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, looking at viewer through glass, seductive gaze, heavy blush, breathless expression, biting lip, condensation on glass, clear glass shower stall, intimate close-up, upper body focus"
+      "prompt": "completely nude, full nudity, bare skin, breasts pressed against glass, hands pressed on glass, (wet skin:1.2), (wet hair:1.2), (water droplets:1.2), dripping water, water running down body, (steam:1.1), steamy, looking at viewer through glass, seductive gaze, heavy blush, breathless expression, biting lip, condensation on glass, clear glass shower stall, intimate close-up, upper body focus",
+      "required_outfit": "nude"
     }
   },
   "genit_actions": {
@@ -432,12 +436,14 @@
     "081": {
       "label": "착의섹스약",
       "description": "옷을 입은 채 치마만 걷어올리고 나누는 착의 씬 (약)",
-      "prompt": "((clothed sex:1.25)), skirt lifted, underwear aside, fully dressed, standing or sitting, gentle rhythm, soft blush, looking at partner, thrilling secret encounter, soft lighting"
+      "prompt": "((clothed sex:1.25)), skirt lifted, underwear aside, standing or sitting, gentle rhythm, soft blush, looking at partner, thrilling secret encounter, soft lighting",
+      "required_outfit": "default"
     },
     "082": {
       "label": "착의섹스강",
       "description": "옷깃이 흐트러진 채 책상이나 벽에서 진행되는 격렬한 착의 씬 (강)",
-      "prompt": "((intense clothed sex:1.35)), unbuttoned shirt, skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal"
+      "prompt": "((intense clothed sex:1.35)), skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal",
+      "required_outfit": "default"
     },
     "083": {
       "label": "샤워섹스중",
@@ -507,12 +513,14 @@
     "096": {
       "label": "착의펠라약",
       "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
-      "prompt": "fully clothed, clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body"
+      "prompt": "clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body",
+      "required_outfit": "default"
     },
     "097": {
       "label": "착의펠라강",
       "description": "옷을 입은 채 깊이 삼키는 착의 딥스로트 (강: N73)",
-      "prompt": "fully clothed, clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body"
+      "prompt": "clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body",
+      "required_outfit": "default"
     },
     "098": {
       "label": "알몸키스",
@@ -522,7 +530,8 @@
     "099": {
       "label": "딥키스",
       "description": "파트너와 입술을 격렬하게 포개고 타액을 흘리며 열정적으로 나누는 농밀한 딥키스 씬 (옷 입은 상태, 키로 037 - poses에서 이동)",
-      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body"
+      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body",
+      "required_outfit": "default"
     }
   },
   "scenes_otokonoko": {
@@ -694,12 +703,14 @@
     "181": {
       "label": "착의섹스약",
       "description": "옷을 입은 채 치마만 걷어올리고 나누는 착의 씬 (약)",
-      "prompt": "((clothed anal sex:1.25)), skirt lifted, underwear aside, fully dressed, standing or sitting, gentle rhythm, soft blush, looking at partner, thrilling secret encounter, soft lighting"
+      "prompt": "((clothed anal sex:1.25)), skirt lifted, underwear aside, standing or sitting, gentle rhythm, soft blush, looking at partner, thrilling secret encounter, soft lighting",
+      "required_outfit": "default"
     },
     "182": {
       "label": "착의섹스강",
       "description": "옷깃이 흐트러진 채 책상이나 벽에서 진행되는 격렬한 착의 씬 (강)",
-      "prompt": "((intense clothed anal sex:1.35)), unbuttoned shirt, skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal"
+      "prompt": "((intense clothed anal sex:1.35)), skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal",
+      "required_outfit": "default"
     },
     "183": {
       "label": "샤워섹스중",
@@ -769,12 +780,14 @@
     "196": {
       "label": "착의펠라약",
       "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
-      "prompt": "fully clothed, clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body"
+      "prompt": "clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body",
+      "required_outfit": "default"
     },
     "197": {
       "label": "착의펠라강",
       "description": "옷을 입은 채 깊이 삼키는 착의 딥스로트 (강: N73)",
-      "prompt": "fully clothed, clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body"
+      "prompt": "clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body",
+      "required_outfit": "default"
     },
     "198": {
       "label": "결합딥키스",
@@ -784,7 +797,8 @@
     "199": {
       "label": "딥키스",
       "description": "파트너와 입술을 격렬하게 포개고 타액을 흘리며 열정적으로 나누는 농밀한 딥키스 씬 (옷 입은 상태, 키로 037 - poses에서 이동)",
-      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body"
+      "prompt": "kiss, french kiss, faceless male, deep passionate kiss, messy saliva trail, parted lips, heavy blush, flushed skin, trembling with pleasure, upper body",
+      "required_outfit": "default"
     }
   }
 }
