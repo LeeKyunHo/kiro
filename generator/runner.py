@@ -329,6 +329,15 @@ def run_batch(
                 if is_nude_scene:
                     actual_negative = f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, crop top, halter, straps:1.35), (wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)"
 
+            # 목욕(bath) 씬인 경우 물 위에 구슬/공/장난감/이물질/동물이 뜨거나 좁은 통 욕조가 생성되는 현상 차단
+            if "bath" in pose_prompt.lower():
+                actual_negative = (
+                    f"{actual_negative}, ((marbles, glass marbles, balls, floating balls, spheres, orbs, "
+                    f"bath bombs, rubber duck, toys, floating objects, petals, bubbles, animal, cat, dog, pet, "
+                    f"fire, flame, flames, torch, white border, picture frame, "
+                    f"narrow bathtub, cramped tub, small plastic tub:1.45))"
+                )
+
             # 웨딩드레스(wedding) 테마 의상인 경우:
             # 1) 캐릭터 기본 네거티브에 걸려 있는 흰색 드레스/스커트/긴소매/티아라/프릴 억제 태그를 자동 해제
             # 2) 과도한 노출/란제리/비키니/가슴골/슬릿 요소를 네거티브로 강력 차단하여 품격 있는 웨딩드레스 보장

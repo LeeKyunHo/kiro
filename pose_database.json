@@ -244,15 +244,15 @@
     },
     "044": {
       "label": "목욕중",
-      "description": "욕조 안 따뜻한 물에 몸을 담그고 휴식하는 씬 (B16)",
+      "description": "넓은 욕조 안 따뜻한 물에 몸을 담그고 뒤쪽 턱에 여유롭게 기대어 휴식하는 씬 (B16)",
       "required_outfit": "nude",
-      "prompt": "completely nude, full nudity, bare skin, ((relaxing in warm bathtub:1.25)), water up to chest, steam, peaceful contented smile, wet hair, indoor bath"
+      "prompt": "solo, completely nude, full nudity, bare skin, ((relaxing in wide spacious luxury sunken bath pool:1.3)), ((leaning back against wide horizontal bath ledge behind shoulders, both arms spread wide resting on horizontal ledge:1.25)), clear warm water up to chest, gentle water ripples, rising steam, peaceful contented smile, wet hair, warm lighting, indoor luxury bath, cowboy shot"
     },
     "045": {
       "label": "목욕들켜부끄러움",
       "description": "목욕 도중 인기척에 놀라 웅크리는 씬 (B17)",
       "required_outfit": "nude",
-      "prompt": "completely nude, full nudity, bare skin, ((hugging knees in bathtub:1.25)), ((splashing water, screaming blush:1.25)), startled wide eyes, caught in bath"
+      "prompt": "solo, completely nude, full nudity, bare skin, ((hugging knees in wide spacious sunken bath pool:1.25)), ((splashing clear water, screaming blush:1.25)), startled wide eyes, wet hair, rising steam, caught in bath, cowboy shot"
     },
     "046": {
       "label": "결혼식",
