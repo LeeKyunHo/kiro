@@ -199,7 +199,7 @@
       "prompt": "(single view:1.3), (single shot:1.3), (princess carry:1.35), (carried by male partner:1.3), faceless male, (closed eyes:1.2), (head tilted down:1.2), (bashful embarrassed expression:1.25), (sweet blush:1.2), soft rosy cheeks, shy sweet smile, parted lips, (arms wrapped around partner neck:1.3), clinging tightly to partner, intimate romantic embrace, soft romantic lighting, detailed anime shading, full body"
     },
     "037": {
-      "label": "애프터피크",
+      "label": "붓카케",
       "description": "체액 범벅인 피사체가 의자에 기대어 허공을 응시하며 깊은 여운에 빠진 사후 씬 (키로 050)",
       "prompt": "completely nude, full nudity, bare skin, solo, (sitting on chair:1.15), leaning back, looking at viewer, (excessive cum:1.15), cum on body, cum puddle, cum on thighs and chest, messy hair, (warm flushed skin:1.1), (rosy cheeks:1.1), (satisfied smile:1.15), (blissful afterglow expression:1.15), soft loving eyes, (gentle smile:1.1), content and fulfilled, relaxed and happy, cowboy shot",
       "required_outfit": "nude"
@@ -219,22 +219,22 @@
   },
   "genit_actions": {
     "040": {
-      "label": "상대방덮치기",
+      "label": "덮쳐짐",
       "description": "침대 위에서 유저를 내려다보며 다가오는 씬 (B08)",
       "required_outfit": "default",
       "prompt": "((kneeling on bed, looking down at viewer:1.25)), ((leaning forward with seductive confident smile:1.2)), hands on sheets, bed"
     },
     "041": {
-      "label": "손잡고끌려감",
-      "description": "유저에게 손을 잡힌 채 이끌려가는 씬 (B09)",
-      "required_outfit": "default",
-      "prompt": "((pov holding viewer's hand:1.25)), looking back flustered, being pulled forward, dynamic walking angle, light blush"
-    },
-    "042": {
-      "label": "손잡고이끌기",
-      "description": "신나서 유저의 손을 잡고 앞장서서 이끄는 씬 (B10)",
+      "label": "이끌기",
+      "description": "신나서 유저의 손을 잡고 앞장서서 이끄는 씬 (원래 042, 능동적)",
       "required_outfit": "default",
       "prompt": "((pov holding viewer's hand:1.25)), ((looking back over shoulder with bright cheerful smile:1.25)), follow me angle, walking"
+    },
+    "042": {
+      "label": "끌려감",
+      "description": "유저에게 손을 잡힌 채 이끌려가는 씬 (원래 041, 수동적)",
+      "required_outfit": "default",
+      "prompt": "((pov holding viewer's hand:1.25)), looking back flustered, being pulled forward, dynamic walking angle, light blush"
     },
     "043": {
       "label": "침대숙면",
@@ -261,7 +261,7 @@
       "prompt": "solo, cowboy shot, ((wearing luxurious haute couture pure white bridal wedding dress, elegant high-neck sheer floral lace illusion neckline, intricate pearl and lace embroidered satin bodice, modest covered chest, sheer floral lace long sleeves, flowing A-line layered tulle bridal gown:1.25)), ((holding bridal bouquet of white roses with both hands in front of waist:1.25)), sheer white bridal veil, delicate pearl tiara, radiant joyful smile, happy loving eyes, warm blush, sunlit cathedral stained glass background, soft romantic lighting, wedding day"
     },
     "047": {
-      "label": "쓰다듬받는",
+      "label": "쓰다듬기",
       "description": "머리를 쓰다듬받으며 기분 좋아하는 1인칭 씬 (B21)",
       "required_outfit": "default",
       "prompt": "((pov hand patting head:1.25)), ((leaning into hand, blissful smiling face:1.25)), closed eyes in contentment"
@@ -289,12 +289,12 @@
       "prompt": "completely nude, full nudity, bare skin, lying on side on bed, spooning position, partner arm around waist, intimate embrace, heavy body blush, intensely flushed face and neck, head tilted back, parted lips soft moaning, heavy-lidded eyes half-closed in bliss, trembling with arousal, sensual pleasure expression, breathless, cowboy shot"
     },
     "052": {
-      "label": "침대누워사후여운",
+      "label": "누워절정여운",
       "description": "모든 행위가 끝나고 땀과 체액에 젖은 채 침대에 나른하게 누워 거친 숨을 고르는 사후 여운 (키로 058)",
       "prompt": "solo, completely nude, full nudity, bare skin, aftersex aftermath, lying on bed, messy white sheets, looking at viewer, (excessive cum:1.15), cum pool on bedsheets, cum dripping on inner thighs, messy hair, (warm flushed skin:1.1), (rosy cheeks:1.1), (satisfied smile:1.15), (blissful afterglow expression:1.15), soft loving eyes, tender happy gaze, (gentle smile:1.1), content and fulfilled expression, warm glowing skin, basking in afterglow, completely melted by pleasure, relaxed and happy, cowboy shot"
     },
     "053": {
-      "label": "침대엎드려사후",
+      "label": "엎드려절정여운",
       "description": "행위 후 침대에 완전히 엎드려 엉덩이와 허벅지에 체액이 흐르는 채 나른하게 뒤돌아보는 여운 (키로 059)",
       "prompt": "solo, completely nude, full nudity, bare skin, (from behind:1.15), (back view:1.15), (lying prone on bed:1.15), buttocks focus, (looking back over shoulder at viewer:1.15), looking at viewer, ass slightly raised, exhausted aftersex aftermath, legs spread, (excessive cum:1.15), (thick cum dripping between thighs:1.15), cum pool on bedsheets, cum dripping down inner thighs, trembling legs, heavily flushed back, heavy-lidded dazed expression, parted lips moaning, completely broken and melted by pleasure, cowboy shot"
     },
@@ -364,9 +364,9 @@
       "prompt": "completely nude, full nudity, bare skin, pov, from above, solo focus, looking up at viewer, paizuri titfuck climax, intimate close-up, (excessive cum:1.15), (huge cumshot:1.15), cum on breasts and cleavage, cum dripping down chest, loving gaze upward, tender affectionate smile, gentle smile, soft loving eyes, sweet fond expression, blushing softly, flushed cheeks, parted lips, pleased and devoted, upper body close-up"
     },
     "067": {
-      "label": "파이즈리펠라",
-      "description": "가슴골 사이에 끼운 채 입술과 혀로 끝을 애무하며 올려다보는 복합 봉사 포즈",
-      "prompt": "solo focus, completely nude, full nudity, bare skin, kneeling on bed, ((paizuri titfuck:1.35)), ((fellatio, blowjob:1.3)), ((cleavage, tongue extended licking tip:1.4)), looking up at partner, seductive bedroom eyes, heavy blush, flushed cheeks, parted lips, saliva trail, upper body, close-up, intimate bedroom lighting"
+      "label": "립잡대딸",
+      "description": "엎드린 남성 뒤에서 엉덩이에 얼굴을 바짝 붙여 애무하며 손으로 남근을 잡아 흔드는 POV 포즈",
+      "prompt": "solo focus, completely nude, full nudity, bare skin, pov, ((pov male lying face down on bed:1.4)), ((girl kneeling behind viewer:1.4)), ((girl's face pressed against viewer's buttocks:1.4)), ((head buried between ass cheeks:1.35)), ((performing rimjob:1.4)), ((girl's hand reaching around stroking penis:1.4)), ((handjob from behind:1.3)), looking up with lustful teasing eyes, heavy blush, playful expression, saliva, intimate POV atmosphere"
     },
     "068": {
       "label": "펠라치오약",
@@ -426,7 +426,7 @@
     "079": {
       "label": "보지애무약",
       "description": "은밀한 부위를 손가락으로 부드럽게 애무하는 씬 (약)",
-      "prompt": "completely nude, full nudity, bare skin, ((fingering, gentle petting:1.3)), lying on bed, partner hand on lower body, soft arched back, trembling knees, blushing sweetly, parted lips, tender pleasure, bed, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, ((fingering, gentle petting:1.3)), lying on bed, partner hand on lower body, soft arched back, trembling knees, ((vivid sensual expression:1.3)), ((intensely flushed face, breathless parted lips gasping softly:1.25)), ((moist emotional eyes, sweet moaning:1.2)), heavy blush, trembling with sweet sensation, tender pleasure building, bed, cowboy shot"
     },
     "080": {
       "label": "보지애무강",
@@ -513,7 +513,7 @@
     "096": {
       "label": "착의펠라약",
       "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
-      "prompt": "clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body",
+      "prompt": "clothed fellatio, blowjob under desk, kneeling, ((looking up submissively with deeply devoted affectionate gaze:1.3)), open mouth, licking tip, saliva trail, ((heavy facial blush:1.2)), ((moist emotional eyes:1.2)), teary eyes, intimate tender atmosphere, upper body",
       "required_outfit": "default"
     },
     "097": {
@@ -693,7 +693,7 @@
     "179": {
       "label": "후방애무약",
       "description": "침대에 누워 파트너의 손가락으로 부드럽게 후방 애무를 받으며 수줍게 몸을 떠는 씬 (약)",
-      "prompt": "completely nude, full nudity, bare skin, ((anal fingering, gentle petting:1.3)), lying on bed, legs raised slightly, partner hand on lower body, soft arched back, trembling knees, blushing sweetly, parted lips, tender pleasure, bed, cowboy shot"
+      "prompt": "completely nude, full nudity, bare skin, ((anal fingering, gentle petting:1.3)), lying on bed, legs raised slightly, partner hand on lower body, soft arched back, trembling knees, ((vivid sensual expression:1.3)), ((intensely flushed face, breathless parted lips gasping softly:1.25)), ((moist emotional eyes, sweet moaning:1.2)), heavy blush, trembling with sweet sensation, tender pleasure building, bed, cowboy shot"
     },
     "180": {
       "label": "후방애무강",
@@ -780,7 +780,7 @@
     "196": {
       "label": "착의펠라약",
       "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
-      "prompt": "clothed fellatio, blowjob under desk, kneeling, looking up, modest, blushing, upper body",
+      "prompt": "clothed fellatio, blowjob under desk, kneeling, ((looking up submissively with deeply devoted affectionate gaze:1.3)), open mouth, licking tip, saliva trail, ((heavy facial blush:1.2)), ((moist emotional eyes:1.2)), teary eyes, intimate tender atmosphere, upper body",
       "required_outfit": "default"
     },
     "197": {
