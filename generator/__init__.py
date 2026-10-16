@@ -54,6 +54,16 @@ from generator.reporter import (
 )
 from generator.roster import RosterPathManager, apply_character_to_args, list_characters, load_character
 from generator.runner import execute, run_all_chars, run_batch
+from generator.censor import (
+    censor_file,
+    censor_image,
+    detect_genitals,
+    get_pose_anchor_box,
+    get_pose_category,
+    run_batch_censor,
+    POSE_SAFE_ANCHORS,
+)
+from generator.qa_validator import validate_generated_image
 
 __all__ = [
     # config
@@ -108,4 +118,14 @@ __all__ = [
     "execute",
     "run_all_chars",
     "run_batch",
+    # censor
+    "censor_file",
+    "censor_image",
+    "detect_genitals",
+    "get_pose_anchor_box",
+    "get_pose_category",
+    "run_batch_censor",
+    "POSE_SAFE_ANCHORS",
+    # qa_validator
+    "validate_generated_image",
 ]
