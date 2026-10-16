@@ -31,18 +31,25 @@ POSE_SAFE_ANCHORS = {
     "default_h":  [0.34, 0.56, 0.66, 0.84]
 }
 
-def get_pose_category(code):
-    if code in [40, 41, 49, 50, 140, 141, 149, 150, 164]:
+def get_pose_category(code: int) -> str | None:
+    # 152종 통합 체계 (048~099, 148~199) 및 레거시(40~75, 140~170) 지원
+    missionary_codes = {40, 41, 49, 50, 54, 55, 56, 57, 58, 59, 60, 61, 140, 141, 149, 150, 154, 155, 156, 157, 158, 159, 160, 161, 164}
+    doggystyle_codes = {43, 44, 62, 63, 64, 65, 66, 74, 143, 144, 162, 163, 164, 165, 166}
+    cowgirl_codes = {45, 46, 47, 48, 68, 69, 70, 71, 72, 73, 145, 146, 147, 148, 168, 169, 170, 171, 172, 173}
+    fellatio_codes = {58, 59, 79, 80, 83, 84, 85, 155, 156, 157, 158, 159, 179, 180, 183, 184, 185}
+    side_codes = {51, 52, 53, 54, 151, 152, 153, 154}
+
+    if code in missionary_codes:
         return "missionary"
-    elif code in [43, 44, 74, 143, 144]:
+    elif code in doggystyle_codes:
         return "doggystyle"
-    elif code in [45, 46, 47, 48, 62, 63, 69, 70, 145, 146, 147, 148, 162, 163, 165, 169, 170]:
+    elif code in cowgirl_codes:
         return "cowgirl"
-    elif code in [58, 59, 155, 156, 157, 158, 159]:
+    elif code in fellatio_codes:
         return "fellatio"
-    elif code in [53, 54, 153, 154]:
+    elif code in side_codes:
         return "side"
-    elif (40 <= code <= 75) or (140 <= code <= 170):
+    elif (48 <= code <= 99) or (148 <= code <= 199) or (40 <= code <= 75) or (140 <= code <= 170):
         return "default_h"
     return None
 

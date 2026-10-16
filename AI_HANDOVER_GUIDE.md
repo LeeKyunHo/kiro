@@ -1,19 +1,19 @@
 # 키로(Kiro) 파이프라인 마스터 인계 및 AI 개발자 가이드 (Handover Guide)
 
 > **문서 목적**: Antigravity 에이전트가 투입되었을 때 불필요한 일회성 히스토리나 특정 캐릭터 묘사에 혼선 없이, 시스템 아키텍처, 파이프라인 핵심 메커니즘, 프롬프트 작성 불변식, 검증 규칙을 즉시 파악하고 작업을 연속성 있게 수행하기 위한 핵심 가이드.  
-> **최종 갱신일**: 2026-09-28  
-> **연계 문서**: [`GEMINI.md`](file:///c:/Users/rbsgh/kiro/GEMINI.md), [`PROJECT_GUIDE.md`](file:///c:/Users/rbsgh/kiro/PROJECT_GUIDE.md), [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt), [`pose_database.json`](file:///c:/Users/rbsgh/kiro/pose_database.json)
+> **최종 갱신일**: 2026-10-16  
+> **연계 문서**: [`GEMINI.md`](file:///c:/Users/rbsgh/kiro/GEMINI.md), [`PROJECT_GUIDE.md`](file:///c:/Users/rbsgh/kiro/PROJECT_GUIDE.md), [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt), [`pose_database.json`](file:///c:/Users/rbsgh/kiro/pose_database.json), [`POSE_CATALOG.md`](file:///c:/Users/rbsgh/kiro/POSE_CATALOG.md)
 
 ---
 
 ## 1. 시스템 핵심 원칙 및 아키텍처
 
-- **목적**: Stable Diffusion WebUI (Forge/A1111) API 기반 캐릭터 챗봇용 에셋(총 80종: 감정 20종, 포즈 20종, H-씬 20종, 오토코노코 씬 20종) 배치 생성 및 젠잇(Genit) 마크다운 자동 조립.
-- **체크포인트**: Unholy Nova AI (SDXL 기반 Danbooru 학습 모델). 프롬프트는 자연어 서술을 철저히 배제하고 순수 Danbooru 공식 태그만 사용.
+- **목적**: Stable Diffusion WebUI (Forge/A1111) API 기반 캐릭터 챗봇용 에셋(총 152종: 감정 20종, 포즈 20종, 젠잇액션 8종, H-씬 52종, 오토코노코 씬 52종; 로스터 이벤트 포함 시 162종) 배치 생성 및 젠잇(Genit) 마크다운 자동 조립.
+- **체크포인트**: Unholy Nova AI (SDXL 기반 Danbooru 학습 모델) 등 checkpoint_profiles.json 기반 다중 프로필 지원. 프롬프트는 자연어 서술을 철저히 배제하고 순수 Danbooru 공식 태그만 사용.
 - **철저한 관심사 분리 (Separation of Concerns)**:
   - **프롬프트 데이터 격리**: 공용 포즈 DB는 `pose_database.json`에, 캐릭터 외형/의상은 `projects/{roster}/characters/{char}.json`에 격리.
   - **파이프라인 로직 격리**: 배치 생성, 태그 정규화, 프롬프트 조립, WebUI 통신 로직은 `generator/` Python 패키지에 모듈화.
-- **테스트 무결성**: 모든 코드/데이터 수정 후 반드시 `python sd_batch_generator.py --test` (52개 항목 단위 검사) PASS 유지.
+- **테스트 무결성**: 모든 코드/데이터 수정 후 반드시 `python sd_batch_generator.py --test` (61개 항목 단위 검사) PASS 유지.
 
 ---
 
@@ -47,11 +47,13 @@ CLIP 토큰 분산 방지 및 포즈 제어력 유지를 위한 2청크 분리 �
 
 > 📖 **포즈 상세 작성 가이드 및 80종 전체 레퍼런스**: [`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)의 **3장**을 단일 진실 공급원(SSOT)으로 반드시 교차 확인하십시오.
 
-### 3.1 번호 대역 (총 80종 정예화 체제)
-- `00~19` (**`emotions`**): 감정 표현 20종 (단독 샷, `clean background` 포함 → 프로젝트별 `background.json`으로 자동 치환)
-- `20~39` (**`poses`**): 착의 솔로 포즈 및 스킨십/밀착 20종 (의상 착용 기준)
-- `40~59` (**`h_scenes`**): 여성 2인 결합 씬 20종 (기본 체위 + 클라이맥스/체액 + 사후여운)
-- `140~159` (**`scenes_otokonoko`**): 오토코노코 2인 결합 씬 20종 (40~59번과 1:1 대칭 매핑)
+### 3.1 번호 대역 (총 152종 통합 정예화 체제)
+- `000~019` (**`emotions`**): 감정 표현 20종 (단독 샷, `clean background` 포함 → 프로젝트별 `background.json`으로 자동 치환)
+- `020~039` (**`poses`**): 착의 솔로 포즈 및 스킨십/밀착 20종 (의상 착용 기준)
+- `040~047` (**`genit_actions`**): 젠잇 연동 특수 액션 8종 (덮쳐짐, 이끌기, 목욕, 결혼식 등)
+- `048~099` (**`h_scenes`**): 여성 2인 결합 및 상호작용 씬 52종 (기본/약/중/강 체위 + 클라이맥스/체액 + 특수 연출 + 사후여운)
+- `148~199` (**`scenes_otokonoko`**): 오토코노코 씬 52종 (048~099번과 1:1 대칭 매핑)
+*(로스터 전용 이벤트 `201~210` 10종 포함 시 총 162종)*
 
 ### 3.2 시스템 연계 4대 핵심 불변식
 1. **명시적 `label` 필수**: `{"label": "한국어라벨", "prompt": "Danbooru 태그"}` 형식 유지 (젠잇 매핑 가이드 및 콘솔 출력용).
@@ -82,7 +84,7 @@ CLIP 토큰 분산 방지 및 포즈 제어력 유지를 위한 2청크 분리 �
 2. **응답 언어**: 모든 대화, 설명, 코드 분석, 결과 보고는 **항상 한국어**로 작성.
 3. **사무적·기술적 용어 사용**: 콘솔 출력 및 사용자 응답 시 노골적인 비속어나 민감한 묘사를 배제하고, 공식적인 기술/구도 용어(체위, 클라이맥스, 화각, 페어링 태그, 파트너 객체, 네거티브 필터링 등) 사용.
 4. **Git 커밋 규격**: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:` 접두어 사용 및 민감 표현 배제한 사무적 서술 준수.
-5. **작업 완료 전 무결성 검증**: 코드, 프롬프트, 캐릭터 JSON 수정 후 반드시 `python sd_batch_generator.py --test` (52개 항목) PASS 확인.
+5. **작업 완료 전 무결성 검증**: 코드, 프롬프트, 캐릭터 JSON 수정 후 반드시 `python sd_batch_generator.py --test` (61개 항목) PASS 확인.
 
 ---
 
