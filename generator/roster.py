@@ -24,11 +24,14 @@ from generator.config import (
 from generator.models import CharacterConfig, PoseDatabase, RosterPaths
 from generator.prompt import join_tags, validate_prefix
 
-# default_mode 값 → --mode 표현식 기본 매핑
+# default_mode 값 → --mode 표현식 기본 매핑 (V2 섹션 체계)
 _DEFAULT_MODE_MAP: dict[str, str] = {
-    "female": "emotions,poses,genit_actions,h_scenes",
-    "otokonoko": "emotions,poses,genit_actions,scenes_otokonoko",
-    "sdxl": "emotions,poses,genit_actions,h_scenes",
+    "female": "emotions,poses,events,romance,h_scenes,special_h",
+    "girl": "emotions,poses,events,romance,h_scenes,special_h",
+    "woman": "emotions,poses,events,romance,h_scenes,special_h",
+    "otokonoko": "emotions,poses,events,romance,scenes_otokonoko,special_otokonoko",
+    "femboy": "emotions,poses,events,romance,scenes_otokonoko,special_otokonoko",
+    "sdxl": "emotions,poses,events,romance,h_scenes,special_h",
     "all": "all",
 }
 
@@ -47,7 +50,11 @@ def _resolve_default_mode(default_mode: str, db: PoseDatabase | None = None) -> 
     # 로스터 전용 커스텀 섹션 자동 병합 및 존재하는 섹션만 필터링
     if db and resolved != "all":
         base_secs = [s for s in resolved.split(",") if s in db.sections]
-        builtin_sections = {"emotions", "poses", "genit_actions", "h_scenes", "scenes_otokonoko"}
+        builtin_sections = {
+            "emotions", "poses", "events", "romance",
+            "h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko",
+            "genit_actions"
+        }
         custom_sections = [sec for sec in db.sections if sec not in builtin_sections]
         resolved = ",".join(base_secs + custom_sections)
 

@@ -56,6 +56,7 @@ class PoseEntry:
     required_outfit: str = ""          # 의상 슬롯 요구사항 (optional)
     prompt_female: str = ""            # 여성 전용 프롬프트 (optional)
     prompt_otokonoko: str = ""         # 오토코노코 전용 프롬프트 (optional)
+    negative_add: str = ""             # 포즈별 추가 네거티브 (optional)
 
     @property
     def label(self) -> str:

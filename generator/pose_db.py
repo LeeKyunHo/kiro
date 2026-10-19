@@ -59,6 +59,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 required_outfit = str(value.get("required_outfit", "") or "").strip()
                 prompt_female = str(value.get("prompt_female", "") or "").strip()
                 prompt_otokonoko = str(value.get("prompt_otokonoko", "") or "").strip()
+                negative_add = str(value.get("negative_add", "") or "").strip()
                 if not isinstance(prompt, str) or not prompt.strip():
                     db.warnings.append(f"코드 {key} 의 prompt 가 비어 있음 - 무시")
                     continue
@@ -71,6 +72,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 required_outfit = ""
                 prompt_female = ""
                 prompt_otokonoko = ""
+                negative_add = ""
             else:
                 db.warnings.append(f"코드 {key} 의 값이 문자열/딕셔너리가 아님 - 무시")
                 continue
@@ -96,6 +98,7 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 required_outfit,
                 prompt_female,
                 prompt_otokonoko,
+                negative_add,
             )
             section_codes.append(code)
 

@@ -20,5 +20,5 @@
 
 ## 4. 파이프라인 학습 및 문서 교차 참조 (Handover & Continuity)
 - 새로운 대화 세션이나 다른 에이전트 인스턴스가 투입될 때:
-  - **파이프라인 아키텍처 및 런타임 로직**: 반드시 루트 디렉토리의 **[`AI_HANDOVER_GUIDE.md`](file:///c:/Users/rbsgh/kiro/AI_HANDOVER_GUIDE.md)**를 최우선으로 읽고 핵심 불변식을 숙지합니다.
-  - **캐릭터 JSON 및 포즈 프롬프트 작업**: **[`캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)**를 단일 진실 공급원(SSOT)으로 반드시 교차 확인하여 80종 정예화 라벨, BREAK 문법, 화풍 공식, 손 앵커링 규칙을 준수합니다.
+  - **파이프라인 아키텍처 및 런타임 로직**: 반드시 **[`docs/AI_HANDOVER_GUIDE.md`](file:///c:/Users/rbsgh/kiro/docs/AI_HANDOVER_GUIDE.md)**를 최우선으로 읽고 핵심 불변식을 숙지합니다.
+  - **캐릭터 JSON 및 포즈 프롬프트 작업**: **[`docs/캐릭터_포즈_제작_규칙.txt`](file:///c:/Users/rbsgh/kiro/docs/%EC%BA%90%EB%A6%AD%ED%84%B0_%ED%8F%AC%EC%A6%88_%EC%A0%9C%EC%9E%91_%EA%B7%9C%EC%B9%99.txt)**를 단일 진실 공급원(SSOT)으로 반드시 교차 확인하여 80종 정예화 라벨, BREAK 문법, 화풍 공식, 손 앵커링 규칙을 준수합니다.

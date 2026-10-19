@@ -356,7 +356,7 @@ def _test_events_and_prompt(report: TestReport, base_dir: Path, db: PoseDatabase
 
         # T19: _resolve_default_mode 이벤트 자동 확장 검증
         resolved_with_events = _resolve_default_mode("otokonoko", merged_db)
-        expected_sections = "emotions,poses,genit_actions,scenes_otokonoko,event_main,event_random"
+        expected_sections = "emotions,poses,events,romance,scenes_otokonoko,special_otokonoko,event_main,event_random"
         report.check(
             "T19 default_mode 이벤트 자동 포함",
             resolved_with_events == expected_sections,

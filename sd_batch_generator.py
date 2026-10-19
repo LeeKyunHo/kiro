@@ -306,6 +306,25 @@ def build_parser(
         "--ckpt-profile", "--ckpt_profile", dest="ckpt_profile", default=None,
         help="체크포인트 최적 파라미터 프로필 적용 (unholy, wai, flatbread, hexmix, pony, animagine 등)",
     )
+
+    qc_group = parser.add_argument_group("검열 및 품질 검증 (QC)")
+    qc_group.add_argument(
+        "--auto-qc", "--auto-retry-qa", dest="auto_qc", action="store_true",
+        help="Auto-QC 품질 검수 및 불량(인원 초과, 손/머리 증식 등) 감지 시 자동 재시도",
+    )
+    qc_group.add_argument(
+        "--max-retries", type=int, default=3,
+        help="Auto-QC 불량 발생 시 최대 재시도 횟수 (기본 3)",
+    )
+    qc_group.add_argument(
+        "--censor", action="store_true",
+        help="성인/탈의 씬 생성 시 MobileSAM 화이트 실루엣 자동 검열 및 assets/{char}_origin/ 원본 보존",
+    )
+    qc_group.add_argument(
+        "--censor-style", default="white_silhouette",
+        choices=["white_silhouette", "black_silhouette", "mosaic", "wide_bar", "slim_bar", "shadow"],
+        help="검열 렌더링 스타일 (기본 white_silhouette)",
+    )
     return parser
 
 

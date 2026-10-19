@@ -6,6 +6,10 @@ generator.runner
 from __future__ import annotations
 
 import argparse
+import io
+import random
+import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -103,6 +107,10 @@ def run_batch(
     outfits: dict[str, str] | None = None,
     dry_run: bool = False,
     mock: bool = False,
+    auto_qc: bool = False,
+    max_retries: int = 3,
+    censor: bool = False,
+    censor_style: str = "white_silhouette",
     progress_callback: Callable[[int, str, Path, int, int], None] | None = None,
     is_cancelled: Callable[[], bool] | None = None,
 ) -> BatchResult:
@@ -128,7 +136,11 @@ def run_batch(
 
         if dry_run:
             result.planned.append(code)
-            bg_info = f" [BG: {active_bg}]" if (active_bg and entry.section == "emotions") else ""
+            intrinsic_kws = ("bed", "shower", "bath", "sofa", "classroom", "cafe", "library", "festival", "cathedral", "desk", "wall")
+            p_check = entry.get_prompt(gender).lower()
+            has_intr = any(re.search(r"\b" + re.escape(kw) + r"\b", p_check) for kw in intrinsic_kws)
+            apply_bg = entry.section in ("emotions", "genit_emotions") or (not has_intr and entry.section not in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko", "adult"))
+            bg_info = f" [BG: {active_bg}]" if (active_bg and apply_bg) else ""
             print(f"  [{tag}] (계획) {filename}  <- {entry.label}{bg_info}")
             continue
 
@@ -151,7 +163,17 @@ def run_batch(
         started = time.perf_counter()
         try:
             pose_prompt = entry.get_prompt(gender)
-            if active_bg and entry.section == "emotions":
+            intrinsic_bg_keywords = (
+                "bed", "shower", "bath", "sofa", "classroom", "cafe", "library",
+                "festival", "cathedral", "desk", "wall"
+            )
+            p_low = pose_prompt.lower()
+            has_intrinsic_bg = any(re.search(r"\b" + re.escape(kw) + r"\b", p_low) for kw in intrinsic_bg_keywords)
+            apply_bg = (
+                entry.section in ("emotions", "genit_emotions")
+                or (not has_intrinsic_bg and entry.section not in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko", "adult"))
+            )
+            if active_bg and apply_bg:
                 if "clean background" in pose_prompt:
                     pose_prompt = pose_prompt.replace("clean background", active_bg)
                 else:
@@ -160,16 +182,18 @@ def run_batch(
             # 탈의/H-씬 또는 테마 의상 스왑 분기:
             active_base_pos = base_positive
             active_char_prompt = char_prompt
-            is_clothed_scene = (
-                entry.required_outfit == "default"
-                or code in (81, 82, 96, 97, 99, 181, 182, 196, 197, 199)
-            )
+            is_clothed_scene = (entry.required_outfit == "default")
             is_nude_scene = (
                 not is_clothed_scene
                 and (
-                    entry.section in ("h_scenes", "scenes_otokonoko")
-                    or entry.required_outfit == "nude"
-                    or any(kw in pose_prompt.lower() for kw in ("nude", "unclothed", "bare skin", "bare body"))
+                    entry.required_outfit == "nude"
+                    or (
+                        not entry.required_outfit
+                        and (
+                            entry.section in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko")
+                            or any(kw in pose_prompt.lower() for kw in ("nude", "unclothed", "bare skin", "bare body"))
+                        )
+                    )
                 )
             )
             if is_nude_scene:
@@ -227,6 +251,9 @@ def run_batch(
             
             # 파트너가 존재하는 포즈/H-씬인 경우 남성 억제 네거티브 및 solo 태그 자동 완화, 2인 페어링 보강
             actual_negative = negative_prompt
+            if entry.negative_add and entry.negative_add.strip():
+                actual_negative = f"{actual_negative}, {entry.negative_add.strip()}"
+
             partner_keywords = (
                 "partner", "faceless male", "penetration", "kiss", "fellatio",
                 "hetero", "missionary", "cowgirl", "doggystyle", "cunnilingus", "fingering",
@@ -242,7 +269,7 @@ def run_batch(
             )
             is_interactive = (
                 any(k in pose_prompt.lower() for k in partner_keywords)
-                or entry.section in ("h_scenes", "scenes_otokonoko")
+                or entry.section in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko")
             ) and not is_aftermath and not is_solo_scene
 
             if is_interactive:
@@ -290,11 +317,11 @@ def run_batch(
                 # 2인 구도 페어링 태그 보강 및 Attention 격리 (화면 내 파트너가 직접 등장하는 경우에만 적용)
                 if not is_offscreen_partner:
                     is_otokonoko_char = "otokonoko" in active_base_pos.lower() or "otokonoko" in active_char_prompt.lower()
-                    if entry.section == "scenes_otokonoko" or (is_otokonoko_char and is_interactive):
+                    if entry.section in ("scenes_otokonoko", "special_otokonoko") or (is_otokonoko_char and is_interactive):
                         if "yaoi" not in full_prompt.lower() and "2boys" not in full_prompt.lower():
                             full_prompt = f"yaoi, 2boys, faceless male, {full_prompt}"
                         full_prompt = full_prompt.replace("hetero,", "").replace("hetero", "")
-                    elif entry.section == "h_scenes" or "hetero" in pose_prompt.lower() or is_interactive:
+                    elif entry.section in ("h_scenes", "special_h") or "hetero" in pose_prompt.lower() or is_interactive:
                         if "hetero" not in full_prompt.lower():
                             full_prompt = f"hetero, 1boy, faceless male, {full_prompt}"
                         elif "1boy" not in full_prompt.lower():
@@ -303,19 +330,39 @@ def run_batch(
                     # 모브 남성 파트너 무특징화: BREAK를 통한 여주인공과 모브의 Attention 완전 격리 (이염 원천 차단)
                     # 착의 스킨십 씬(단색 블랙 팬츠 고정) vs 탈의 성인 씬(완전 탈의) 하의 정밀 분기
                     # featureless silhouette 제거(암전/가면 결함 방지), 순수 음영 및 구도 중심 모브화
-                    is_rear_scene = any(kw in pose_prompt.lower() for kw in ("behind", "doggystyle", "sumata", "rear", "prone"))
+                    is_head_hug_scene = any(
+                        kw in pose_prompt.lower()
+                        for kw in (
+                            "head on chest", "burying face", "face buried", "holding head",
+                            "hugging head", "patting head", "kissing head", "hair from behind",
+                            "back of male", "back of head"
+                        )
+                    )
+                    is_rear_scene = (
+                        any(kw in pose_prompt.lower() for kw in ("back hug", "doggystyle", "sumata", "rear", "prone", "grabbed from behind", "hugging from behind"))
+                        or ("behind" in pose_prompt.lower() and not any(f in pose_prompt.lower() for f in ("head from behind", "hair from behind", "face buried", "cleavage", "buried between breasts", "nestled in cleavage")))
+                    )
                     rear_direction = "(from behind:1.15), " if is_rear_scene else ""
-                    male_face_suppression = "(detailed male face:1.4), (detailed eyes on male:1.35), (handsome male:1.4), (attractive male face:1.3), (expressive male face:1.3), male hair, male bangs, male haircut"
+                    male_face_suppression = "(detailed male face:1.4), (detailed eyes on male:1.35), (handsome male:1.4), (attractive male face:1.3), (expressive male face:1.3), (male portrait:1.3), male hair, male bangs, male haircut"
 
-                    if is_nude_scene:
-                        mob_positive = f"BREAK (single faceless male partner:1.15), (obscured male face:1.15), (male head out of frame:1.15), (shadow over male eyes:1.1), {rear_direction}(naked male:1.15), (bottomless male:1.15), muscular build"
-                        mob_negative = f"{male_face_suppression}, male clothes, male shirt, pants, trousers, jeans, shorts, underwear, (mask, white mask, noh mask, blank face, pupil-less:1.3), (2boys:1.6), (multiple boys:1.6), (multiple males:1.6), (extra male:1.6)"
+                    if is_head_hug_scene:
+                        mob_positive = ""
+                        mob_negative = f"{male_face_suppression}, (shading eyes:1.5), (hand on forehead:1.4), (standing male:1.5), (tall male:1.5), (standing beside:1.5), (2boys:1.8), (multiple boys:1.8), (duplicate male:1.8)"
+                    elif is_nude_scene:
+                        mob_positive = f"BREAK (single faceless male partner:1.15), (unseen eyes:1.15), (obscured male face:1.15), (male head out of frame:1.15), {rear_direction}(naked male:1.15), (bottomless male:1.15), muscular build"
+                        mob_negative = f"{male_face_suppression}, (shading eyes:1.5), (hand on forehead:1.4), male clothes, male shirt, pants, trousers, jeans, shorts, underwear, (mask, white mask, noh mask, blank face, pupil-less:1.3), (2boys:1.6), (multiple boys:1.6), (multiple males:1.6), (extra male:1.6)"
                     else:
-                        mob_positive = f"BREAK (single faceless male partner:1.15), (obscured male face:1.15), (male head out of frame:1.15), (shadow over male eyes:1.1), {rear_direction}(shirtless male:1.1), (bare shoulders:1.1), (solid black pants:1.2), muscular build"
-                        mob_negative = f"{male_face_suppression}, male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, (mask, white mask, noh mask, blank face, pupil-less:1.3), (2boys:1.6), (multiple boys:1.6), (multiple males:1.6), (extra male:1.6)"
+                        mob_positive = f"BREAK (single faceless male partner:1.15), (unseen eyes:1.15), (obscured male face:1.15), (male head out of frame:1.15), {rear_direction}(shirtless male:1.1), (bare shoulders:1.1), (solid black pants:1.2), muscular build"
+                        mob_negative = f"{male_face_suppression}, (shading eyes:1.5), (hand on forehead:1.4), male clothes, male shirt, male t-shirt, male jacket, male suit, (naked male:1.2), (bottomless:1.2), (male underwear:1.2), jeans, blue pants, (mask, white mask, noh mask, blank face, pupil-less:1.3), (2boys:1.6), (multiple boys:1.6), (multiple males:1.6), (extra male:1.6)"
 
-                    full_prompt = f"{full_prompt} {mob_positive}"
+                    if mob_positive:
+                        full_prompt = f"{full_prompt} {mob_positive}"
                     actual_negative = f"{actual_negative}, {mob_negative}"
+
+                    # 가로로 눕는 2인 체위에서 세로 캔버스 여백에 남성 하반신이 복제되지 않도록 spitroast 차단
+                    is_horizontal_scene = any(kw in pose_prompt.lower() for kw in ("lying", "reclining", "on bed", "on back", "missionary"))
+                    if is_horizontal_scene:
+                        actual_negative = f"{actual_negative}, (spitroast, duplicate torso, extra legs at bottom, extra male lower body:1.4)"
 
             # 사후여운 씬인 경우 모브/남성 파트너 얼굴 및 신체 생성 원천 차단
             if is_aftermath:
@@ -396,34 +443,87 @@ def run_batch(
             if mock:
                 png_bytes = make_dummy_png(prefix, code, width, entry, reference)
             else:
-                try:
-                    png_bytes = generate_image(payload)
-                except requests.exceptions.HTTPError as e:
-                    if e.response.status_code in (422, 500):
-                        print(f"\n[WARN] 확장 기능 충돌 감지 (HTTP {e.response.status_code}). 순정 모드로 재시도...")
-                        fallback_payload = build_txt2img_payload(
-                            prompt=full_prompt,
-                            negative_prompt=negative_prompt,
-                            sampler_name=actual_sampler,
-                            width=actual_width,
-                            height=actual_height,
-                            steps=actual_steps,
-                            cfg_scale=actual_cfg,
-                            scheduler=actual_scheduler,
-                        )
-                        fallback_payload = inject_alwayson_scripts(
-                            fallback_payload, controlnet_units,
-                            False, 1.1, 1.2, 0.9, 0.2, False
-                        )
-                        png_bytes = generate_image(fallback_payload)
-                        print(f"  [{tag}] 재시도 성공 (순정 모드)", end=" ")
-                    else:
-                        raise
+                max_attempts = (max_retries + 1) if auto_qc else 1
+                for attempt in range(max_attempts):
+                    if attempt > 0:
+                        payload["seed"] = random.randint(1, 2**32 - 1)
+                    try:
+                        png_bytes = generate_image(payload)
+                    except requests.exceptions.HTTPError as e:
+                        if e.response.status_code in (422, 500):
+                            print(f"\n[WARN] 확장 기능 충돌 감지 (HTTP {e.response.status_code}). 순정 모드로 재시도...")
+                            fallback_payload = build_txt2img_payload(
+                                prompt=full_prompt,
+                                negative_prompt=negative_prompt,
+                                sampler_name=actual_sampler,
+                                width=actual_width,
+                                height=actual_height,
+                                steps=actual_steps,
+                                cfg_scale=actual_cfg,
+                                scheduler=actual_scheduler,
+                            )
+                            fallback_payload = inject_alwayson_scripts(
+                                fallback_payload, controlnet_units,
+                                False, 1.1, 1.2, 0.9, 0.2, False
+                            )
+                            png_bytes = generate_image(fallback_payload)
+                            print(f"  [{tag}] 재시도 성공 (순정 모드)", end=" ")
+                        else:
+                            raise
+
+                    if auto_qc:
+                        try:
+                            from PIL import Image
+                            from generator.qa_validator import validate_generated_image
+                            img_pil = Image.open(io.BytesIO(png_bytes))
+                            is_kiss = "kiss" in pose_prompt.lower() or code in (60, 61, 198, 199, 19)
+                            passed, fail_reason, _ = validate_generated_image(
+                                image=img_pil,
+                                is_solo_scene=is_solo_scene,
+                                is_two_person=is_interactive,
+                                is_offscreen_partner=is_offscreen_partner,
+                                is_kiss_scene=is_kiss,
+                                section=entry.section,
+                            )
+                            if not passed:
+                                if attempt < max_retries:
+                                    print(f" [Auto-QC 불량: {fail_reason} -> 재시도 {attempt+1}/{max_retries}]", end="", flush=True)
+                                    continue
+                                else:
+                                    print(f" [Auto-QC 불량(최대 재시도 초과): {fail_reason}]", end="", flush=True)
+                            elif attempt > 0:
+                                print(f" [Auto-QC 통과(재시도 {attempt}회)]", end="", flush=True)
+                        except Exception as qe:
+                            print(f" [Auto-QC 건너뜀: {qe}]", end="", flush=True)
+                    break
+
             if is_cancelled and is_cancelled():
                 print("중단됨 (미완성 이미지 저장 안 함)")
                 result.aborted = True
                 break
+
             save_as_webp(png_bytes, save_path)
+
+            # 성인 씬 검열 및 무검열 원본 assets/{prefix}_origin/ 백업
+            if censor and (is_nude_scene or entry.section in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko")):
+                origin_dir = save_dir.parent / f"{prefix}_origin"
+                origin_dir.mkdir(parents=True, exist_ok=True)
+                origin_path = origin_dir / filename
+                if not origin_path.exists():
+                    save_as_webp(png_bytes, origin_path)
+                try:
+                    from generator.censor import censor_file
+                    tmp_censored = save_dir / f".tmp_{filename}"
+                    c_res = censor_file(save_path, dst_path=tmp_censored, style=censor_style, pose_code=code, enable_anchor_fallback=True)
+                    if c_res and c_res.exists():
+                        if save_path.exists():
+                            save_path.unlink()
+                        tmp_censored.rename(save_path)
+                        print(f" [검열본 적용: assets/{prefix}/{filename} (원본: {prefix}_origin/)]", end="")
+                    elif tmp_censored.exists():
+                        tmp_censored.unlink()
+                except Exception as ce:
+                    print(f" [검열 처리 예외: {ce}]", end="")
         except requests.exceptions.ConnectionError:
             print("실패: WebUI 연결 불가 (--api 옵션 실행 여부 확인)")
             result.failed.append((code, "connection"))
@@ -604,12 +704,16 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         char_gender = getattr(args, "gender", "female")
         is_otk = str(char_gender).lower() in ("otokonoko", "femboy")
         base_secs = (
-            ["emotions", "poses", "genit_actions", "scenes_otokonoko"]
+            ["emotions", "poses", "events", "romance", "scenes_otokonoko", "special_otokonoko"]
             if is_otk
-            else ["emotions", "poses", "genit_actions", "h_scenes"]
+            else ["emotions", "poses", "events", "romance", "h_scenes", "special_h"]
         )
         active_secs = [s for s in base_secs if s in db.sections]
-        builtin_sections = {"emotions", "poses", "genit_actions", "h_scenes", "scenes_otokonoko"}
+        builtin_sections = {
+            "emotions", "poses", "events", "romance",
+            "h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko",
+            "genit_actions"
+        }
         custom_sections = [sec for sec in db.sections if sec not in builtin_sections]
         target_mode = ",".join(active_secs + custom_sections)
 
@@ -691,6 +795,10 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         outfits=getattr(args, "outfits", None),
         dry_run=dry_run,
         mock=mock,
+        auto_qc=getattr(args, "auto_qc", False) or getattr(args, "auto_retry_qa", False),
+        max_retries=getattr(args, "max_retries", 3),
+        censor=getattr(args, "censor", False),
+        censor_style=getattr(args, "censor_style", "white_silhouette"),
         progress_callback=getattr(args, "progress_callback", None),
         is_cancelled=getattr(args, "is_cancelled", None),
     )
