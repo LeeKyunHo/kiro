@@ -1,15 +1,36 @@
 """
-generator.qa_validator
-생성된 일러스트 이미지의 품질 및 구도 불량(인원수 오류, 머리 복제, 손 증식, 모브 남성 얼굴 노출)을
+plepa_engine.qa_validator
+생성된 일러스트 이미지의 품질 및 구도 불량(인원수 오류, 머리 복제, 손 증식, 모브 얼굴 노출)을
 전문 애니메이션 딥러닝 감지기(imgutils.detect)로 자동 판정하는 Auto-QC 모듈.
 """
 
 from __future__ import annotations
 
-import argparse
 import logging
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 1. CPU 스레드 자동 제한 (전체 스레드 수 - 2) & 2. 프로세스 우선순위 하향 (Below Normal)
+# 딥러닝 감지기 추론 중 CPU 100% 점유로 인한 윈도우 UI/마우스/브라우저 버벅임을 원천 방지합니다.
+# ──────────────────────────────────────────────────────────────────────────────
+usable_threads = max(2, (os.cpu_count() or 4) - 2)
+os.environ["OMP_NUM_THREADS"] = str(usable_threads)
+os.environ["MKL_NUM_THREADS"] = str(usable_threads)
+
+try:
+    import torch
+    torch.set_num_threads(usable_threads)
+except Exception:
+    pass
+
+try:
+    import psutil
+    p = psutil.Process(os.getpid())
+    p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
+except Exception:
+    pass
 
 from PIL import Image
 
@@ -35,9 +56,11 @@ def validate_generated_image(
     is_kiss_scene: bool = False,
     section: Optional[str] = None,
     conf_threshold: float = 0.55,
+    prompt: Optional[str] = None,
+    **kwargs: Any,
 ) -> Tuple[bool, str, Dict[str, Any]]:
     """
-    생성된 일러스트 이미지를 정밀 분석하여 불량(Reject) 여부와 사유를 판정합니다.
+    생성된 이미지를 정밀 분석하여 불량(Reject) 여부와 사유를 판정합니다.
 
     Returns:
         (is_valid, reject_reason, metrics)
@@ -53,7 +76,7 @@ def validate_generated_image(
     }
 
     if not HAS_IMGUTILS:
-        # 감지기가 설치되지 않은 환경에서는 안전 통과
+        # 감지기가 없으면 안전 통과
         return True, "", metrics
 
     try:
@@ -88,25 +111,30 @@ def validate_generated_image(
                 reason = f"1인 씬 인원/머리 초과 감지 (인원: {metrics['persons']}명, 머리: {metrics['heads']}개)"
                 return False, reason, metrics
 
-            if metrics["hands"] > 2:
-                reason = f"1인 씬 손 증식(3개 이상) 감지 (손: {metrics['hands']}개)"
+            # 1인칭 손 개입 씬(쓰다듬기 047, 덮쳐짐 040 등 유저 손 개입) 허용치 완화
+            p_text = (prompt or "").lower()
+            pov_hand_keywords = ("headpat", "patting head", "hand on head", "hands pressed on mattress", "pov")
+            is_pov_hand_scene = any(kw in p_text for kw in pov_hand_keywords)
+            max_hands = 4 if is_pov_hand_scene else 2
+
+            if metrics["hands"] > max_hands:
+                reason = f"1인 씬 손 증식({max_hands + 1}개 이상) 감지 (손: {metrics['hands']}개)"
                 return False, reason, metrics
 
         # ── 2인 상호작용 씬 판정 규칙 (오프스크린 제외) ──
         elif is_two_person and not is_offscreen_partner:
             if metrics["persons"] > 2 or metrics["heads"] > 2:
-                reason = f"2인 씬 제3자/모브 증식(3명 이상) 감지 (인원: {metrics['persons']}명, 머리: {metrics['heads']}개)"
+                reason = f"2인 씬 제3자/남성 증식(3명 이상) 감지 (인원: {metrics['persons']}명, 머리: {metrics['heads']}개)"
                 return False, reason, metrics
 
             if metrics["hands"] > 4:
                 reason = f"2인 씬 손 증식(5개 이상) 감지 (손: {metrics['hands']}개)"
                 return False, reason, metrics
 
-            # 2인 씬에서 모브 남성의 얼굴이 완전히 드러나 얼굴이 2개 이상 잡힌 경우
-            # (단, 키스 씬이나 로맨스 씬은 두 사람의 얼굴이 접촉하므로 faces <= 2 허용)
-            max_faces = 2 if (is_kiss_scene or section in ("romance", "poses")) else 1
+            # 2인 씬에서 제3자의 얼굴까지 노출되는 것을 방지 (2명 씬이므로 faces <= 2 허용)
+            max_faces = 2
             if metrics["faces"] > max_faces:
-                reason = f"모브 남성 얼굴 노출 감지 (얼굴: {metrics['faces']}개, faceless 위반)"
+                reason = f"2인 씬 얼굴 과다 노출 감지 (얼굴: {metrics['faces']}개, 3인 이상 위반)"
                 return False, reason, metrics
 
         return True, "", metrics
@@ -114,26 +142,3 @@ def validate_generated_image(
     except Exception as e:
         logger.warning(f"[Auto-QC 판정 예외] {e}")
         return True, "", metrics
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="키로(kiro) Auto-QC 일러스트 품질 검증기")
-    parser.add_argument("-f", "--file", type=str, required=True, help="검증할 이미지 파일 경로")
-    parser.add_argument("--two-person", action="store_true", help="2인 상호작용 씬 여부")
-    parser.add_argument("--kiss", action="store_true", help="키스/얼굴 밀착 씬 여부")
-    parser.add_argument("--conf", type=float, default=0.55, help="인원/머리 검출 임계치")
-
-    args = parser.parse_args()
-
-    is_valid, reason, metrics = validate_generated_image(
-        image=args.file,
-        is_solo_scene=not args.two_person,
-        is_two_person=args.two_person,
-        is_kiss_scene=args.kiss,
-        conf_threshold=args.conf,
-    )
-
-    print(f"결과: {'[PASS] 합격' if is_valid else '[REJECT] 불량'}")
-    if not is_valid:
-        print(f"사유: {reason}")
-    print(f"측정값: {metrics}")

@@ -484,6 +484,7 @@ def run_batch(
                                 is_offscreen_partner=is_offscreen_partner,
                                 is_kiss_scene=is_kiss,
                                 section=entry.section,
+                                pose_code=code,
                             )
                             if not passed:
                                 if attempt < max_retries:
@@ -491,6 +492,7 @@ def run_batch(
                                     continue
                                 else:
                                     print(f" [Auto-QC 불량(최대 재시도 초과): {fail_reason}]", end="", flush=True)
+                                    result.qa_warnings.append((code, entry.label, fail_reason))
                             elif attempt > 0:
                                 print(f" [Auto-QC 통과(재시도 {attempt}회)]", end="", flush=True)
                         except Exception as qe:
@@ -514,7 +516,7 @@ def run_batch(
                 try:
                     from generator.censor import censor_file
                     tmp_censored = save_dir / f".tmp_{filename}"
-                    c_res = censor_file(save_path, dst_path=tmp_censored, style=censor_style, pose_code=code, enable_anchor_fallback=True)
+                    c_res = censor_file(save_path, dst_path=tmp_censored, style=censor_style, pose_code=code, enable_anchor_fallback=False)
                     if c_res and c_res.exists():
                         if save_path.exists():
                             save_path.unlink()
@@ -806,6 +808,14 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     vram = None if (mock or dry_run) else fetch_vram_peak()
     print_summary(result, save_dir, badge, vram)
 
+    if result.qa_warnings:
+        print(f"\n[⚠️ Auto-QC 경고] '{prefix}' 캐릭터에서 최대 재시도(3회) 후에도 결함이 감지된 이미지 {len(result.qa_warnings)}건:")
+        for q_code, q_lbl, q_rsn in result.qa_warnings:
+            print(f"  - [{q_code:03d} {q_lbl}] 사유: {q_rsn}")
+        print("  💡 해당 이미지는 일단 저장되었으나, 포즈 데이터 또는 프롬프트 수정을 권장합니다.")
+
+    setattr(args, "last_result", result)
+
     existing = result.existing
     if not existing:
         print("\n[INFO] 생성된 파일이 없어 마크다운을 출력하지 않습니다.")
@@ -844,6 +854,10 @@ def run_all_chars(
     scheduler: str | None = None,
     cfg_scale: float | None = None,
     no_ref: bool = False,
+    auto_qc: bool = False,
+    max_retries: int = 3,
+    censor: bool = False,
+    censor_style: str = "white_silhouette",
 ) -> int:
     """로스터의 모든 캐릭터를 순서대로 생성한다."""
     chars_dir = roster.characters_dir
@@ -862,6 +876,7 @@ def run_all_chars(
     total = len(files)
     succeeded: list[str] = []
     failed: list[str] = []
+    all_qa_issues: list[tuple[str, int, str, str]] = []  # (char_name, code, label, reason)
 
     print(f"\n[ALL-CHARS] {total}명 순차 생성 시작\n{'=' * 64}")
 
@@ -914,6 +929,10 @@ def run_all_chars(
             nude_positive=cfg.nude_positive,
             gender=cfg.gender,
             outfits=cfg.outfits,
+            auto_qc=auto_qc,
+            max_retries=max_retries,
+            censor=censor,
+            censor_style=censor_style,
         )
         # 캐릭터 설정 적용 시 db를 함께 전달하여 이벤트 섹션 자동 병합 반영
         apply_character_to_args(cfg, args, db)
@@ -921,6 +940,10 @@ def run_all_chars(
         try:
             code = execute(args, roster)
             (succeeded if code == 0 else failed).append(name)
+            last_res = getattr(args, "last_result", None)
+            if last_res and getattr(last_res, "qa_warnings", None):
+                for q_code, q_lbl, q_rsn in last_res.qa_warnings:
+                    all_qa_issues.append((name, q_code, q_lbl, q_rsn))
         except ConfigError as e:
             print(f"[ERROR] {name}: {e}", file=sys.stderr)
             if e.hint:
@@ -937,4 +960,15 @@ def run_all_chars(
         print(f"  성공: {succeeded}")
     if failed:
         print(f"  실패: {failed}")
+
+    if all_qa_issues:
+        print(f"\n{'=' * 64}")
+        print(f"🚨 [Auto-QC 종합 품질 검수 리포트: 포즈 수정 권장]")
+        print(f"총 {len(all_qa_issues)}개 에셋에서 최대 재시도(3회) 후에도 결함이 감지되었습니다:")
+        for char_name, q_code, q_lbl, q_rsn in all_qa_issues:
+            print(f"  - [{char_name}] 포즈 {q_code:03d} ({q_lbl}) ➔ {q_rsn}")
+        print("\n💡 [권장 조치] 위 이미지들은 시드를 변경하며 3회 재시도하였음에도 인체/인원/얼굴 결함이 지속되었습니다.")
+        print("   안정적인 결과물을 위해 해당 포즈의 구도(프롬프트), 화각, 가중치 조정을 권장합니다.")
+        print(f"{'=' * 64}")
+
     return 1 if failed else 0

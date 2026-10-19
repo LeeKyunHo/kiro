@@ -31,9 +31,9 @@ def audit_pose_db(db: PoseDatabase) -> list[str]:
     errors = []
     for code, entry in db.entries.items():
         label = entry.label
-        # 1. 라벨 규격 검사 (슬래시/공백 금지, 1~20자)
-        if "/" in label or " " in label:
-            errors.append(f"포즈 {code} 라벨 공백/슬래시 금지 위반: '{label}'")
+        # 1. 라벨 규격 검사 (슬래시 금지, 1~20자)
+        if "/" in label:
+            errors.append(f"포즈 {code} 라벨 슬래시 금지 위반: '{label}'")
         if not (1 <= len(label) <= 20):
             errors.append(f"포즈 {code} 라벨 길이 비정상: '{label}' ({len(label)}자)")
 

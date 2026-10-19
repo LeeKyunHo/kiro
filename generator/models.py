@@ -25,7 +25,10 @@ class RosterPaths:
     
     @property
     def events_file(self) -> Path:
-        """로스터 전용 이벤트 포즈 파일 (projects/{roster}/events.json)"""
+        """로스터 전용 이벤트 포즈 파일 (pose_overrides.json 또는 events.json)"""
+        p_overrides = self.characters_dir.parent / "pose_overrides.json"
+        if p_overrides.is_file():
+            return p_overrides
         return self.characters_dir.parent / "events.json"
 
     @property
@@ -200,6 +203,7 @@ class BatchResult:
     failed: list[tuple[int, str]] = field(default_factory=list)
     planned: list[int] = field(default_factory=list)
     durations: list[tuple[int, float]] = field(default_factory=list)
+    qa_warnings: list[tuple[int, str, str]] = field(default_factory=list)  # (code, label, reason)
     aborted: bool = False
     dry_run: bool = False
 

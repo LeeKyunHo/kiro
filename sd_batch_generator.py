@@ -410,6 +410,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             no_ref=args.no_ref,
             naming=args.naming,
             overwrite=args.overwrite,
+            auto_qc=args.auto_qc,
+            max_retries=args.max_retries,
+            censor=args.censor,
+            censor_style=args.censor_style,
         )
 
     if args.char:

@@ -142,9 +142,19 @@ def load_pose_db(base_dir: Path, events_file: Path | None = None) -> PoseDatabas
     """JSON 을 읽고 검증까지 완료한 PoseDatabase 를 반환한다."""
     raw = read_pose_json(base_dir)
 
+    target_files: list[Path] = []
     if events_file and events_file.exists():
+        target_files.append(events_file)
+        roster_dir = events_file.parent
+        # pose_overrides.json 또는 events.json 중 누락된 형제 파일도 함께 병합
+        for sibling_name in ("pose_overrides.json", "events.json"):
+            sibling_path = roster_dir / sibling_name
+            if sibling_path.is_file() and sibling_path not in target_files:
+                target_files.append(sibling_path)
+
+    for ef in target_files:
         try:
-            with open(events_file, encoding="utf-8-sig") as f:
+            with open(ef, encoding="utf-8-sig") as f:
                 events_raw = json.load(f)
             if isinstance(events_raw, dict):
                 merged_sections: list[str] = []
@@ -157,9 +167,9 @@ def load_pose_db(base_dir: Path, events_file: Path | None = None) -> PoseDatabas
                         raw[sec].update(body)
                         merged_sections.append(sec)
                 if merged_sections:
-                    print(f"[EVENTS] 로스터 전용 이벤트 병합: {events_file.name} ({', '.join(merged_sections)})")
+                    print(f"[EVENTS] 로스터 전용 포즈 병합: {ef.name} ({', '.join(merged_sections)})")
         except Exception as e:
-            print(f"[WARN] 로스터 이벤트 파일({events_file}) 읽기 실패: {e}")
+            print(f"[WARN] 로스터 전용 포즈 파일({ef}) 읽기 실패: {e}")
 
     db = parse_pose_db(raw)
 

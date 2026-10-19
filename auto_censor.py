@@ -34,7 +34,7 @@ def run_batch_censor_with_backup(
     overwrite: bool = True,
     targets: Sequence[str] = ("penis", "pussy"),
     min_confidence: float = 0.15,
-    enable_anchor_fallback: bool = True,
+    enable_anchor_fallback: bool = False,
 ) -> int:
     """_origin 무검열 원본 격리 백업과 함께 일괄 검열을 수행합니다."""
     base_dir = Path(folder_path).resolve()
@@ -49,7 +49,10 @@ def run_batch_censor_with_backup(
 
     target_files = [
         f for f in image_files
-        if not f.stem.endswith("_censored") and "_origin" not in f.parts and not f.name.startswith(".tmp_")
+        if not f.stem.endswith("_censored")
+        and not any("_origin" in part for part in f.parts)
+        and not any("backup" in part.lower() for part in f.parts)
+        and not f.name.startswith(".tmp_")
     ]
     total = len(target_files)
 
@@ -58,13 +61,13 @@ def run_batch_censor_with_backup(
 
     processed_count = 0
     for idx, file_path in enumerate(target_files, 1):
-        match = re.search(r"_(\d{3})\.", file_path.name)
+        match = re.search(r"_(\d{2,3})(?:_|\.)", file_path.name)
         pose_code = int(match.group(1)) if match else None
 
-        # V2 체계: 080~149, 150~219 또는 레거시 H-씬
+        # V2 표준 체계: 080~139 (여성 h_scenes 48종 + special_h 3종), 150~200 (오토코노코 48종+전용)
         is_h = False
         if pose_code is not None:
-            is_h = (80 <= pose_code <= 149) or (150 <= pose_code <= 219) or (40 <= pose_code <= 75) or (140 <= pose_code <= 170)
+            is_h = (80 <= pose_code <= 139) or (150 <= pose_code <= 200)
         if not is_h:
             continue
 
@@ -154,15 +157,16 @@ def main():
         help="원본 파일을 덮어쓰지 않고 _censored 파일로 별도 저장"
     )
     parser.add_argument(
-        "--no-anchor",
+        "--enable-anchor",
         action="store_true",
-        help="AI 미탐지 시 체위별 세이프 앵커 폴백 비활성화"
+        help="AI 미탐지 시 체위별 세이프 앵커 폴백 활성화 (주의: 엉덩이/골반 과대 검열 가능)",
     )
 
     args = parser.parse_args()
 
     # 레거시 스타일명 매핑
     style = "wide_bar" if args.style == "black_bar" else args.style
+    anchor_fallback = getattr(args, "enable_anchor", False)
 
     if args.file:
         file_path = Path(args.file).resolve()
@@ -177,7 +181,7 @@ def main():
             style=style,
             targets=args.targets,
             min_confidence=args.conf,
-            enable_anchor_fallback=not args.no_anchor,
+            enable_anchor_fallback=anchor_fallback,
         )
         if out:
             print(f"[완료] 검열본 저장 완료: {out}")
@@ -191,7 +195,7 @@ def main():
             overwrite=not args.no_overwrite,
             targets=args.targets,
             min_confidence=args.conf,
-            enable_anchor_fallback=not args.no_anchor,
+            enable_anchor_fallback=anchor_fallback,
         )
     else:
         parser.print_help()
