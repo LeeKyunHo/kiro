@@ -535,8 +535,9 @@
     },
     "109": {
       "label": "커닐링구스",
-      "description": "하체 부위에 입을 맞추며 애무하는 씬",
-      "prompt": "1girl, 1boy, completely nude, full nudity, bare skin, ((cunnilingus:1.3)), lying on bed, legs spread, partner between legs, clutching sheets, ((intense ecstatic expression, head thrown back in pleasure, blissfully half-closed eyes, parted lips gasping for air, deeply flushed red face, trembling with overwhelming delight:1.35)), bed, cowboy shot",
+      "description": "침대에 누워 파트너가 양손으로 허벅지를 잡고 밀착하여 얼굴을 묻은 채 뒤통수만 노출되는 애무 구도",
+      "prompt": "1girl, 1boy, completely nude, full nudity, bare skin, lying on back on bed, legs spread wide, (partner hands holding thighs:1.2), (partner head between thighs, face buried, face completely hidden:1.25), (only back of male head visible, short dark hair:1.25), faceless male, clutching sheets, (intense ecstatic expression, head thrown back in pleasure, blissfully half-closed eyes, parted lips gasping for air, deeply flushed red face, trembling with overwhelming delight:1.25), bed, cowboy shot",
+      "negative_add": "(male face visible:1.4), (two faces visible:1.4), (facing each other:1.35), (extra head:1.5), (extra hands:1.4)",
       "section": "h_scenes"
     },
     "110": {
@@ -853,8 +854,9 @@
     },
     "179": {
       "label": "구강애무받기",
-      "description": "침대에 누워 다리를 벌린 채 다리 사이에서 파트너의 입술과 혀로 은밀한 애무를 받는 씬",
-      "prompt": "2boys, completely nude, full nudity, bare skin, (receiving oral stimulation:1.3), lying on bed, legs spread wide, partner head between legs, hands clutching sheets, ((intense ecstatic expression, head thrown back in pleasure, blissfully half-closed eyes, parted lips gasping for air, deeply flushed red face, trembling with overwhelming delight:1.35)), trembling thighs, bed, cowboy shot",
+      "description": "침대에 누워 파트너가 양손으로 허벅지를 잡고 밀착하여 얼굴을 묻은 채 뒤통수만 노출되는 애무 구도",
+      "prompt": "2boys, completely nude, full nudity, bare skin, lying on back on bed, legs spread wide, (partner hands holding thighs:1.2), (partner head between thighs, face buried, face completely hidden:1.25), (only back of male head visible, short dark hair:1.25), faceless male, hands clutching sheets, (intense ecstatic expression, head thrown back in pleasure, blissfully half-closed eyes, parted lips gasping for air, deeply flushed red face, trembling with overwhelming delight:1.25), trembling thighs, bed, cowboy shot",
+      "negative_add": "(male face visible:1.4), (two faces visible:1.4), (facing each other:1.35), (extra head:1.5), (extra hands:1.4)",
       "section": "scenes_otokonoko"
     },
     "180": {
