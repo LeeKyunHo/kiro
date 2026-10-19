@@ -1,442 +1,158 @@
-================================================================================
-  SD 캐릭터 & 포즈 프롬프트 제작 규칙 (Unholy Desire Mix Crimson v5.0 기준)
-  캐릭터 JSON, 포즈 DB, 이벤트/배경 프롬프트 작성자를 위한 완전 지침서
-================================================================================
+# 🎨 플에파(PLEPA) & 키로(Kiro) 캐릭터·포즈 제작 및 5단계 사전점검 통합 규칙서 (V2 최신 표준)
 
-  [이 문서의 성격과 목적]
-  • 목적: Unholy Desire Mix Crimson v5.0(NoobAI) 체크포인트에 최적화된
-          캐릭터 외형, 포즈, 배경, 이벤트 프롬프트 작성 표준 규격 및 노하우 제공.
-  • 대상: 캐릭터 제작자, 프롬프트 엔지니어, 시나리오/스토리 작가.
-  • 다른 문서 안내:
-    - 👤 설치 및 CLI 명령어 실행 치트시트   → 사용법.txt
-    - 🤖 AI/도구용 전체 파라미터/JSON 명세서 → 에파_기능명세.md
-    - 🛠️ 시스템 아키텍처 및 내부 구조        → PROJECT_GUIDE.md
+> **적용 엔진**: **SDXL 단일 공식 표준** (`unholyDesireMixSinister_v90.safetensors` 등 최신 SDXL 체크포인트)  
+> **문서 목적**: 캐릭터 JSON, V2 포즈 DB([`pose_database.json`](../pose_database.json)), 테마 의상 슬롯(`outfits`), 배경 프리셋을 작성할 때 최상의 화질과 인체 해부학적 안정성, 의상 무결성을 보장하고 [`generator/precheck.py`](../generator/precheck.py) 5단계 사전점검을 100% 통과하기 위한 단일 진실 공급원(SSOT) 지침서입니다.  
+> **🚨 AI 에이전트 불변 규칙**: 모든 포즈 추가/수정은 오직 **`pose_database.json`**(및 로스터별 `pose_overrides.json`)에만 수행하며, 파이프라인 로직은 `generator/`에 엄격히 격리합니다.
 
+---
 
-================================================================================
-  📑 목차 (Table of Contents)
-================================================================================
+## 1. 핵심 원칙: 3대 관심사 분리 (Separation of Concerns)
 
-  1. 핵심 원칙: 3대 모듈화 격리 (Separation of Concerns)
-     - 1.1 캐릭터 JSON (외형만 담당, 표정/자세 절대 금지)
-     - 1.2 포즈 DB (동작/표정만 담당, 성별/외형 절대 금지, 첫 태그 라벨 원칙)
-     - 1.3 프로젝트 전용 배경 및 이벤트 (작품 고유 분위기 격리)
-  2. 캐릭터 JSON 작성 규칙 (projects/{roster}/characters/{prefix}.json)
-     - 2.1 필수 필드 및 구조
-     - 2.2 positive 조립 공식 (4단계 레이어 + BREAK 문법)
-     - 2.2.1 특정 작가/화풍(Artist Style) 적용 공식 (선택 사항)
-     - 2.2.2 속옷 겉옷 돌출(Underwear over clothes) 방지 및 속옷끈 연출 공식
-     - 2.2.3 정면 편향(Front-facing bias) 방지 및 의상 태그 정제 공식
-     - 2.2.4 머메이드 실루엣 왜곡(인어 꼬리화) 방지 및 슬릿 드레스 공식
-     - 2.3 negative 조립 공식 (3단계 방어선, sweat/liquid 금지 원칙)
-     - 2.3.4 특정 헤어 색상 이염 방지 공식 (3중 앵커링 + 네거티브 보강)
-  3. 포즈 DB 작성 규칙 (pose_database.json)
-     - 3.1 코드 번호 대역 (총 80종: 00~19 감정, 20~39 포즈/스킨십, 40~59/140~159 H씬)
-     - 3.2 CLIP 토큰 최적 순서 및 손 앵커링 원칙
-     - 3.3 감정 씬 (00~19) 작성 요령
-     - 3.4 상호작용 및 스킨십 씬 (20~39) 작성 요령 (032~036 오프스크린/파트너 제어)
-     - 3.5 결합 H씬 (40~59 / 140~159) 작성 요령 (046 개각유혹 솔로 분기, 053 결합키스, 와인잔 차단)
-  4. 프로젝트 전용 배경(background.json) 및 이벤트(events.json)
-     - 4.1 배경 프리셋 규격 (감정 씬 자동 치환용)
-     - 4.2 이벤트 씬 규격 (200번대 메인/랜덤 이벤트)
-  5. 프롬프트 연출 고급 팁 (Best Practices)
-     - 5.1 도플갱어(인물 복제) 방지 기법 (POV, faceless male, solo focus)
-     - 5.2 의상 벗겨짐 및 손상 연출 (top pushed up, skirt hiked)
-     - 5.3 절정 표정 단계화 (자극 단계별 표정 서술어)
-     - 5.4 후방/측면 앵글 시선 처리 및 몸체 회전 방지 (looking back over shoulder)
-  6. 최종 제작 체크리스트
-     - 캐릭터 JSON 검사 & 포즈/이벤트 DB 검사 체크리스트
+### 1.1 캐릭터 JSON (`projects/{roster}/characters/{prefix}.json`) — **외형만 담당**
+- **포함 요소**: 머리 스타일/색상, 눈동자 색상/눈매, 기본 체형(`balanced body proportions`, 가슴 크기 필수), 기본 의상(`positive` 또는 `sdxl_positive`), 순수 신체 베이스(`nude_positive` 또는 `sdxl_nude_positive`), 테마 의상 슬롯(`outfits`).
+- ❌ **절대 금지**:
+  1. 고정 표정(`smile`, `smirk`, `yandere smile`, `heart eyes`)
+  2. 고정 조명/배경(`soft lighting`, `clean background`, `luxury salon lounge`)
+  3. 구도/자세(`cowboy shot`, `bust shot`, `standing`, `sitting`)
+  4. 손에 쥐는 고정 소품(`holding ...`, `syringe`, `cigarette holder`, `folder`)
+  5. 정면 편향 의상 어휘(`front tie`, `front button`, `wrap front`, `front cleavage`, `exposed cleavage`)
+  6. 9~10등신 롱다리 기형 유발 태그(`long slender limbs` ➔ 반드시 `balanced body proportions` 사용)
+  7. `negative` 내 체액 차단 금지어(`sweat,`, `liquid`, `splatter` ➔ T34b 검사 탈락)
 
+### 1.2 포즈 DB (`pose_database.json` & `pose_overrides.json`) — **동작/표정/구도만 담당**
+- **포함 요소**: 자세, 표정, 카메라 앵글/화각, 상호작용 제스처, `required_outfit` 의상 슬롯.
+- ❌ **절대 금지**:
+  1. 팔 벌림/마네킹 유발: `introduction pose`, `blank face`, `featureless face`
+  2. 하반신 지느러미 융합 유발: `mermaid`, `fishtail`
+  3. 전신 층고 압축(거인화) 및 커튼 잡기 유발: `chandelier`, `curtains`
+  4. 억지 속옷끈 생성 유발: `pulling collar down`, `bra strap`
+  5. 구강 기형 유발: 한 포즈 내 `parted lips`와 `puckered lips` 동시 사용
+  6. 뷰파인더(`⌜ ⌝`) 테두리 유발: 포즈 프롬프트 내 `camera` 단어 사용 지양 (`viewer`로 대체, 네거티브에 `camera frame, viewfinder, HUD` 차단)
 
-================================================================================
-  1. 핵심 원칙: 3대 모듈화 격리 (Separation of Concerns)
-================================================================================
+### 1.3 프로젝트 전용 배경 (`projects/{roster}/background.json`) — **분위기 격리**
+- `default` 배경 프리셋에 `chandelier`, `ceiling`, `sofa`, `couch`, `curtains`, `drapes`를 넣지 않습니다 (전신 스탠딩에서 캐릭터가 2.5m 거인처럼 보이거나 커튼을 움켜쥐는 편향 방지).
 
-  1.1 캐릭터 JSON (외형만 담당)
-    - 머리 스타일/색상, 눈동자 색상, 체형(가슴 크기 필수), 기본 의상(브라/팬티 색상 포함), 고유 신체 특징만 서술.
-    - ❌ 절대 금지: 표정(neutral expression, smile), 조명(soft lighting), 구도(cowboy shot), 
-                   자세(standing, sitting), 배경(clean background).
-    - 이유 1 (자세/표정 충돌): 캐릭터 JSON에 자세나 표정이 들어가면 포즈 DB의 지시사항과 충돌하여 표정이 굳거나 자세가 망가집니다.
-    - 이유 2 (배경 치환 무력화): 파이프라인의 배경 치환기는 포즈 DB(`pose_database.json`)의 `clean background`만 교체합니다.
-      캐릭터 `positive`(특히 `BREAK` 앞단)에 `clean background, soft lighting`을 적어두면 치환되지 않고 영구 고착되어,
-      프로젝트 전용 배경(`background.json`)은 물론 샤워 씬(`bathroom setting`), 이벤트 씬의 배경까지 모두 날려버립니다!
+---
 
-  1.2 포즈 DB (동작, 표정, 구도만 담당)
-    - 자세(standing, lying), 표정(gentle smile, crying), 신체 각도, 카메라 구도, 조명만 서술.
-    - ❌ 절대 금지: 성별 태그(1girl, 1boy), 캐릭터 외형 속성(silver hair, twintails).
-    - 명시적 label 권장: 각 항목을 `{"label": "한국어명칭", "prompt": "..."}` 딕셔너리로 작성하면
-                         콘솔 진행 로그 및 젠잇 마크다운 상태 매핑 가이드에 해당 한국어 라벨이 정확히 표시됩니다.
-                         (생략 시 프롬프트 쉼표 전 첫 번째 태그가 폴백으로 사용됨)
+## 2. 캐릭터 JSON 작성 공식
 
-  1.3 프로젝트 전용 배경 및 이벤트 (작품 분위기 격리)
-    - 감정(emotions, 00~20) 씬의 단색 배경(`clean background`)은 `background.json`을 통해
-      프로젝트 분위기 배경으로 자동 치환됩니다.
-    - 작품 고유의 이벤트 씬(200번대)은 `events.json`에 정의하여 공용 포즈 DB와 분리합니다.
+### 2.1 필수 필드 및 `BREAK` 구조
+`positive`와 `nude_positive` 모두 반드시 **`[품질/화풍 티어] BREAK [성별 + 체형 + 헤어/눈 시그니처 (+ 의상)]`** 구조를 가져야 합니다.
 
-
-================================================================================
-  2. 캐릭터 JSON 작성 규칙 (`projects/{roster}/characters/{prefix}.json`)
-================================================================================
-
-2.1 필수 필드 및 구조
 ```json
 {
-  "prefix": "ren",
-  "default_mode": "otokonoko",
-  "positive": "[1. 공통 품질 티어] BREAK [2. 성별 및 체형 축], [3. 외형 특징], [4. 기본 복장(가중치 1.0)]",
-  "negative": "[1. 기형/저품질 방어선], [2. 성별 반전 방어선], [3. 컷신/번짐 방지선]",
-  "ref_weight": 0.7,
-  "background": "tropical beach bar terrace background, ocean view through window"
+  "prefix": "aya",
+  "name": "아야",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "positive": "masterpiece, best quality, very aesthetic, absurdres, newest BREAK 1girl, solo, balanced body proportions, slender curvy body, large breasts, (long straight dark navy hair:1.15), (sharp violet eyes:1.15), crisp white collared blouse, red ribbon tie, navy pleated miniskirt",
+  "nude_positive": "masterpiece, best quality, very aesthetic, absurdres, newest BREAK 1girl, solo, balanced body proportions, slender curvy body, large breasts, (long straight dark navy hair:1.15), (sharp violet eyes:1.15), fair smooth skin",
+  "negative": "lowres, worst quality, bad quality, bad anatomy, bad hands, extra digits, (bare shoulders:1.2), sleeveless",
+  "outfits": {
+    "underwear": "white lace bra, matching white lace panties",
+    "swimsuit": "navy blue halter bikini, tied side bikini bottom",
+    "maid": "classic French maid headdress, black and white frilly maid apron dress"
+  }
 }
 ```
 
-2.2 positive 조립 공식 (4단계 레이어 + BREAK 필수)
-  ★ 반드시 `BREAK` 키워드로 품질 티어와 캐릭터 본체를 물리적으로 분리합니다.
-  (파이프라인이 BREAK를 감지하여 포즈를 앞쪽 청크에 전진 배치하고 색상 번짐을 차단합니다.)
+### 2.2 가중치 상한선(`:1.15`) 및 색감 과포화(Color Burn) 방어
+- 헤어·눈동자 등 핵심 시그니처 가중치는 최대 **`:1.15`** 이하로 작성하며, 의상 본체 태그는 괄호 가중치 없는 평문(`1.0`)으로 작성합니다.
+- 파이프라인의 `clamp_weights()`가 긍정 프롬프트 가중치를 최대 `1.15`, 부정 프롬프트 가중치를 최대 `1.25`로 자동 클램핑하고 중첩 괄호 `((...))`를 단일 괄호로 평탄화하여 색감 과포화(Color Burn)를 원천 차단합니다.
+- 캐릭터 JSON의 품질 태그 중복 주입을 방지하여 화풍과 채도의 무결성을 유지합니다.
 
-  ① [1. 공통 품질 티어] (모든 캐릭터 고정 — ⚠️ clean background / soft lighting 절대 넣지 말 것!)
-     masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK
+---
 
-  ② [2. 성별 및 기본 체형 축] (시드별 체형 흔들림 방지를 위해 체형·가슴 크기 필수 고정!)
-     - 여성형: `1girl, solo, [체형: slender / curvy / petite], [가슴크기: small breasts / medium breasts / large breasts]`
-       예: `1girl, solo, slender, medium breasts`
-     - 오토코노코: `1boy, solo, androgynous, (otokonoko, femboy:1.2), delicate feminine face, slender build, flat chest`
+## 3. V2 포즈 DB 아키텍처 및 작성 규칙 (`000 ~ 200`)
 
-  ③ [3. 얼굴 및 신체 고유 특징] (가중치 `:1.1~1.2` 적용)
-     - 헤어/눈/태닝/피어싱 등 절대 변하면 안 되는 신체 특징에만 괄호 가중치(`:1.1~1.2`)를 부여합니다.
-       예: `(long straight black hair:1.2), bangs, (two red hair ribbons:1.2), blue eyes`
-     - ★ 오토코노코 필수: `(subtle bulge, tiny bulge under clothing:1.1)` 반드시 포함!
+### 3.1 V2 8대 섹션 및 오토코노코 `+70` 대칭 법칙
+1. **`emotions` (`000 ~ 019`)**: 공용 감정/표정 20종 (`required_outfit: "default"`).
+2. **`poses` (`020 ~ 039`)**: 공용 일상/스킨십/샤워 20종 (`030, 037, 038, 039`는 `"nude"`, 나머지는 `"default"`).
+   - 공용 섹션(`emotions`, `poses`, `romance`)에서 기본 `prompt`에 `1girl`이 포함되는 경우(예: `014`, `033`, `034`, `060`, `061`), 반드시 오토코노코를 위한 **`prompt_otokonoko`(`2boys` 또는 `1boy` 기반)를 함께 정의**해야 합니다.
+3. **`events` (`040 ~ 052`)**: 공용 스토리 이벤트 8종(`040~047`) + 로스터별 오버라이드 이벤트 5종(`048~052`, `projects/{roster}/pose_overrides.json`).
+4. **`romance` (`060 ~ 063`)**: 공용 로맨스 4종 (`060` 딥키스 `"default"`, `061` 알몸키스 `"nude"`, `062` 씻겨주기 `"default"`, `063` 스푸닝 `"nude"`).
+5. **`h_scenes` (`080 ~ 127`, `130`)**: 여성 전용 성인 H-씬 49종 (`105~107, 130`은 착의 성교 `"default"`, 나머지는 `"nude"`).
+6. **`scenes_otokonoko` (`150 ~ 197`, `200`)**: 오토코노코 전용 성인 H-씬 49종.
+   - **불변 대칭 공식**: `오토코노코 성인 코드 = 여성 성인 코드 + 70` (예: 여성 정상위 `085` ↔ 오토코노코 정상위 `155`, 여성 밀회 `130` ↔ 오토코노코 밀회 `200`).
 
-  ④ [4. 기본 복장 및 소품] (⚠️ 의상 본체는 반드시 가중치 1.0 유지!)
-     - 상/하의/원피스/바니슈트 등 **벗겨져야 하는 의상 본체에는 절대 괄호 가중치(`:1.2` 등)를 주지 마세요!**
-       (의상에 `:1.2` 가중치가 걸리면 24~29번 탈의 씬, 36번 샤워 씬, 40~75번 H씬에서 `topless`나 `completely nude`가 무시되고 옷을 입은 채로 나오는 버그가 발생합니다.)
-     - 탈의 시에도 남는 머리띠·리본 등 액세서리에만 `:1.1` 가중치를 허용하며, 동물귀/꼬리 소품은 반드시 `hairband`, `fake`를 붙여 진짜 수인(furry)과 구분합니다.
-       올바른 예: `shiny black latex strapless playboy bunny suit, black bowtie, (black bunny ears hairband:1.1), fake white fluffy bunny tail, black fishnet pantyhose, black bra, black panties`
-       잘못된 예: `(shiny black latex strapless playboy bunny suit:1.2), black bunny ears` (❌ 탈의 불가 + 수인 귀 오인)
+### 3.2 복합 인터랙션 및 2인 모브 격리 규칙
+- 2인 결합/스킨십 씬에서는 남성 파트너의 외형이 여주인공에게 이염되지 않도록 파이프라인이 `BREAK (single faceless male partner:1.15), (unseen eyes:1.15), (obscured male face:1.15)...` 블록을 자동 주입합니다.
+- 단독/사후 여운 씬(`037`, `083`, `084`, `101`, `123` 등)은 `solo`로 분류되어 남성 모브 난입이 원천 차단됩니다.
 
-2.2.1 특정 작가/화풍(Artist / Art Style) 적용 공식 (선택 사항)
-  ★ 로스터 또는 특정 캐릭터에 특유의 작화/화풍(예: ratatatat74 등)을 일관되게 주입할 때의 공식 규격입니다.
+### 3.3 로스터 전용 슬롯 (`048 ~ 052` 일상 5종 및 `130 ~ 135` 성인 6종) 설계 가이드라인
+모든 로스터는 공용 100종(`unified_100`)을 공통으로 사용하면서, **각 작품 고유의 세계관(학원물, 첩보물, 메이드 카페, 무협 등)을 담아내는 11개의 플러그인 전용 슬롯**을 제공합니다:
+- **`048 ~ 052` (이벤트 일상 5종 슬롯, `events`)**: 세계관 일상, 탐색, 행사
+- **`130 ~ 132` (여성 이벤트 성인 3종 슬롯, `special_h`)**: 장소 특화 착의 성인 씬
+- **`133 ~ 135` (오토코노코 이벤트 성인 3종 슬롯, `special_otokonoko`)**: `130~132`와 `1:1` (+3) 대칭 씬
 
-  ① 배치 위치 (1청크 맨 끝 / BREAK 바로 앞단 필수)
-     - 화풍/작가 태그는 2청크(외형/의상)가 아니라 **반드시 [1. 공통 품질 티어] 청크의 맨 끝(`BREAK` 바로 앞)**에 배치합니다.
-     - 이유: 파이프라인의 `assemble_prompt()`는 포지티브를 BREAK 기준으로 분리하여 1청크에 [품질 태그 + 포즈 태그]를 결합합니다.
-       따라서 화풍 태그가 1청크 선두에 위치해야만 CLIP 77토큰 우선순위 안에서 포즈나 의상 변경에 밀리지 않고 강하게 화풍이 유지됩니다.
-     - 2청크에 넣으면 탈의 씬이나 긴 의상 묘사에 밀려 화풍이 풀리는 현상이 발생합니다.
+#### 1) 슬롯별 표준 연출 및 설계 가이드
+| 슬롯 번호 | 성별 트랙 | 권장 연출 테마 | 캠퍼스(`campus`) 적용 예시 | 스파이(`spy`) 적용 예시 | 메이드(`maid`) 적용 예시 | 의상 슬롯 |
+| :---: | :---: | :--- | :--- | :--- | :--- | :---: |
+| **`048`** | 공용 | **세계관 일상 1 (휴식/음료)** | 캠퍼스 카페 (커피 마시며 대화) | 술대접 (위스키 잔 들고 유혹) | 메이드 티타임 (홍차잔 들고 미소) | `default` |
+| **`049`** | 공용 | **세계관 일상 2 (탐색/조사)** | 캠퍼스 도서관 (책장 사이 뒤돌아봄) | 잠입수색 (손전등 서류함 수색) | 메이드 주방 요리 (팬케이크, 앞치마) | `default` |
+| **`050`** | 공용 | **세계관 일상 3 (야외/개방/감청)** | 캠퍼스 벤치 (야외 잔디밭 휴식) | 도청 (이어피스 누르고 녹음기 감청) | 정원 산책 (화단 가꾸기, 온실) | `default` |
+| **`051`** | 공용 | **세계관 전문 활동 (업무/훈련)** | 캠퍼스 공부/연구 (책상 노트 필기) | 권총겨누기 (소음 권총 양손 조준) | 테이블 서빙 (은쟁반 들고 인사) | `default` |
+| **`052`** | 공용 | **세계관 특별 상황 (위기/행사)** | 캠퍼스 축제 (포장마차, 뒤돌아봄) | 포박 (의자 뒤 손목 결박 위기) | 주인님 생일파티 (케이크 촛불) | `default` |
+| **`130`** | 여성 | **세계관 시그니처 1 (장소 결합)** | **빈강의실 섹스** (교탁 엎드림 후배위) | **골목섹스** (심야 골목길 벽 착의섹스) | 주방테이블 섹스 (조리대 엎드림) | `default` |
+| **`131`** | 여성 | **세계관 시그니처 2 (장소 결합)** | **보건실 침대섹스** (침대 위 착의 기승위) | **밀실심문** (취조실 책상 심문 결합) | 주인님침대 섹스 (침대 위 기승위) | `default` |
+| **`132`** | 여성 | **세계관 시그니처 3 (장소 결합/봉사)** | **화장실펠라** (칸막이 안 구강봉사) | **접견** (사적 침실 침대 밀실 결합) | 탈의실펠라 (락커룸 무릎 구강봉사) | `default` |
+| **`133`** | 오토 | **`130`의 오토코노코 1:1 대칭 씬** | **빈강의실 아날섹스** (교탁 아날 후배위) | 골목 아날섹스 (골목길 아날 결합) | 주방테이블 아날섹스 (아날 후배위) | `default` |
+| **`134`** | 오토 | **`131`의 오토코노코 1:1 대칭 씬** | **보건실 침대아날섹스** (침대 아날 기승위) | 밀실심문 아날섹스 (아날 심문 결합) | 주인님침대 아날섹스 (아날 기승위) | `default` |
+| **`135`** | 오토 | **`132`의 오토코노코 1:1 대칭 씬** | **화장실펠라** (오토 착의 펠라) | 접견 아날섹스 (침대 아날 결합) | 탈의실펠라 (오토 착의 펠라) | `default` |
 
-  ② 올바른 태그 표기법 및 권장 가중치
-     - Danbooru 공식 작가 태그 단일 괄호 표기 준수: `(작가태그:가중치)`
-     - 권장 가중치: `1.15` ~ `1.25` (기본 추천: `:1.2`)
-       * 1.1 이하: 화풍 전사 효과가 미미함.
-       * 1.3 이상: 캐릭터 본연의 이목구비 왜곡이나 과적합(인물 복제, 포즈 경직) 발생 위험.
-     - ⚠️ 주의: 복합 괄호 내 쉼표 절대 금지! `(tag1, tag2:1.2)` (X) ➔ `(artist_name:1.2)` (O)
-
-  ③ 적용 예시:
-     `"positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes, (ratatatat74:1.2) BREAK 1girl, solo, ..."`
-
-2.2.2 속옷 겉옷 돌출(Underwear over clothes) 방지 및 속옷끈 연출 공식
-  ★ 롱드레스, 메이드복, 셔츠, 오프숄더 등에서 속옷이 옷 위에 덧그려지거나 브라 컵이 옷 밖으로 삐져나오는 결함을 원천 차단하는 공식 규격입니다.
-
-  ① 문제 원인 (속옷 우선 렌더링 및 가중치 역전 현상)
-     - 캐릭터 포지티브에 `black bra, black panties` 등의 직접 노출 태그가 있거나,
-       속옷끈 태그가 길고 `lace bra` 같은 컵 명칭이 포함되어 있으면 브라 컵이 옷 위로 돌출됩니다.
-     - 특히 속옷끈에 `:1.1~1.15` 가중치를 주면 겉옷 본체(가중치 `1.0`)보다 속옷의 가중치가 높아져 속옷이 겉옷을 뚫고 나오는 심각한 역전 현상이 발생합니다.
-
-  ② 해결 공식 1: 초경량 단문(Thin strap) 치환 및 가중치 하향 (`:0.9~0.95`)
-     - `bra`, `lace bra` 단어와 긴 위치 서술어(`peeking out at neckline` 등)를 완전히 배제하고,
-       단순한 어깨끈 형태의 초경량 단문으로 치환합니다.
-     - 겉옷(`1.0`)이 항상 속옷을 덮을 수 있도록 가중치를 **`0.9 ~ 0.95`**로 겉옷보다 낮게 설정합니다.
-     - 표준 권장 태그:
-       * 검은 끈: `(thin black strap:0.95)`
-       * 흰색 끈: `(thin white strap:0.95)`
-       * 실크 끈: `(thin silk strap:0.95)`
-       * 범용: `(thin strap:0.95)`
-     - ⚠️ H씬/탈의 씬 무결성 보장: 결합 씬(40~59/140~159)과 탈의 포즈는 포즈 DB의 강력한 `completely nude`, `topless` 태그가 우선 적용되므로 캐릭터 JSON에 bra/panties 본체가 없어도 누드 연출에 전혀 지장이 없습니다.
-
-  ③ 해결 공식 2: 네거티브 속옷 노출 방어선 필수 배치
-     - 겉옷을 뚫고 나오는 브라 컵이나 의도치 않은 팬티 노출을 완벽히 막기 위해 네거티브 선두에 아래 방어 태그를 배치합니다:
-       `pantyshot, exposed panties, exposed bra cup, exposed bra, visible panties, see-through`
-
-2.2.3 정면 편향(Front-facing bias) 방지 및 의상 태그 정제 공식
-  ★ 뒤태(back view), 도기(doggystyle), 측면 구도에서 캐릭터의 몸이나 얼굴이 강제로 정면으로 꺾여 나오는 치명적 결함을 원천 차단하는 공식 규격입니다.
-
-  ① 문제 원인 1: 의상 태그 내 'front' 어휘 오염 (강력한 정면 강제 버그)
-     - 캐릭터 포지티브에 `front tie`, `front button`, `tie front`, `front slit` 등 'front'가 포함된 복장 묘사를 넣으면,
-       CLIP 텍스트 인코더가 이를 복장 장식이 아닌 카메라 구도 `front view`로 해석합니다.
-     - 결과: 포즈 DB에서 `from behind`, `turned back`, `doggystyle` 같은 명확한 후방 구도를 주어도 모델이 이를 억누르고 캐릭터를 강제로 정면으로 돌려버립니다.
-     - ❌ 금지 태그: `front tie`, `front button`, `tie front`, `front slit`, `front zipper`
-     - ✅ 대체 표준 태그:
-       * `front tie` ➔ `tied shirt`, `tied clothes`, `ribbon on chest`, `chest knot`
-       * `front button` ➔ `buttoned shirt`, `collared shirt`
-       * `front slit` ➔ `slit dress`, `skirt slit`, `side slit`
-
-  ② 문제 원인 2: 상시 가슴골/노출(Cleavage) 태그에 의한 시선·구도 고착
-     - 캐릭터 JSON에 `heavy cleavage`, `exposed cleavage`, `cleavage cutout` 등이 기본 외형으로 영구 등록되어 있으면,
-       AI가 가슴 정면을 반드시 보여주어야 한다고 판단하여 캐릭터의 상체를 억지로 정면으로 비틀어버립니다.
-     - 해결책: 캐릭터 JSON에는 체형/가슴 크기(`large breasts`)와 의상 형태(`open shirt`, `low-cut shirt`)만 담고,
-       과도한 클리비지 직접 묘사는 포즈 DB나 오픈 의상의 자연스러운 렌더링에 일임합니다.
-
-  ③ 문제 원인 3: ControlNet 참조 이미지(IP-Adapter) 가중치 과적합
-     - 캐릭터 레퍼런스 이미지(`ref.webp`)가 대개 '정면 스탠딩 샷'으로 등록되어 있습니다.
-     - 만약 캐릭터 JSON의 `ref_weight`가 0.70 이상으로 지나치게 높으면, 참조 이미지의 정면 구도 정보가 포즈 DB의 후방 앵글 지시를 압도하여 뒤를 돌아보지 못합니다.
-     - 권장 설정: `ref_weight: 0.55 ~ 0.65` (기본 권장값: `0.60`). 얼굴과 복장 특징은 100% 보존하면서 뒤태 및 다양한 앵글이 완벽히 발현됩니다.
-
-2.2.4 머메이드 실루엣 왜곡(인어 꼬리화) 방지 및 슬릿 드레스 공식
-  ★ 롱드레스/이브닝드레스 착용 캐릭터에서 의상 하단이 인어 꼬리(fishtail) 형태로 뭉개지거나 다리가 결합되는 결함을 원천 차단하는 공식 규격입니다.
-
-  ① 문제 원인 ('mermaid' 어휘의 강력한 수인/환상종 오염)
-     - 캐릭터 포지티브에 `mermaid silhouette dress`, `mermaid dress` 등을 지정하면, CLIP 텍스트 인코더가 'mermaid(인어)' 토큰에 반응하여 하반신을 물고기 지느러미/꼬리처럼 융합시키거나 비늘 텍스처를 입힙니다.
-     - 특히 036번 공주님안기, 025번 앉아유혹 등 다리를 들어 올리거나 구부리는 포즈에서 드레스 자락이 꼬리 모양으로 괴기스럽게 늘어나는 심각한 왜곡이 발생합니다.
-
-  ② 해결 공식: 슬릿/맥시 드레스 대체 및 네거티브 방어선 구축
-     - ❌ 절대 금지: `mermaid silhouette`, `mermaid dress`, `fishtail dress`
-     - ✅ 대체 표준 태그:
-       `high side slit dress, elegant draped maxi dress, long dress with side slit`
-       (우아한 드레이프와 롱 실루엣을 유지하면서도 한쪽 슬릿을 통해 다리 윤곽을 독립적으로 분리 렌더링)
-     - ✅ 캐릭터 JSON 네거티브 필수 방어선:
-       `((mermaid:1.4)), ((mermaid tail:1.4)), ((fishtail:1.4)), ((fins:1.4))`
-
-
-2.3 negative 조립 공식 (3단계 방어선)
-  ① [1. 기형/저품질 및 수인 방어선]
-     - 기본 템플릿:
-       `worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, cat ears, fox ears, dog ears, wolf ears, furry`
-     - ★ 바니걸 / 동물귀 머리띠 캐릭터 주의사항 (태그 충돌 방지):
-       포지티브에 `bunny ears hairband`, `fake rabbit tail` 등을 넣었을 때 네거티브에 포괄 태그(`animal ears`, `animal tail`, `beast ears`)가 있으면 토끼귀 머리띠와 꼬리가 지워지거나 기형적으로 뭉개집니다!
-       → 동물귀 소품 캐릭터는 네거티브에서 **`animal ears, animal tail, beast ears`를 반드시 빼고**, 다른 동물 태그(`cat ears, fox ears, dog ears, wolf ears, furry`)만 넣으세요.
-
-  ② [2. 성별 반전 방어선]
-     - 여성 캐릭터: `1boy, male, masculine, beard, mustache, facial hair, muscular`
-     - 오토코노코 캐릭터: `2boys, multiple characters, clone, duplicate, 1girl, female, large breasts, huge breasts, heavy cleavage, female anatomy, female genitalia, vagina, muscular, manly, beard, mustache, facial hair, visible penis, large penis, erection, testicles`
-     ★ 주의: 오토코노코는 포지티브에 `delicate feminine face`가 들어가므로 네거티브에 `feminine` 단독어를 넣지 마세요!
-
-  ③ [3. 컷신 및 번짐 방지선]
-     `photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4)`
-     ★ 절대 주의: 네거티브에 `sweat`, `perspiration`, `liquid`, `splatter` 등 체액/땀 관련 단어를 넣지 마세요!
-       (H씬 및 상호작용 포즈의 땀과 체액 연출이 완전히 삭제되는 치명적 버그가 발생합니다.)
-
-2.3.4 특정 헤어 색상 이염(Color Bleed) 방지 공식
-  ★ 유색 의상(다크그린, 에메랄드 벨벳 등)이나 강한 홍채 색소가 머리카락으로 번져 헤어 컬러가 변색(이염)되는 현상을 원천 차단하는 공식 규격입니다.
-
-  ① 문제 원인 (CLIP 크로스 어텐션 색상 누출)
-     - 의상 색상(예: `dark emerald green dress`)과 눈동자(`emerald green eyes`)에 사용된 강한 색소 토큰이 CLIP 크로스 어텐션 단계에서 인접한 헤어 영역으로 누출되어, 붉은색이나 금발 머리가 칙칙한 초록빛/카키색으로 오염되는 현상이 발생합니다.
-
-  ② 해결 공식 1: 포지티브 3중 컬러 앵커링(Triple Anchoring)
-     - 헤어 색상 단일 태그 대신 유의어 3종을 점진적 가중치로 결합하여 머리카락 색소를 완벽히 고정합니다:
-       예 (버건디 헤어): `((deep burgundy hair:1.35)), ((wine red hair:1.25)), (dark red hair:1.15)`
-       예 (플래티넘 블론드): `((platinum blonde hair:1.35)), ((pale blonde hair:1.25)), (light yellow hair:1.15)`
-
-  ③ 해결 공식 2: 네거티브 인접/반대 색상 강력 차단
-     - 의상이나 눈동자 색상이 머리로 번지지 못하도록 네거티브에 오염 예상 색상을 명시적으로 고가중치 차단합니다:
-       예: `((green hair:1.6)), ((emerald hair:1.5)), ((teal hair:1.5)), ((olive hair:1.4))`
-
-  ④ 해결 공식 3: IP-Adapter 가중치 조절
-     - 참조 이미지(레퍼런스)의 색상 과포화가 원인일 경우 `ref_weight`를 `0.50 ~ 0.55`로 미세 하향하여 베이스 모델의 색상 해석력을 확보합니다.
-
-
-
-================================================================================
-  3. 포즈 DB 작성 규칙 (`pose_database.json`)
-================================================================================
-
-3.1 코드 번호 대역 (총 80종 정예화 체제)
-  - `00 ~ 19`: 일상 감정 및 표정 20종 (emotions, 단독 샷 — clean background 배경 자동 치환 대상)
-  - `20 ~ 39`: 착의 스킨십 및 포즈 20종 (poses, 2인 상호작용 및 솔로 도발 포즈)
-  - `40 ~ 59`: 여성 전용 H씬 20종 (h_scenes, 기본 체위 + 클라이맥스/체액 + 사후여운)
-  - `140 ~ 159`: 오토코노코 전용 H씬 20종 (scenes_otokonoko, 40~59번과 1:1 대칭 매핑)
-  - `200번대~`: 작품 전용 이벤트 씬 (events.json에 정의)
-
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ 전체 포즈 코드 레퍼런스 (총 80종 정예화 빠른 참조용)                 │
-  └─────────────────────────────────────────────────────────────────────┘
-
-  - emotions (감정 표현: 000~019, 총 20종):
-    000:평상 | 001:미소 | 002:활짝웃음 | 003:홍조 | 004:뾰로통
-    005:분노 | 006:경멸 | 007:슬픔 | 008:울음 | 009:놀람
-    010:자신감 | 011:의문 | 012:장난 | 013:하트눈 | 014:유혹
-    015:나른 | 016:진지 | 017:공포 | 018:얀데레 | 019:키스
-
-  - poses (스킨십/포즈: 020~039, 총 20종):
-    020:윙크 | 021:양손하트 | 022:손흔들기 | 023:팔짱 | 024:뒤태
-    025:앉아유혹 | 026:체벌 | 027:배후옷속침범 | 028:마주안아엉덩이주무름 | 029:도기유혹
-    030:전신나체 | 031:배후성추행 | 032:벽치기 | 033:정면포옹 | 034:가슴에얼굴묻기
-    035:침대덮치기 | 036:공주님안기 | 037:딥키스 | 038:샤워뒤태 | 039:유리밀착유혹
-
-  - h_scenes (여성 전용 결합 씬: 040~059, 총 20종):
-    040:정상위 | 041:정면절정 | 042:후배위 | 043:후방절정 | 044:기승위
-    045:상위절정 | 046:개각유혹 | 047:대면좌위 | 048:밀착절정 | 049:스푸닝
-    050:가슴밀착 | 051:가슴절정 | 052:구강봉사 | 053:결합키스 | 054:딥스로트
-    055:구강사후 | 056:벽밀착 | 057:샤워씬 | 058:침대사후 | 059:후방사후
-
-  - scenes_otokonoko (오토코노코 전용 결합 씬: 140~159, 총 20종):
-    140:정상위 | 141:정면절정 | 142:후배위 | 143:후방절정 | 144:기승위
-    145:상위절정 | 146:개각유혹 | 147:대면좌위 | 148:밀착절정 | 149:스푸닝
-    150:상호자극 | 151:상호절정 | 152:구강봉사 | 153:결합키스 | 154:딥스로트
-    155:구강사후 | 156:벽밀착 | 157:샤워씬 | 158:침대사후 | 159:후방사후
-
-  ※ 이벤트 씬은 events.json에 200번대 이상으로 정의
-
-
-3.2 CLIP 토큰 최적 순서 및 손 앵커링 원칙
-  ① 프롬프트 순서: 영문 서술어의 자연스러운 순서대로 배치해야 AI가 가장 정확히 이해합니다:
-     [자세/체위] → [시점/구도] → [상호작용/파트너] → [행위/신체접촉] → [노출/의상] → [체액/땀] → [표정/반응] → [배경/조명] → [화각(cowboy shot 등)]
-
-  ② ★ 손 위치 앵커링(Anchoring) 필수 불변식:
-     - 손의 위치가 허공에 비어 있으면 기형 손, 손 모으기 편향, 또는 상대방이 만져야 할 부위를 캐릭터 본인이 만지는 심각한 오류가 발생합니다.
-     - 반드시 캐릭터의 손 위치(예: `hands on partner's chest`, `hands on partner's shoulders`, `hands on bed`, `arms around neck`)를 물리적 접촉면에 단단히 고정하세요!
-
-  ③ 단일 화각 유지 (화각 충돌 금지):
-     - `close-up`과 `cowboy shot`처럼 상반된 화각 태그를 동시에 사용하면 화면 분할 컷(멀티뷰) 버그가 발생하므로 단일 화각을 유지합니다.
-
-3.3 감정 씬 (00~19) 작성 요령
-  - 구조: `{"label": "한국어라벨", "prompt": "[자세], [표정 키워드], [세부 안면 반응], clean background, soft lighting, cowboy shot"}`
-  - 배경 치환 원칙: 모든 감정 씬에는 반드시 `clean background`를 포함해야 프로젝트별 `background.json`으로 자동 치환됩니다.
-  - 예시:
-    "00": {"label": "평상", "prompt": "standing, looking at viewer, calm neutral expression, gentle gaze, clean background, soft lighting, cowboy shot"}
-    "01": {"label": "미소", "prompt": "standing, looking at viewer, gentle smile, sweet expression, light blush, clean background, soft lighting, cowboy shot"}
-    "18": {"label": "얀데레", "prompt": "solo focus, ((leaning forward:1.35)), ((leaning towards viewer:1.35)), bending forward, close to viewer, slight high angle, ((reaching towards viewer:1.25)), one hand reaching forward, yandere, ((yandere smile:1.3)), crazy smile, wide eyes, obsessive gaze, intense stare, parted lips, sweet psychotic expression, blush, flushed cheeks, clean background, soft lighting, upper body"}
-    "19": {"label": "키스", "prompt": "solo focus, ((puckered lips:1.35)), ((puckering lips:1.3)), closed eyes, head tilted, ((leaning forward:1.35)), ((leaning towards viewer:1.35)), pleading, sweet anticipation, flushed cheeks, heavy blush, soft gentle expression, clean background, soft lighting, upper body portrait"}
-
-3.4 상호작용 및 착의 스킨십 씬 (20~39) 작성 요령
-  - 기본 전제: 20~39번은 **의상을 완전히 착용한 상태(fully clothed)**에서의 스킨십 및 매혹/도발 구도입니다.
-  - 착의 보장: 뒤태나 신체 굴곡을 강조할 때 노출 편향 태그(`back focus` 등 맨등 노출 태그)를 피하고 `fully clothed, back view`를 명시하여 옷이 파이거나 찢어지는 현상을 방지합니다.
-  - 상대방 묘사: 파트너의 얼굴이 노출되지 않도록 `faceless male` 및 상체 줌인(`pov, pov kabedon`)을 활용합니다.
-
-  ★ [핵심 개선] 032~036번 파트너 결합 및 시선 왜곡 방지 공식:
-  ① 032(벽치기), 033(정면포옹), 035(침대덮치기) 화면 밖 파트너 하반신 분리 (`is_offscreen_partner`):
-     - 문제: 포즈 내 `partner` 단어로 인해 2인 모드가 발동되며 모브 남성의 전신과 검은 바지(`solid black pants`)가 화면 모서리에 강제 침범하는 현상 발생.
-     - 해결: `off-screen` 감지 시 모브 전신 주입을 배제하고 네거티브에 `((male body, male torso, male lower body, male legs, pants, trousers, black pants:1.5))`를 주입하여 오직 파트너의 손/팔 앵커링만 유지.
-  ② 034(가슴에얼굴묻기) 다중 머리(머리 2개) 버그 차단:
-     - 문제: 프롬프트에 `face buried in breasts`와 `partner from behind`가 모순 공존하여 AI가 앞뒤로 남성 머리를 2개 생성하던 결함.
-     - 해결: 후방 태그 제거, `single partner, 1boy`로 단일화하고 네거티브에 `((extra head, two heads, 2boys:1.4))` 주입.
-  ③ 035(침대덮치기) 1인칭 상체 버스트 샷 전환:
-     - 문제: 와이드 샷으로 인해 여캐 아래에 남성 하반신이 어색하게 깔려 나오는 결함.
-     - 해결: 1인칭 시점(`pov, from above, looking up at viewer`)의 타이트 상체 버스트 샷으로 변경하여 여캐의 상기된 표정과 심리 묘사에 집중.
-  ④ 036(공주님안기) 시선 처리 안정화:
-     - 문제: 모브 얼굴 응시(`looking up at partner`) 지시 시 이목구비가 찌그러지거나 허공을 응시하는 왜곡 발생.
-     - 해결: 수줍음에 눈을 감고 고개를 살포시 숙이는(`closed eyes, head tilted down, bashful embarrassed expression`) 연출로 변경하여 안정적인 미모 보장.
-
-  - 대표 예시:
-    "24": {"label": "뒤태", "prompt": "fully clothed, ((from behind:1.35)), ((turned back:1.25)), back view, ((looking back over shoulder:1.35)), looking at viewer, seductive glance over shoulder, standing, arched back, heavy blush, bedroom eyes, parted lips, sultry look, cowboy shot"}
-    "32": {"label": "벽치기", "prompt": "pov, (trapped against wall:1.25), (cornered against wall:1.25), back against wall, (partner off-screen:1.35), (only partner hands on wall:1.3), (partner arms flanking character on wall:1.25), (hands clutched against own chest:1.2), (hands held in front:1.15), looking at viewer, upturned gaze, rapid breathing, heavy blush, intensely flushed face, wide moist eyes, breathless panting, trembling lips, flustered and aroused, tight bust shot, close-up upper body portrait"}
-    "34": {"label": "가슴안김", "prompt": "fully clothed, (single partner:1.2), 1boy, (face buried in breasts:1.35), (burying face in breasts:1.3), head in cleavage, hugging partner, facing partner, intimate embrace, hands on partner's head, holding partner's head to chest, faceless male, looking down at partner, gentle affectionate smile, sweet blush, flushed cheeks, heavy blush, loving gaze, tender expression, parted lips, upper body"}
-    "35": {"label": "침대덮침", "prompt": "fully clothed, lying on bed, on back, pinned down, (pov:1.3), (from above:1.25), looking up at viewer, (partner off-screen:1.35), (partner hands pinning wrists to bed:1.3), hands pinned beside head, (flustered and aroused:1.3), heavy blush, intensely flushed face, parted breathless lips, panting, arched back, bedroom, soft lighting, tight bust shot, close-up upper body portrait"}
-    "36": {"label": "공주안기", "prompt": "fully clothed, (bridal carry:1.35), (carried princess style:1.3), in partner's arms, lifted up, (closed eyes:1.2), (head tilted down:1.2), shy bashful expression, embarrassed blush, intensely flushed face, parted lips, arms wrapped around partner's neck, clinging to partner, faceless male, soft romantic lighting, cowboy shot"}
-
-3.5 결합 H씬 (여성 40~59 / 오토코노코 140~159 1:1 대칭 완비)
-  - 1:1 대칭 매핑: 여성 씬(40~59번)과 오토코노코 씬(140~159번)은 번호 끝자리 기준으로 체위와 상황이 1:1로 완벽히 대응합니다.
-  - 해부학 분기:
-    * 여성(40~59): `completely nude, full nudity, bare skin, missionary`, `doggystyle`, `cowgirl`, `straddling`, `breast grab`, `fellatio`
-    * 오토코노코(140~159): `completely nude, full nudity, bare skin, anal missionary`, `anal doggystyle`, `anal cowgirl`, `subtle bulge`, `handjob receiving`, `fellatio oral sex` (절대 vaginal 사용 금지)
-
-  ★ [핵심 개선] H씬 솔로 분기, 결합키스 신설 및 와인잔 차단 규칙:
-  ① 046번/146번(개각유혹) 순수 1인 솔로 씬 분기 (`is_solo_scene`):
-     - 문제: 기존 파이프라인이 `h_scenes` 전체를 2인 상호작용으로 간주하여, 홀로 침대에 누워 다리를 벌리고 시청자를 유혹해야 하는 씬에 모브 남성을 강제 배치하고 `solo` 태그를 삭제하던 치명적 오류.
-     - 해결: 포즈 DB 내 `solo` 키워드 감지 시 파이프라인에서 2인 모브 주입을 차단하고 `solo` 태그를 완벽 보존하며 네거티브에 남성 차단 태그를 주입. `trembling slightly`를 제거하고 당당하고 도발적인 매혹 시선(`seductive bedroom eyes, confident alluring smile`)으로 정제.
-  ② 053번/153번(결합키스) 신설:
-     - 기존 52(구강봉사), 54(딥스로트), 55(구강사후)와의 중복을 탈피하고, 파트너와 강하게 결합된 상태에서 목덜미를 끌어안고 서로의 혀를 섞는 농밀한 딥키스 체위(`deep passionate kiss while connected, missionary embrace, tongue entangled, arms around partner's neck`)로 전면 개편.
-  ③ 침대 및 H씬 와인잔/음료 소품 전역 네거티브 차단:
-     - 문제: 침대 위나 탈의 씬에서 뜬금없이 와인잔, 샴페인병 등이 생성되는 환각 현상.
-     - 해결: 파이프라인 프롬프트 빌더 및 캐릭터 네거티브에 `(wine, wine glass, champagne, glass, bottle, cup, drink, beverage:1.4)`를 자동 주입하여 소품 환각 원천 차단.
-
-  - 체액 및 클라이맥스: `((excessive cum:1.35))`, `((thick cum covering body:1.3))`, `cum pool on bedsheets`
-  - 사후여운(Aftermath) 솔로 보장: 58~59번, 158~159번은 `aftermath`, `aftersex` 키워드로 파트너를 완전 배제하고 단독 탈진 샷 보장.
-
-
-================================================================================
-  4. 프로젝트 전용 배경(`background.json`) 및 이벤트(`events.json`)
-================================================================================
-
-4.1 배경 프리셋 (`projects/{roster}/background.json`)
-  감정(00~20) 씬의 `clean background`를 프로젝트 고유 분위기로 치환합니다.
-  ```json
-  {
-    "default": "tropical beach bar terrace background, ocean view through window, afternoon sunlight",
-    "night": "dimly lit beach bar interior, warm lamp lighting, dark night ocean outside window"
+#### 2) 파일 작성 규칙 (`projects/{roster}/pose_overrides.json`)
+- 파일 위치: 반드시 각 로스터 디렉토리인 **`projects/{roster}/pose_overrides.json`**에 작성합니다.
+- 스키마 구조:
+```json
+{
+  "_note": "{로스터명} 전용 포즈 오버라이드",
+  "events": {
+    "048": { "label": "라벨", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "events" }
+  },
+  "special_h": {
+    "130": { "label": "장소상황라벨1", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "special_h" },
+    "131": { "label": "장소상황라벨2", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "special_h" },
+    "132": { "label": "장소상황라벨3", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "special_h" }
+  },
+  "special_otokonoko": {
+    "133": { "label": "장소상황라벨1(오토)", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "special_otokonoko" },
+    "134": { "label": "장소상황라벨2(오토)", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "special_otokonoko" },
+    "135": { "label": "장소상황라벨3(오토)", "description": "설명", "prompt": "...", "required_outfit": "default", "section": "special_otokonoko" }
   }
-  ```
-  - `default`: 기본 실행 시 적용되는 배경.
-  - 기타 키(`night` 등): CLI에서 `--bg-preset night`로 즉시 전환 가능.
+}
+```
 
-4.2 이벤트 씬 (`projects/{roster}/events.json`)
-  공용 DB를 수정하지 않고 해당 작품에만 존재하는 스토리 씬(200번대)을 정의합니다.
-  ```json
-  {
-    "event_main": {
-      "201": {
-        "label": "칵테일건네기",
-        "prompt": "standing, holding tropical cocktail glass, serving drink, smiling, bar interior, cowboy shot"
-      },
-      "203": {
-        "label": "럼병돌리기",
-        "prompt": "sitting on wooden bar table, legs swinging playfully, leaning back, bar interior, cowboy shot"
-      }
-    },
-    "event_random": {
-      "211": {
-        "label": "얼음넘어짐",
-        "prompt": "falling forward toward viewer, accidental stumble, blushing face, hands reaching out, bar interior, cowboy shot"
-      },
-      "215": {
-        "label": "창고밀착",
-        "prompt": "standing pressed against wall in narrow wooden storage room, close intimate distance, flushed cheeks, storage room interior, cowboy shot"
-      }
-    }
-  }
-  ```
-  - `default_mode`가 평가될 때 `event_*` 섹션이 자동으로 생성 대상에 병합됩니다.
+#### 3) 이벤트 및 특수 성인 프롬프트 작성 6대 수칙
+1. **명칭 직관화 및 AI 챗봇 키워드 매칭 원칙**: 단순 감성 문구가 아닌, 캐릭터 챗봇 AI 및 파일명에서 상황을 즉시 조건 판정할 수 있도록 **`[장소 키워드] + [핵심 액션]`** (예: `빈강의실 섹스`, `골목섹스`, `밀실심문`) 형태로 명명합니다.
+2. **캐릭터 기본 외형 침범 금지**: 머리색, 눈동자색, 체형 등은 캐릭터 JSON의 고유 영역이므로 이벤트 프롬프트에 작성하지 않습니다.
+3. **배경과 소품은 포즈에 어울리게 최소화**: 배경 프롬프트(`background.json`)와 충돌하지 않도록 핵심 환경/소품 태그(예: `dark night alleyway, brick wall`) 위주로 1~2개 집중 투입합니다.
+4. **카메라 앵글 및 화각 명시**: 생동감을 위해 `cowboy shot`, `upper body`, `looking back over shoulder`, `intimate close-up` 등 화각을 명시합니다.
+5. **의상 슬롯 준수**: 일상 이벤트 및 특수 H씬은 착의 상태 유지를 위해 `"required_outfit": "default"`를 기본으로 설정합니다.
+6. **사전점검 필수 실행**: 작성 후 반드시 `python sd_batch_generator.py --test` 및 사전점검 모듈을 실행하여 금지어 및 의상 충돌 0건을 검증합니다.
 
+#### 4) AI 캐릭터 채팅 조건 매칭 (Trigger Matching) 연동 표준
+플에파/키로의 에셋과 프롬프트 시트는 SillyTavern, Genit, 비주얼 노벨 챗봇 등 **AI 캐릭터 채팅 인터페이스에서 실시간 이미지 호출(Trigger)**과 100% 직결됩니다:
+- **매칭 메커니즘**:
+  - LLM이 대화 중 사용자가 위치한 **장소(Location Context)**와 진행 중인 **행동(Action Context)**을 추출하여 해당 번호의 이미지를 자동 출력합니다.
+  - 예시 (스파이 로스터):
+    - 대화 장소가 `심야 골목길`이고 성인 씬에 진입한 경우 ➔ **`130 골목섹스`** 자동 매칭 (`<img: 130>`)
+    - 대화 장소가 `비밀 취조실`이고 심문/결합이 진행되는 경우 ➔ **`131 밀실심문`** 자동 매칭 (`<img: 131>`)
+    - 대화 장소가 `사적 침실`이고 은밀한 거래가 진행되는 경우 ➔ **`132 접견`** 자동 매칭 (`<img: 132>`)
+- **작성 기준**: 라벨이 지나치게 복잡하거나 미사여구가 많으면 LLM의 키워드 매칭 확률이 떨어지므로, **가장 대표적인 장소 명사 + 행위 명사** 조합으로 단순 명료하게 유지해야 합니다.
+- **수량 완전 대칭**:
+  - 여성 캐릭터: 공용 100종 + 일상 5종(048~052) + 성인 3종(130~132) = **총 108종**
+  - 오토코노코 캐릭터: 공용 100종 + 일상 5종(048~052) + 성인 3종(133~135) = **총 108종**
 
-================================================================================
-  5. 프롬프트 연출 고급 팁 (Best Practices)
-================================================================================
+---
 
-5.1 도플갱어(인물 복제) 방지 기법
-  - 스킨십/H씬에서 상대방이 캐릭터와 똑같이 복제되는 현상을 막으려면:
-    1) `pov` 구도를 적극 사용하여 상대방은 화면 밖 관찰자로 처리.
-    2) 상대방을 인물 전체가 아니라 `large masculine hands`, `masculine arms` 처럼 신체 부위만 묘사.
-    3) 3인칭 구도 필요 시: `faceless male, no facial features, featureless head, skin-colored head`.
-    4) 프롬프트에 `solo focus` 보강.
+## 4. 배치 생산 전 5단계 자동 사전점검 표준 (`generator/precheck.py`)
 
-5.2 의상 벗겨짐 및 손상 연출
-  - 캐릭터 JSON의 기본 의상 가중치를 `1.0` 내외로 유지해야 포즈 DB의 탈의 태그가 정상 작동합니다.
-  - 탈의 유도 태그: `top pushed up`, `skirt hiked up`, `clothes disheveled`, `panties pulled aside`, `topless`.
+새로운 캐릭터나 포즈를 추가·수정한 뒤에는 반드시 사전점검 모듈을 통해 **5단계 사전점검(`PASS`, 위반 0건)**을 확인합니다:
 
-5.3 절정 표정 단계화
-  - 절정 전: `flushed cheeks, heavy-lidded pleasure eyes, parted panting lips, trembling`
-  - 절정 후: `ahegao, rolling eyes, tongue out, tears streaming, drooling`
-
-5.4 후방/측면 앵글 시선 처리 및 몸체 회전 방지 (looking back over shoulder)
-  - 뒤태(24, 28, 38) 및 도기 체위(29, 42, 142)에서 시선을 시청자 쪽으로 돌릴 때 발생하는 문제:
-  - ❌ 잘못된 태그: `looking at viewer` 단독 사용
-    → 캐릭터가 시청자를 바라보기 위해 몸 전체를 180도 돌려 정면으로 서버립니다.
-  - ✅ 올바른 태그: `((looking back over shoulder:1.35~1.4)), looking back, seductive glance back`
-    → "몸은 뒤돌아서 있고, 고개만 어깨 너머로 살짝 돌려 유혹적인 시선을 던지는" 완전한 후방 시그니처 구도가 안정적으로 형성됩니다.
-
-
-================================================================================
-  6. 최종 제작 체크리스트
-================================================================================
-
-  [캐릭터 JSON 검사]
-  □ prefix가 3~5글자 영문 소문자인가? (예: ren, rog, mika)
-  □ positive에 공통 품질 티어와 `BREAK` 키워드가 존재하는가?
-  □ positive(특히 BREAK 앞단)에 `clean background`, `soft lighting` 등 배경·조명·표정·자세 태그가 완전히 제거되었는가?
-  □ 시드별 체형 흔들림을 막기 위해 체형(`slender` 등)과 가슴 크기(`medium breasts` 등)가 명시되었는가?
-  □ 탈의·샤워·H씬 작동을 위해 의상 본체(원피스, 바니슈트 등)의 가중치가 괄호 없는 `1.0`으로 유지되었는가?
-  □ 동물귀/꼬리 소품(`bunny ears hairband` 등) 착용 시 네거티브에서 포괄 태그(`animal ears`, `animal tail`)를 제외했는가?
-  □ 오토코노코 캐릭터에 `(subtle bulge, tiny bulge under clothing:1.1)`가 있는가?
-  □ negative에 `sweat`, `liquid`, `splatter` 같은 체액 태그가 들어가 있지 않은가?
-  □ default_mode가 올바르게 지정되었는가? ("female" 또는 "otokonoko")
-  □ 겉옷 바깥 속옷 돌출 방지: bra 단어 및 긴 서술어를 배제하고, 겉옷(1.0)보다 낮은 가중치(0.90~0.95)의 초경량 끈 태그((thin strap:0.95)) 및 negative 방어선을 배치했는가?
-  □ 의상에 `front tie`, `front button` 등 'front' 단어가 들어가 정면 편향을 유발하지 않는가? (tied shirt 등 대체어 사용)
-  □ 머메이드 왜곡 방지: `mermaid silhouette dress` 대신 `high side slit dress`를 사용하고 네거티브에 mermaid 방어선을 넣었는가?
-  □ 헤어 색상 이염 방지: 유색 의상/눈동자 캐릭터에 포지티브 3중 컬러 앵커링 및 네거티브 오염 색상 차단이 적용되었는가?
-  □ ref_weight가 0.70을 초과하여 정면 앵글이 강제되지 않는가? (권장: 0.55~0.65)
-
-  [포즈 및 이벤트 DB 검사]
-  □ 각 엔트리에 명확한 한국어 label 필드(예: "label": "평상")가 명시되어 있는가?
-  □ 포즈 프롬프트 안에 1girl, 1boy 등 성별 태그가 없는가?
-  □ H씬에서 체위명 뒤에 "position"이 붙어있는가?
-  □ 오토코노코 H씬에 vaginal 관련 태그가 전혀 없는가?
-  □ 후방 구도(뒤태, 도기 등)에서 `looking at viewer` 단독 사용 대신 `looking back over shoulder`를 적용했는가?
-  □ 작성 완료 후 `python sd_batch_generator.py --test` 검사를 통과하는가?
+| 단계 | 점검 항목 | 합격 기준 |
+| :---: | :--- | :--- |
+| **1단계** | **포즈 DB 규칙 검사** | 라벨 2~15자, `description` 5자 이상, 금지어(`mermaid`, `chandelier`, `curtains` 등) 0건, 오토코노코 프롬프트 내 `1girl` 0건, 공용 섹션 성별 분기 완비 |
+| **2단계** | **캐릭터 JSON & 배경 무결성** | `positive` 및 `nude_positive` 내 `BREAK` 존재, `long slender limbs` 및 고정 소품 금지어 0건, `background.json` 전신 왜곡 어휘 0건 |
+| **3단계** | **착의(`default`) 의상 고정** | 모든 `default` 슬롯 포즈 조립 시 `is_nude == False`, 캐릭터 고유 의상 시그니처 토큰 100% 보존, `completely nude` 오주입 0건 |
+| **4단계** | **탈의(`nude`) 완전 알몸 전환** | 모든 `nude` 슬롯 포즈 조립 시 `is_nude == True`, `nude, completely nude` 주입, 평상복 토큰 잔류 0%, 의상 차단 태그 주입 |
+| **5단계** | **테마 의상 스왑(`outfits`) 격리** | `swimsuit`, `bunny`, `maid`, `underwear` 등 테마 슬롯 조립 시 `nude_positive` + `outfits[slot]`만 결합되고 평상복 잔류 0% |
