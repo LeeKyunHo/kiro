@@ -1,0 +1,19 @@
+{
+  "prefix": "ykn_2nd",
+  "name": "설세린 (2녀 - 미디엄 허쉬컷 & 쿨뷰티 & 매력적인 힙라인)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A remarkably beautiful elite noble girl with stylish collarbone-length layered black hair in a trendy medium hush cut with feathered layers and airy curtain bangs framing her face, sharp intelligent deep sapphire blue eyes, serene composed look, flawless pale porcelain skin (cool beauty second quadruplet sister)",
+    "physique": "elegant feminine figure, medium natural breasts, slender waist, shapely wide hips, plump attractive buttocks, beautiful lower body curves, elegant refined posture",
+    "outfit": "clean sophisticated date outfit with a soft white cable-knit cardigan over a pastel blue blouse and a dark pleated skirt accentuating her attractive hip line"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, (soft shaded skin:1.15), (smooth skin:1.1), delicate anime coloring, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, masterpiece quality",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest BREAK 1girl, solo, (yukinoshita_yukino:1.2), (medium black hair, collarbone-length layered hair, hush cut, layered bob:1.25), (feathered layers, piecey hair:1.15), (wispy bangs, airy bangs:1.15), (deep sapphire blue eyes:1.15), (sharp intelligent eyes:1.1), cool beauty, composed gaze, (medium breasts:1.15), (slender waist, wide hips:1.15), (attractive hips:1.15), white cable cardigan, light blue blouse, pleated skirt, elegant refined posture",
+  "sdxl_negative": "(braid, ponytail, twintails:1.4), (school uniform, blazer:1.3), (photorealistic, realistic, 3d, render, cgi:1.25), (multiple characters, character sheet, concept art, reference sheet, mannequin:1.3), (worst quality, bad quality:1.2), lowres, bad anatomy, sketch, old, oldest, flat color, simple shading, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, choker, necklace, multiple moles, freckles, dark circles, dark eyelids, heavy shadow on face, overexposed, (cat ears, animal ears, wolf ears, fox ears, kemonomimi:1.3), (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, muscular, bulky, manly, beard, mustache",
+  "ref_weight": 0.5
+}

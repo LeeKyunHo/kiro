@@ -1,0 +1,31 @@
+{
+  "prefix": "aya",
+  "name": "Ayame (아야메 / 교토 동기 - 미야코노코지 아야메 / 은발 쿨시크 힙스터)",
+  "gender": "female",
+  "default_mode": "sdxl",
+  "ref_weight": 0.55,
+  "faction": "meio_university_literature",
+  "role": "교토 출신 동기. 플래티넘 은발 숏컷의 감성 미니멀리스트 쿨뷰티. 겉으론 시크하고 촌철살인 팩트폭행을 날리지만 유저에게만 챙겨주는 츤데레",
+  "appearance": {
+    "face_and_hair": "sleek platinum silver short bob hair with straight bangs, deep violet eyes",
+    "physique": "slender figure, small breasts, narrow waist, slender legs",
+    "outfit": "clean opaque white collared dress shirt, tucked into high-waisted black denim shorts, leather belt, black sheer pantyhose, black loafers"
+  },
+  "sdxl_positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes, balanced body proportions BREAK 1girl, solo, slender, small breasts, narrow waist, (platinum silver hair, sleek short bob hair:1.15), straight bangs, (deep violet eyes:1.15), cool calm expression, ((clean opaque white dress shirt with long sleeves:1.2)), collared shirt, unbuttoned top button, tucked into black denim shorts, high-waisted short shorts, leather belt, (black sheer pantyhose:1.15), black loafers",
+  "sdxl_negative": "lowres, worst quality, bad quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, signature, watermark, username, artist name, text, blurry, ((cat ears, fox ears, dog ears, wolf ears, animal ears, kemonomimi, mechanical ears, horns, head ornament, fake ears, metallic ears:1.6)), earrings, piercing, furry, 1boy, male, masculine, beard, mustache, facial hair, muscular, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, pantyshot, exposed panties, visible panties, (comic:1.2), (multiple views:1.2), (panel layout:1.2), (speech bubble:1.2), (text box:1.2), (split screen:1.2), blonde hair, black hair, long hair, ponytail, twintails, long pants, ((see-through, transparent shirt, sheer clothing, exposed bra, exposed bra cup:1.4)), ((sleeveless, bare shoulders, bare arms, tank top, vest, no sleeves:1.4)), (yellow background, yellow lighting, amber room, yellow tint, golden lighting, purple background, purple walls, purple tint, green background, green walls, green tint, greenish lighting, color tint, colored ambient lighting:1.35)",
+  "sdxl_nude_positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes, balanced body proportions BREAK 1girl, solo, slender, small breasts, narrow waist, (platinum silver hair, sleek short bob hair:1.15), straight bangs, (deep violet eyes:1.15), pale smooth skin",
+  "outfits": {
+    "underwear": "black lace bra, matching black lace panties"
+  },
+  "pose_restrictions": {
+    "campus_only": [
+      "048",
+      "049",
+      "050",
+      "051",
+      "052",
+      "130",
+      "200"
+    ]
+  }
+}

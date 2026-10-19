@@ -1,0 +1,12 @@
+{
+  "prefix": "mob_nanman",
+  "name": "남만 야수궁 전사단 (경비, 맹수 사육사, 부족 전사)",
+  "category": "faction_mob",
+  "appearance": {
+    "warrior_male": "rugged tribal barbarian male warrior, muscular build, tiger skin loincloth and shoulder guard, bone spear, warpaint, wild hair",
+    "warrior_female": "feral athletic tribal female warrior, tan skin, leopard fur halter top and skirt, bone daggers, feather hair ornaments",
+    "beast_master": "exotic beast master with snarling trained black panther and war hounds on heavy chains, dense tropical jungle camp"
+  },
+  "flux_positive_sentry": "cinematic wuxia shot, Southern Barbarian Beast Palace tribal warriors on patrol, exotic bronze-skinned warriors wearing fur armor and bone ornaments, holding spears and torches, standing guard at wooden palisade, dense tropical rainforest background, atmospheric torchlight",
+  "flux_positive_beast": "cinematic wuxia shot, Southern Barbarian beast tamer, snarling black panther and giant warhound beside primitive muscular handler with bone whip, jungle temple ruins, misty evening light"
+}

@@ -1,0 +1,18 @@
+{
+  "prefix": "serin",
+  "name": "세린 (Serin - 은발 자수정 브레이드)",
+  "gender": "female",
+  "appearance": {
+    "face_and_hair": "A breathtakingly beautiful girl with long silky silver white hair styled into a single side braid draped over one shoulder, straight bangs, sidelocks, mysterious glowing amethyst violet eyes, cool intelligent serene expression, flawless pale porcelain skin",
+    "physique": "slender graceful figure, slender waist, modest petite breasts, slender long legs, elegant posture",
+    "outfit": "pastel lavender knit cardigan over a delicate white collared blouse with a thin violet ribbon, paired with a pleated charcoal gray skirt"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, (soft shaded skin:1.15), (smooth skin:1.1), delicate anime coloring, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, masterpiece quality",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, soft lighting, soft shaded skin, clean pale skin, clean background BREAK 1girl, solo, (silver hair, white hair:1.25), (single side braid:1.3), braid over one shoulder, straight bangs, sidelocks, (amethyst violet eyes, purple eyes:1.2), calm intelligent expression, cool gentle look, (pastel lavender cardigan, white collared blouse, charcoal pleated skirt:1.15), slender figure, small breasts, delicate posture",
+  "sdxl_negative": "(photorealistic, realistic, 3d, render, cgi:1.25), (multiple characters, character sheet, concept art, reference sheet, mannequin:1.3), (worst quality, bad quality:1.2), lowres, bad anatomy, sketch, old, oldest, flat color, simple shading, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, choker, necklace, multiple moles, freckles, dark circles, dark eyelids, heavy shadow on face, overexposed, (hourglass:1.3), (cat ears, animal ears, wolf ears, fox ears, kemonomimi:1.3), (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, muscular, bulky, manly, beard, mustache, jewelry",
+  "ref_weight": 0.5
+}

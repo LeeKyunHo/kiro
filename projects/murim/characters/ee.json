@@ -1,0 +1,16 @@
+{
+  "prefix": "ee",
+  "name": "서예린 (살수문 수석 암살자 / 과묵한 은영살수)",
+  "gender": "female",
+  "faction": "unorthodox_assassin",
+  "appearance": {
+    "face_and_hair": "short messy ash-black bob cut with subtle dark blue sheen, sharp emotionless silver-grey eyes, kuudere stoic gaze, small pale face",
+    "physique": "lithe compact athletic figure, supple flexible muscles, medium firm breasts, hidden agility",
+    "outfit": "midnight-black leather assassin suit, form-fitting stealth wrap, concealed dagger sheaths on thighs and back, dark cowl lowered around neck"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Seo Ye-rin, stoic assassin of shadow guild, short messy ash-black layered bob hair, sharp deadpan silver-grey eyes, kuudere, emotionless cool expression, lean athletic agile body, firm medium breasts, wearing midnight-black fitted leather stealth assassin garments, belts with concealed throwing knives, dark arm guards, shadowy oriental wuxia atmosphere",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, bright colorful clothes, smiling, bubbly expression, heavy armor",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, seo ye-rin, short messy ash black hair, sharp silver grey eyes, kuudere, emotionless, lean athletic body, firm medium breasts, midnight black leather assassin suit, dagger sheaths, shadow stealth wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, colorful dress, bright colors",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, seo ye-rin, short ash black hair, emotionless silver eyes, lean toned athletic body, firm perk breasts, pale skin, toned abs"
+}

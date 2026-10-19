@@ -1,0 +1,17 @@
+{
+  "prefix": "jj",
+  "name": "연 (마교 교주의 수족 / 오토코노코 우호법 야차)",
+  "gender": "otokonoko",
+  "default_mode": "otokonoko",
+  "faction": "demonic_cult_enforcer",
+  "appearance": {
+    "face_and_hair": "slender delicate feminine face, silky dark plum-purple hair in high side-ponytail with dark ribbon, single burning golden-amber eye, sleek black demonic horn eyepatch covering left eye, soft pale porcelain skin, sadistic yet alluring smirk",
+    "physique": "slender androgynous feminine build, completely flat chest, delicate collarbone, narrow feminine waist, soft slender thighs, subtle bulge under clothing",
+    "outfit": "tight-fitting black silk and demonic lacquered leather assassin leotard robes, exposed shoulders, sheer dark purple leg wraps, spiked dark steel bracers, blood-red silk waist sash"
+  },
+  "flux_positive": "1boy, solo, androgynous, otokonoko, femboy, masterpiece, best quality, ultra-detailed, Yeon, androgynous demonic enforcer, delicate pretty feminine face, sleek dark plum-purple high side-ponytail hair, ornamental black horn eyepatch over left eye, single glowing fierce golden eye, cruel playful smirk, slender androgynous body, completely flat chest, narrow waist, subtle bulge under clothing, wearing form-fitting black leather and sheer purple demonic martial robes, blood-red sash, spiked dark bracers, sinister seductive dark oriental wuxia",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, 1girl, female, large breasts, heavy cleavage, muscular, bulky, manly, beard, mustache, plain clothes",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1boy, solo, androgynous, (otokonoko, femboy:1.2), (subtle bulge, tiny bulge under clothing:1.15), (refined delicate feminine face:1.15), slender graceful build, flat chest, narrow waist, (dark purple hair:1.15), (high side ponytail:1.15), (eyepatch over one eye:1.2), (glowing golden eye:1.15), sadistic smirk, pale skin, tight black demonic leather martial robes, exposed shoulders, spiked bracers, blood red sash, dark wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, 1girl, female, large breasts, huge breasts, cleavage, pussy, vagina, female genitalia, muscular, bulky, manly, beard, mustache, modern clothes",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1boy, solo, androgynous, (otokonoko, femboy:1.2), (delicate feminine face:1.15), slender graceful body, completely flat chest, narrow waist, soft pale porcelain skin, (dark purple high ponytail:1.15), eyepatch over one eye, glowing golden eye, sadistic smile, smooth thighs"
+}

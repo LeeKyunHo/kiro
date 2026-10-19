@@ -1,0 +1,18 @@
+{
+  "prefix": "hayul",
+  "name": "하율 (Hayul - 흑청발 루비 쿨뷰티)",
+  "gender": "female",
+  "appearance": {
+    "face_and_hair": "A remarkably beautiful noble girl with waist-length midnight blue black hair styled into an elegant half-up crown braid while long straight hair flows down her back, neat blunt bangs, sidelocks, sharp striking ruby crimson red eyes, cool aloof kuudere glare, flawless porcelain skin",
+    "physique": "slender graceful figure, slender waist, modest petite breasts, slender long legs, refined noble posture",
+    "outfit": "luxurious classic navy blue velvet date dress with a white lace collar and a modest antique gold broach"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, (soft shaded skin:1.15), (smooth skin:1.1), delicate anime coloring, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, masterpiece quality",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, soft lighting, soft shaded skin, clean pale skin, clean background BREAK 1girl, solo, (midnight blue hair, dark blue hair:1.25), (half-up braid, crown braid:1.3), long straight hair flowing down, neat blunt bangs, sidelocks, (ruby red eyes, crimson eyes:1.2), sharp intelligent glare, cool composed kuudere expression, (classic navy blue dress, white lace collar:1.15), slender figure, small breasts, refined lady posture",
+  "sdxl_negative": "(photorealistic, realistic, 3d, render, cgi:1.25), (multiple characters, character sheet, concept art, reference sheet, mannequin:1.3), (worst quality, bad quality:1.2), lowres, bad anatomy, sketch, old, oldest, flat color, simple shading, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, choker, necklace, multiple moles, freckles, dark circles, dark eyelids, heavy shadow on face, overexposed, (hourglass:1.3), (cat ears, animal ears, wolf ears, fox ears, kemonomimi:1.3), (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, muscular, bulky, manly, beard, mustache, jewelry",
+  "ref_weight": 0.5
+}

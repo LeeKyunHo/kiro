@@ -1,0 +1,88 @@
+{
+  "_note": "캠퍼스 프로젝트 전용 포즈 오버라이드 (V2 규격 동기화)",
+  "_usage": "projects/campus/characters/*.json의 pose_restrictions.campus_only에 정의된 코드들과 연동",
+  "events": {
+    "048": {
+      "label": "캠퍼스 카페",
+      "description": "캠퍼스 프로젝트 전용: 카페에서 커피를 마시는 포즈",
+      "prompt": "1girl, solo, sitting at cafe table, holding coffee cup, looking at viewer, warm lighting, campus setting",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "049": {
+      "label": "캠퍼스 도서관",
+      "description": "캠퍼스 프로젝트 전용: 도서관 책장 사이에 서서 뒤돌아보는 포즈",
+      "prompt": "1girl, solo, ((standing between library bookshelves:1.25)), ((looking back over shoulder at viewer:1.35)), looking back, surrounded by tall bookshelves, books on shelves, library setting, warm library lighting, campus setting, cowboy shot",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "050": {
+      "label": "캠퍼스 벤치",
+      "description": "캠퍼스 프로젝트 전용: 캠퍼스 벤치에 앉아있는 포즈",
+      "prompt": "1girl, solo, sitting on outdoor bench, relaxed pose, looking at viewer, soft smile, campus setting",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "051": {
+      "label": "캠퍼스 공부/연구",
+      "description": "캠퍼스 프로젝트 전용: 캠퍼스 책상에 앉아 집중하여 공부 또는 연구하는 포즈 (학생 및 교수 겸용)",
+      "prompt": "1girl, solo, ((sitting at wooden study desk:1.3)), ((studying, researching:1.25)), reading open textbook, holding pen, notebook and study materials on desk, campus study room, bookshelves in background, focused calm expression, looking at viewer, warm academic atmosphere, soft interior lighting, cowboy shot",
+      "negative_add": "(standing:1.3), (blackboard:1.2), (hand on face:1.4), (touching face:1.4)",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "052": {
+      "label": "캠퍼스 축제",
+      "description": "캠퍼스 프로젝트 전용: 활기찬 캠퍼스 축제 배경에서 뒤돌아보며 미소 짓는 포즈",
+      "prompt": "1girl, solo, ((looking back over shoulder:1.35)), looking back at viewer, at campus festival, cheerful festive decorations, warm evening festival lighting, lively campus atmosphere, gentle smile, cowboy shot",
+      "required_outfit": "default",
+      "section": "events"
+    }
+  },
+  "special_h": {
+    "130": {
+      "label": "빈강의실 섹스",
+      "description": "캠퍼스 프로젝트 전용: 빈 강의실 책상 위에 엎드려 후방 결합하며 뒤돌아보는 착의 섹스 포즈 (상의 착의 유지, 치마/하의만 걷어올림)",
+      "prompt": "1girl, 1boy, ((fully clothed except bottom, wearing clothes, top on:1.35)), ((bent over lectern desk:1.4)), ((leaning forward on desk surface:1.3)), ((partner behind gripping hips:1.3)), ((doggystyle, sex from behind:1.35)), ((hands gripping desk edge:1.2)), ((looking back over shoulder at viewer:1.4)), ((thrilling ecstatic expression:1.35)), ((mixture of excitement and pleasure on face:1.3)), half-lidded bedroom eyes, heavy blush, flushed cheeks, parted lips panting, slight smile mixed with moaning, ((skirt lifted, underwear aside:1.35)), ((excessive cum dripping down thighs:1.35)), ((thick cum covering crotch area:1.35)), ((cum pooling between legs:1.3)), cum stains on inner thighs, papers scattered on desk, trembling legs, intense arousal, ((empty classroom, lectern desk:1.3)), ((chalkboard background:1.2)), ((cowboy shot from behind and side angle:1.2)), ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_h"
+    },
+    "131": {
+      "label": "보건실 침대섹스",
+      "description": "캠퍼스 프로젝트 전용: 보건실 하얀 커튼 안 침대 위에서 파트너 위에 올라타 허리를 흔드는 착의 기승위 포즈 (상의 착의 유지)",
+      "prompt": "1girl, 1boy, ((fully clothed, wearing clothes, top on:1.35)), ((on infirmary bed, straddling partner:1.35)), ((cowgirl position, riding partner:1.35)), ((infirmary curtain background, clinic bed:1.25)), ((skirt lifted, underwear aside:1.35)), hands pressed on partner chest, deeply arched back, head tilted back in pleasure, ((ecstatic moaning expression, heavy blush, parted lips, tears of delight:1.3)), trembling thighs, soft clinic room lighting, cowboy shot, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_h"
+    },
+    "132": {
+      "label": "화장실펠라",
+      "description": "캠퍼스 프로젝트 전용: 방과 후 문 잠긴 좁은 화장실 칸막이 안에서 무릎 꿇고 올려다보며 구강 봉사하는 스릴 착의 펠라 포즈 (상의 착의 단정)",
+      "prompt": "1girl, 1boy, ((fully clothed, wearing clothes, top on:1.35)), ((kneeling inside bathroom stall, locked door:1.35)), ((clothed fellatio, blowjob:1.4)), ((looking up at partner with deeply devoted flushed eyes:1.35)), mouth wide open taking shaft, saliva trail, parted lips, ((neat disheveled collar:1.2)), narrow bathroom stall background, toilet stall door, soft fluorescent lighting, intimate close-up, cowboy shot, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_h"
+    }
+  },
+  "special_otokonoko": {
+    "133": {
+      "label": "빈강의실 아날섹스",
+      "description": "캠퍼스 프로젝트 전용: 빈 강의실 책상 위에 엎드려 후방 아날 결합 섹스하는 착의 포즈 (상의 착의 유지)",
+      "prompt": "((2boys, otokonoko:1.4)), ((fully clothed, wearing clothes, top on:1.35)), anal doggystyle, from behind, anal penetration from behind, otokonoko lying face down on desk, slender body pressed against desk surface, ((heavy blush, pleasure expression, half-closed eyes, parted lips, moaning:1.2)), ((skirt lifted, underwear aside:1.35)), classroom, empty classroom, lectern desk, intercourse, ((single male partner:1.3)), two people only",
+      "required_outfit": "default",
+      "section": "special_otokonoko"
+    },
+    "134": {
+      "label": "보건실 침대아날섹스",
+      "description": "캠퍼스 프로젝트 전용: 보건실 커튼 안 침대 위에서 파트너 위에 올라타 아날 상위 결합하는 착의 포즈 (상의 착의 유지)",
+      "prompt": "((2boys, otokonoko:1.4)), ((fully clothed, wearing clothes, top on:1.35)), ((on infirmary bed, straddling partner:1.35)), ((anal cowgirl position, riding partner:1.35)), ((infirmary curtain background, clinic bed:1.25)), slender boy body, ((skirt lifted, underwear aside:1.35)), hands pressed on partner chest, deeply arched back, ((heavy blush, pleasure expression, moaning with parted lips:1.25)), trembling thighs, soft clinic room lighting, cowboy shot, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_otokonoko"
+    },
+    "135": {
+      "label": "화장실펠라",
+      "description": "캠퍼스 프로젝트 전용: 화장실 칸막이 안에서 무릎 꿇고 올려다보며 구강 봉사하는 착의 포즈 (상의 착의 단정)",
+      "prompt": "((2boys, otokonoko:1.4)), ((fully clothed, wearing clothes, top on:1.35)), ((kneeling inside bathroom stall, locked door:1.35)), ((clothed fellatio, blowjob:1.4)), ((looking up submissively with flushed teary eyes:1.35)), slender boy kneeling, mouth open taking shaft, saliva trail, collar loosened, narrow bathroom stall, soft fluorescent lighting, intimate close-up, cowboy shot, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_otokonoko"
+    }
+  }
+}

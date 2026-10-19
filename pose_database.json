@@ -8,9 +8,9 @@
     "events": "040~059 (13종, 일상 및 스토리 이벤트)",
     "romance": "060~079 (4종, 소프트 로맨스 및 애정 표현)",
     "h_scenes": "080~129 (48종, 여성 기본 성인 H-씬)",
-    "special_h": "130~149 (여성 특수 이벤트 성인 씬)",
-    "scenes_otokonoko": "150~199 (48종, 오토코노코 기본 성인 씬)",
-    "special_otokonoko": "200~219 (오토코노코 특수 이벤트 성인 씬)"
+    "special_h": "130~132 (3종, 여성 특수 이벤트 성인 씬)",
+    "special_otokonoko": "133~135 (3종, 오토코노코 특수 이벤트 성인 씬)",
+    "scenes_otokonoko": "150~199 (48종, 오토코노코 기본 성인 씬)"
   },
   "emotions": {
     "000": {
@@ -184,13 +184,15 @@
     "033": {
       "label": "착의애무",
       "description": "다른 사람들이 있는 공간에서 옆자리에 앉은 파트너가 몰래 다리 사이에 손을 넣어 애무하며 들키지 않으려 필사적으로 참는 긴장감 넘치는 포즈.",
-      "prompt": "1girl, 1boy, fully clothed, ((sitting at table or desk:1.35)), ((male partner sitting next on left or right:1.35)), ((male partner's hand secretly reaching under skirt between thighs:1.4)), ((male fingering under clothes, hidden stimulation:1.35)), ((trying to stay composed, suppressing reaction:1.35)), ((biting lip hard, holding back moan:1.35)), heavy blush, flustered sweating expression, teary eyes, trembling slightly, hand gripping table edge tightly, knuckles white, looking nervous and aroused, ((public setting, other people nearby in background:1.3)), ((faceless male partner beside:1.3)), tense atmosphere, cowboy shot, classroom or cafe setting, ((male active, partner passive, male pleasuring:1.3))"
+      "prompt": "1girl, 1boy, fully clothed, ((sitting at table or desk:1.35)), ((male partner sitting next on left or right:1.35)), ((male partner's hand secretly reaching under skirt between thighs:1.4)), ((male fingering under clothes, hidden stimulation:1.35)), ((trying to stay composed, suppressing reaction:1.35)), ((biting lip hard, holding back moan:1.35)), heavy blush, flustered sweating expression, teary eyes, trembling slightly, hand gripping table edge tightly, knuckles white, looking nervous and aroused, ((public setting, other people nearby in background:1.3)), ((faceless male partner beside:1.3)), tense atmosphere, cowboy shot, classroom or cafe setting, ((male active, partner passive, male pleasuring:1.3))",
+      "prompt_otokonoko": "2boys, fully clothed, ((sitting at table or desk:1.35)), ((male partner sitting next on left or right:1.35)), ((male partner's hand secretly reaching under skirt between thighs:1.4)), ((male fondling under clothes, hidden stimulation:1.35)), ((trying to stay composed, suppressing reaction:1.35)), ((biting lip hard, holding back moan:1.35)), heavy blush, flustered sweating expression, teary eyes, trembling slightly, hand gripping table edge tightly, knuckles white, looking nervous and aroused, ((public setting, other people nearby in background:1.3)), ((faceless male partner beside:1.3)), tense atmosphere, cowboy shot, classroom or cafe setting, ((male active, partner passive, male pleasuring:1.3))"
     },
     "034": {
       "label": "가슴에얼굴묻기",
       "description": "남성이 여자의 풍만한 가슴 위에 안면을 편안하게 얹고 기대며 여자가 그 머리를 포근하게 안아주는 따뜻하고 다정한 스킨십 포즈.",
-      "prompt": "1girl, 1boy, ((from above, high angle shot:1.2)), ((close-up bust shot:1.25)), ((both arms wrapped tenderly around partner's head:1.35)), ((female holding male head against chest with both hands:1.4)), ((male burying face deep in female's chest:1.45)), ((head resting on chest:1.35)), ((only back of male's head visible:1.35)), ((faceless male, short dark hair:1.3)), ((tender gentle smile, happy warm smile:1.35)), ((soft blush:1.2)), looking down lovingly at partner, tender intimate embrace, soft natural indoor window lighting, bright clean atmosphere, neutral color balance, romantic atmosphere, ((single male partner:1.3))",
-      "negative_add": "(crown, tiara, laurel, wreath, flower crown, hair wreath, halo, hair ornament, headwear:1.5), (facing each other:1.35), (eye contact:1.35), (male face visible:1.35), (extra hands:1.45), (multiple hands:1.45), (extra arms:1.45), (standing male:1.5), (tall male:1.5), (standing beside:1.5), (2boys:1.8), (multiple boys:1.8), (duplicate male:1.8)"
+      "prompt": "1girl, 1boy, ((from above, high angle shot:1.2)), ((close-up bust shot:1.25)), ((both arms wrapped tenderly around partner's head:1.35)), ((female holding male head against chest with both hands:1.4)), ((male burying face deep in female's chest, face completely hidden:1.45)), ((head resting on chest, only back of male head visible:1.4)), ((faceless male, short dark hair:1.35)), ((tender gentle smile, happy warm smile:1.35)), ((soft blush:1.2)), looking down lovingly at partner, tender intimate embrace, soft natural indoor window lighting, bright clean atmosphere, neutral color balance, romantic atmosphere, ((single male partner:1.3))",
+      "prompt_otokonoko": "2boys, ((from above, high angle shot:1.2)), ((close-up bust shot:1.25)), ((both arms wrapped tenderly around partner's head:1.35)), ((holding male head against chest with both hands:1.4)), ((male burying face deep against chest, face completely hidden:1.45)), ((head resting on chest, only back of male head visible:1.4)), ((faceless male, short dark hair:1.35)), ((tender gentle smile, happy warm smile:1.35)), ((soft blush:1.2)), looking down lovingly at partner, tender intimate embrace, soft natural indoor window lighting, bright clean atmosphere, neutral color balance, romantic atmosphere, ((single male partner:1.3))",
+      "negative_add": "(crown, tiara, laurel, wreath, flower crown, hair wreath, halo, hair ornament, headwear:1.5), (facing each other:1.35), (eye contact:1.35), (male face visible:1.5), (male eyes:1.5), (male nose:1.5), (male mouth:1.5), (male profile:1.5), (two faces visible:1.5), (extra hands:1.45), (multiple hands:1.45), (extra arms:1.45), (standing male:1.5), (tall male:1.5), (standing beside:1.5), (2boys:1.8), (multiple boys:1.8), (duplicate male:1.8)"
     },
     "035": {
       "label": "덮치기",
@@ -278,6 +280,41 @@
       "required_outfit": "default",
       "prompt": "((pov hand patting head:1.25)), ((leaning into hand, blissful smiling face:1.25)), closed eyes in contentment",
       "section": "events"
+    },
+    "048": {
+      "label": "카페휴식",
+      "description": "테이블에 앉아 커피를 마시며 여유를 즐기는 일상 씬",
+      "required_outfit": "default",
+      "prompt": "1girl, solo, sitting at cafe table, holding coffee cup with both hands, looking at viewer, gentle warm smile, outdoor cafe terrace background, soft daylight, cowboy shot",
+      "section": "events"
+    },
+    "049": {
+      "label": "스트릿스냅",
+      "description": "도심 골목길에서 테이크아웃 음료를 들고 자연스럽게 걷는 스냅 씬",
+      "required_outfit": "default",
+      "prompt": "1girl, solo, walking on urban street, holding takeout drink with straw, casual candid snap, looking back over shoulder at viewer, street bokeh, cowboy shot",
+      "section": "events"
+    },
+    "050": {
+      "label": "야경테라스",
+      "description": "도시 야경이 내려다보이는 고급 테라스에서 뒤돌아보는 럭셔리 씬",
+      "required_outfit": "default",
+      "prompt": "1girl, solo, glamorous night city terrace, looking back over shoulder at viewer, alluring gaze, warm ambient streetlights, glowing night bokeh, cowboy shot",
+      "section": "events"
+    },
+    "051": {
+      "label": "룸미러셀카",
+      "description": "전신 거울 앞에서 스마트폰을 들고 바디라인을 찍는 셀카 씬",
+      "required_outfit": "default",
+      "prompt": "1girl, solo, taking mirror selfie in room, holding smartphone, looking into mirror, arched back, emphasizing body curves, aesthetic room lighting, cowboy shot",
+      "section": "events"
+    },
+    "052": {
+      "label": "바이럴더블피스",
+      "description": "양손 브이와 장난스럽고 과감한 표정으로 렌즈에 다가선 클로즈업 셀카",
+      "required_outfit": "default",
+      "prompt": "1girl, solo, ((extreme close-up portrait, upper body zoom:1.35)), ((double peace, two peace signs near face:1.3)), ((ahegao, tongue out, rolling eyes slightly:1.25)), heavy blush on cheeks, tilted head, playful chaotic influencer selfie, ring light reflection in eyes, smartphone camera angle",
+      "section": "events"
     }
   },
   "romance": {
@@ -311,7 +348,7 @@
       "section": "romance"
     },
     "063": {
-      "label": "스푸닝",
+      "label": "스푸닝 (밀착수면)",
       "description": "침대에 옆으로 나란히 누워 뒤에서 부드럽게 감싸 안기며 잠드는 포근한 밀착 수면 체위",
       "prompt": "1girl, 1boy, completely nude, full nudity, bare skin, lying on side on bed, spooning position, partner arm around waist, intimate embrace, heavy body blush, intensely flushed face and neck, head tilted back, parted lips soft moaning, heavy-lidded eyes half-closed in bliss, trembling with arousal, sensual pleasure expression, breathless, cowboy shot",
       "prompt_female": "1girl, 1boy, completely nude, full nudity, bare skin, lying on side on bed, spooning position, partner arm around waist, intimate embrace, heavy body blush, intensely flushed face and neck, head tilted back, parted lips soft moaning, heavy-lidded eyes half-closed in bliss, trembling with arousal, sensual pleasure expression, breathless, cowboy shot",
@@ -515,16 +552,16 @@
       "section": "h_scenes"
     },
     "112": {
-      "label": "착의섹스약",
-      "description": "옷을 입은 채 치마만 걷어올리고 나누는 착의 씬 (약)",
-      "prompt": "1girl, 1boy, ((clothed sex:1.25)), skirt lifted, underwear aside, standing or sitting, gentle rhythm, thrilling secret encounter, ((vivid sensual expression, intensely flushed face, breathless parted lips gasping softly, moist emotional eyes looking at partner, trembling with sweet sensation, sweet moaning:1.25)), soft lighting",
+      "label": "착의섹스 전",
+      "description": "옷을 입은 채 치마만 걷어올리고 마주하는 착의 단계 씬 (전)",
+      "prompt": "1girl, 1boy, ((clothed sex:1.35)), ((fully clothed except bottom, wearing clothes, top on:1.35)), skirt lifted, underwear aside, standing or sitting, gentle rhythm, thrilling secret encounter, ((vivid sensual expression, intensely flushed face, breathless parted lips gasping softly, moist emotional eyes looking at partner, anticipation expression, expectant look, seductive lustful face, sweet moaning:1.25)), soft lighting",
       "required_outfit": "default",
       "section": "h_scenes"
     },
     "113": {
-      "label": "착의섹스강",
-      "description": "옷깃이 흐트러진 채 책상이나 벽에서 진행되는 격렬한 착의 씬 (강)",
-      "prompt": "1girl, 1boy, ((intense clothed sex:1.35)), skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal, ((excessive cum, massive cumshot, overflowing thick cum, cum splashing and dripping down thighs and stomach, covered in abundant cum:1.35)), ((intense pleasure expression, deeply intoxicated ecstasy face, half-rolled misty eyes, streaming tears of pleasure, open mouth moaning, drooling saliva, heavy full-body blush, completely lost in pleasure:1.3))",
+      "label": "착의섹스 본편",
+      "description": "옷깃이 흐트러진 채 책상이나 벽에서 진행되는 착의 씬 (중)",
+      "prompt": "1girl, 1boy, ((intense clothed sex:1.35)), ((fully clothed except bottom, wearing clothes, top on:1.35)), skirt hiked up, bent over desk or against wall, rapid panting, disheveled clothing, heavy blush, desperate moaning, overwhelming arousal, ((excessive cum, massive cumshot, overflowing thick cum, cum splashing and dripping down thighs and stomach, covered in abundant cum:1.35)), ((intense pleasure expression, deeply intoxicated ecstasy face, half-rolled misty eyes, streaming tears of pleasure, open mouth moaning, drooling saliva, heavy full-body blush, completely lost in pleasure:1.3))",
       "required_outfit": "default",
       "section": "h_scenes"
     },
@@ -537,7 +574,7 @@
     "115": {
       "label": "착의섹스후",
       "description": "착의 섹스 후 치마를 걷어올린 채 다리 사이에서 정액이 흐르는 사후 씬",
-      "prompt": "1girl, 1boy, ((clothed sex aftermath:1.3)), ((skirt lifted, disheveled clothing:1.25)), standing or sitting, underwear aside or removed, ((excessive cum dripping between thighs:1.35)), ((thick white fluid visibly running down inner thighs:1.3)), legs slightly trembling, (heavy body blush:1.2), (intensely flushed face:1.2), breathless dazed expression, parted lips, messy hair, satisfied exhausted smile, looking at viewer with half-closed eyes, leaning against wall or desk for support, aftersex glow, warm intimate lighting, cowboy shot",
+      "prompt": "1girl, 1boy, ((clothed sex aftermath:1.35)), ((fully clothed except bottom, wearing clothes, top on:1.35)), ((skirt lifted, disheveled clothing:1.25)), standing or sitting, underwear aside or removed, ((excessive cum dripping between thighs:1.35)), ((thick white fluid visibly running down inner thighs:1.3)), legs slightly trembling, (heavy body blush:1.2), (intensely flushed face:1.2), breathless dazed expression, parted lips, messy hair, satisfied exhausted smile, looking at viewer with half-closed eyes, leaning against wall or desk for support, aftersex glow, warm intimate lighting, cowboy shot",
       "required_outfit": "default",
       "section": "h_scenes"
     },
@@ -598,25 +635,47 @@
     "125": {
       "label": "풋잡",
       "description": "발가락과 발바닥으로 능숙하게 비비는 풋잡 (N43)",
-      "prompt": "1girl, 1boy, completely nude, full nudity, bare skin, footjob, bare feet, toes, soles, teasing smile, couch, POV, looking at partner",
+      "prompt": "1girl, 1boy, completely nude, full nudity, bare skin, ((footjob, single pair of legs, sole of foot on penis:1.25)), sitting on couch, leaning back, bare feet, toes, teasing smile, couch, POV, looking at partner",
       "section": "h_scenes"
     },
     "126": {
       "label": "착의펠라약",
       "description": "단정한 옷차림으로 책상 아래 무릎 꿇고 진행하는 착의 펠라 (약: N72)",
-      "prompt": "1girl, 1boy, clothed fellatio, blowjob under desk, kneeling, ((looking up submissively with deeply devoted affectionate gaze:1.3)), open mouth, licking tip, saliva trail, ((heavy facial blush:1.2)), ((moist emotional eyes:1.2)), teary eyes, intimate tender atmosphere, upper body",
+      "prompt": "1girl, 1boy, ((clothed fellatio:1.35)), ((fully clothed, wearing clothes, top on:1.35)), blowjob under desk, kneeling, ((looking up submissively with deeply devoted affectionate gaze:1.3)), open mouth, licking tip, saliva trail, ((heavy facial blush:1.2)), ((moist emotional eyes:1.2)), teary eyes, intimate tender atmosphere, upper body",
       "required_outfit": "default",
       "section": "h_scenes"
     },
     "127": {
       "label": "착의펠라강",
       "description": "옷을 입은 채 깊이 삼키는 착의 딥스로트 (강: N73)",
-      "prompt": "1girl, 1boy, clothed fellatio, deepthroat, teary eyes, intense, devoted, kneeling, upper body, ((excessive cum, massive cumshot, overflowing thick cum from mouth and dripping down chin and chest, covered in abundant cum:1.35))",
+      "prompt": "1girl, 1boy, ((clothed fellatio:1.35)), ((fully clothed, wearing clothes, top on:1.35)), deepthroat, teary eyes, intense, devoted, kneeling, upper body, ((excessive cum, massive cumshot, overflowing thick cum from mouth and dripping down chin and chest, covered in abundant cum:1.35))",
       "required_outfit": "default",
       "section": "h_scenes"
     }
   },
-  "special_h": {},
+  "special_h": {
+    "130": {
+      "label": "층계참 밀착",
+      "description": "층계참 벽을 양손으로 짚고 상체를 숙인 후방 밀착 자세, 대부분 탈의된 의상과 절정 연출",
+      "required_outfit": "default",
+      "prompt": "1girl, 1boy, ((hidden in stair landing between staircase flights:1.4)), ((narrow space between stairs:1.35)), ((leaning forward with hands pressed flat against concrete wall:1.45)), ((doggystyle from behind:1.4)), ((clothing mostly stripped, dress pulled down off shoulders and waist, nearly naked, exposed bare skin:1.4)), looking back over shoulder with intense ecstasy face, breathlessness, flushed cheeks, ((glistening messy bodily fluids:1.25)), thrilling secret intimacy in shadows, high contrast stairwell lighting, ((single male partner behind:1.3))",
+      "section": "special_h"
+    },
+    "131": {
+      "label": "차안 백시트",
+      "description": "틴팅된 차량 뒷좌석에 누워 진행되는 백시트 결합 자세, 대부분 탈의된 의상과 절정 연출",
+      "required_outfit": "default",
+      "prompt": "1girl, 1boy, ((inside car interior, vehicle backseat:1.45)), ((lying on back across car rear seat:1.45)), ((missionary position on car backseat:1.4)), leather car seats, tinted car windows with night streetlights blurred outside, ((clothing mostly stripped, dress pulled down and pushed aside, nearly naked, exposed bare skin:1.4)), arched back in intense ecstasy, ecstatic flushed face, open mouth moaning, tears of pleasure, ((splattered bodily fluids, glistening skin:1.25)), intimate narrow space, ((single male partner:1.3))",
+      "section": "special_h"
+    },
+    "132": {
+      "label": "화장실펠라",
+      "description": "문 잠긴 좁은 화장실 칸막이 안에서 무릎 꿇고 올려다보는 착의 펠라 씬",
+      "required_outfit": "default",
+      "prompt": "1girl, 1boy, ((inside bathroom stall, locked door:1.35)), ((clothed fellatio, blowjob:1.4)), looking up at partner with deeply devoted flushed eyes, mouth open taking shaft, saliva trail, intimate close-up, cowboy shot, ((single male partner:1.3))",
+      "section": "special_h"
+    }
+  },
   "scenes_otokonoko": {
     "150": {
       "label": "M자개각",
@@ -893,7 +952,7 @@
     "195": {
       "label": "풋잡",
       "description": "발가락과 발바닥으로 능숙하게 비비는 풋잡 (N43)",
-      "prompt": "2boys, completely nude, full nudity, bare skin, footjob, bare feet, toes, soles, teasing smile, couch, POV, looking at partner",
+      "prompt": "2boys, completely nude, full nudity, bare skin, ((footjob, single pair of legs, sole of foot on penis:1.25)), sitting on couch, leaning back, bare feet, toes, teasing smile, couch, POV, looking at partner",
       "section": "scenes_otokonoko"
     },
     "196": {
@@ -911,5 +970,27 @@
       "section": "scenes_otokonoko"
     }
   },
-  "special_otokonoko": {}
+  "special_otokonoko": {
+    "133": {
+      "label": "층계참 밀착",
+      "description": "층계참 벽을 양손으로 짚고 상체를 숙인 오토코노코 후방 밀착 자세, 대부분 탈의된 의상과 절정 연출",
+      "required_outfit": "default",
+      "prompt": "((2boys, otokonoko:1.4)), ((hidden in stair landing between staircase flights:1.4)), ((narrow space between stairs:1.35)), ((leaning forward with hands pressed flat against concrete wall:1.45)), ((anal doggystyle from behind:1.4)), ((clothing mostly stripped, outfit pulled down off body, nearly naked, exposed bare skin:1.4)), looking back over shoulder with intense ecstasy face, breathlessness, flushed cheeks, ((glistening messy bodily fluids:1.25)), thrilling secret intimacy in shadows, high contrast stairwell lighting, ((single male partner behind:1.3))",
+      "section": "special_otokonoko"
+    },
+    "134": {
+      "label": "차안 백시트",
+      "description": "틴팅된 차량 뒷좌석에 누워 진행되는 오토코노코 백시트 결합 자세, 대부분 탈의된 의상과 절정 연출",
+      "required_outfit": "default",
+      "prompt": "((2boys, otokonoko:1.4)), ((inside car interior, vehicle backseat:1.45)), ((lying on back across car rear seat:1.45)), ((anal missionary position on car backseat:1.4)), leather car seats, tinted windows, night bokeh outside, ((clothing mostly stripped, outfit pushed aside, nearly naked, exposed bare skin:1.4)), arched back in intense ecstasy, ecstatic flushed face, open mouth moaning, ((splattered bodily fluids, glistening skin:1.25)), breathless pleasure, ((single male partner:1.3))",
+      "section": "special_otokonoko"
+    },
+    "135": {
+      "label": "화장실펠라",
+      "description": "화장실 칸막이 안에서 올려다보며 봉사하는 오토코노코 전용 씬",
+      "required_outfit": "default",
+      "prompt": "((2boys, otokonoko:1.4)), kneeling fellatio inside bathroom stall, looking up with flushed cheeks, parted lips, narrow stall, soft lighting, ((single male partner:1.3))",
+      "section": "special_otokonoko"
+    }
+  }
 }

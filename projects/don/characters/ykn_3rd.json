@@ -1,0 +1,19 @@
+{
+  "prefix": "ykn_3rd",
+  "name": "설시아 (3녀 - 생머리에 리본 & 츤데레 & 요염한 슬렌더)",
+  "gender": "female",
+  "default_mode": "female",
+  "appearance": {
+    "face_and_hair": "A remarkably beautiful elite noble girl with silky waist-length jet-black straight hair adorned with small delicate red ribbons on each side, straight bangs, sidelocks, sharp navy blue eyes, cute proud look, flawless pale porcelain skin (tsundere third quadruplet sister)",
+    "physique": "alluring balanced slender figure, tight slender waist, modest petite breasts, sensually toned body, delicate alluring curves, slender long legs, refined posture",
+    "outfit": "stylish date outfit with a tailored beige trench jacket over a crisp white collared blouse and a plaid pleated skirt highlighting her slim slender waistline"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, (soft shaded skin:1.15), (smooth skin:1.1), delicate anime coloring, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, masterpiece quality",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest BREAK 1girl, solo, (yukinoshita_yukino:1.2), (long straight black hair:1.2), (small red hair ribbons on sides:1.15), straight bangs, sidelocks, (deep navy blue eyes:1.15), (sharp eyes:1.1), tsundere, proud demeanor, (alluring slender figure:1.15), (slim waist, slender body:1.2), (small breasts:1.15), beige trench jacket, collared white blouse, plaid pleated skirt, delicate posture",
+  "sdxl_negative": "(school uniform, blazer:1.3), (photorealistic, realistic, 3d, render, cgi:1.25), (multiple characters, character sheet, concept art, reference sheet, mannequin:1.3), (worst quality, bad quality:1.2), lowres, bad anatomy, sketch, old, oldest, flat color, simple shading, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, choker, necklace, multiple moles, freckles, dark circles, dark eyelids, heavy shadow on face, overexposed, (hourglass:1.3), (cat ears, animal ears, wolf ears, fox ears, kemonomimi:1.3), (comic:1.2), (multiple views:1.2), (panel layout:1.2), large breasts, huge breasts, cleavage, muscular, bulky, manly, beard, mustache",
+  "ref_weight": 0.5
+}

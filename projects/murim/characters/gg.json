@@ -1,0 +1,16 @@
+{
+  "prefix": "gg",
+  "name": "바라 (남만 야수궁 소궁주 / 야성의 맹수 조련녀)",
+  "gender": "female",
+  "faction": "nanman_beast_palace",
+  "appearance": {
+    "face_and_hair": "untamed long raven hair adorned with predator fangs and colorful exotic beads, piercing emerald-slit predatory eyes, red tribal warpaint markings across cheekbones, sun-baked dark honey skin",
+    "physique": "exotic feral athletic body, strong supple curves, prominent large perk breasts, narrow toned waist, feline wild grace",
+    "outfit": "spotted leopard fur bikini-style tribal harness, bone necklace, leather loincloth skirt with brass rings, bare feet with ankle wraps, claw bracers"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Bara, young princess of Southern Barbarian Beast Palace, wild long raven hair decorated with animal teeth and beads, fierce predatory green eyes with slit pupils, red tribal paint on cheekbones, dark honey tan skin, exotic muscular curvy body, large perk breasts, wearing leopard fur tribal bikini top, bone fang choker, bone ornament leather loincloth skirt, claw accessories, tropical jungle wuxia warrior",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, pale white skin, modern clothes, elegant silk robes, hanfu, high heels",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, bara, wild long raven hair, fangs beads, slit green eyes, tribal warpaint, dark honey tan skin, exotic curvy body, large breasts, leopard fur tribal outfit, bone accessories, nanman beast palace wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, pale skin, modern clothes, elegant hanfu",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, bara, wild raven hair, green slit eyes, tribal face paint, dark honey tanned skin, voluptuous feral body, large perk breasts, narrow waist, sculpted thighs"
+}

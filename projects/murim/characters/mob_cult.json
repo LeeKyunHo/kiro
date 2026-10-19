@@ -1,0 +1,12 @@
+{
+  "prefix": "mob_cult",
+  "name": "마교 침공군 (혈교 마인, 척후 살수, 마인 잡병)",
+  "category": "faction_mob",
+  "appearance": {
+    "cult_soldier": "demonic cult foot soldier, menacing black hooded cowl, red demonic mask, dark robes, wielding serrated scimitar, glowing sinister red eyes",
+    "cult_scout": "shadowy cult assassin scout, crouching on tree branch, throwing needles, dark stealth wraps",
+    "demonic_berserker": "hulking possessed demonic berserker, unnatural swollen muscles, dark veins bulging, roaring with bloodlust, heavy cleaver blade"
+  },
+  "flux_positive_raid": "cinematic wuxia shot, ominous Demonic Cult raiders attacking in dark night, black hooded cultists with red demon masks, curved bloodied blades, burning oriental village ruins in background, sinister crimson flames, terrifying raid atmosphere",
+  "flux_positive_patrol": "cinematic wuxia shot, demonic cult foot soldiers marching through dark misty bamboo grove, carrying dark iron banners, red glowing lanterns, ominous silhouettes, terrifying martial arts invasion"
+}

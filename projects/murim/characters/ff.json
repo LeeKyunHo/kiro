@@ -1,0 +1,16 @@
+{
+  "prefix": "ff",
+  "name": "진아영 (녹림칠십이채 부채주 딸 / 야성적인 구릿빛 여두목)",
+  "gender": "female",
+  "faction": "unorthodox_bandit",
+  "appearance": {
+    "face_and_hair": "voluminous long wavy reddish-brown hair with feather beads, fierce confident amber-golden eyes, full pouty lips, seductive bold grin, radiant sun-kissed dark tan skin",
+    "physique": "curvaceous exotic athletic hourglass body, toned flat belly, very large buoyant breasts, narrow waist, sculpted wide hips, wild sensual feminine allure",
+    "outfit": "daring open-chest rugged leather halter top with tiger fur trim, brass belly chain, low-rise draped leather slit skirt, leather arm wraps, gold hoop earrings"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Jin Ah-young, exotic bandit queen of green forest, long wavy wild reddish-brown hair decorated with tribal beads and feathers, piercing amber-golden eyes, bold seductive smile, radiant dark tanned skin, voluptuous hourglass figure, very large breasts, toned flat stomach, wide hips, wearing daring tiger-fur trimmed leather halterneck top, low-rise slit leather skirt, brass belly chain, wild sensual oriental wuxia beauty",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, fragile delicate girl, pale white skin, tomboy, short hair, boyish, flat chest, elegant hanfu, deformed fingers",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, jin ah-young, long wavy reddish brown hair, amber eyes, seductive smile, dark tan skin, sun-kissed skin, voluptuous hourglass figure, very large breasts, narrow waist, wide hips, open leather halter top with tiger fur trim, brass belly chain, low-rise leather slit skirt, exotic wuxia femme fatale",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, pale skin, white skin, tomboy, flat chest, boyish, delicate dress, modern clothes",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, jin ah-young, long wavy reddish brown hair, amber eyes, radiant dark tan skin, voluptuous hourglass figure, very large perk breasts, narrow waist, wide hips, sculpted thighs"
+}

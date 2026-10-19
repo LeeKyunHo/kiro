@@ -1,0 +1,16 @@
+{
+  "prefix": "cc",
+  "name": "소유화 (아미파 마지막 의선 / 청초한 자애의 성녀)",
+  "gender": "female",
+  "faction": "righteous_emei",
+  "appearance": {
+    "face_and_hair": "soft silk-straight dark chestnut hair loosely draped over shoulders, gentle droopy emerald-hazel eyes, tareme, soft compassionate loving gaze, peach-toned fair skin",
+    "physique": "softly curved feminine silhouette, large soft bust, graceful gentle demeanor",
+    "outfit": "pure white and pale celadon green layered flowing Buddhist-Taoist healer robes, wooden medicinal gourd pendant, subtle herbal sash"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, So Yu-hwa, divine healer of Emei sect, long soft dark chestnut hair draped loosely over shoulders, gentle compassionate hazel-green eyes, tareme, tender kind expression, softly curved body, large breasts, wearing flowing pure white and pale mint-celadon silk healer robes, layered translucent sleeves, herbal scent vibe, tranquil oriental wuxia atmosphere",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, modern clothes, sharp weapons, aggressive expression, flat chest",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, so yu-hwa, soft dark chestnut hair, gentle hazel eyes, tareme, kind expression, soft feminine body, large breasts, white and pale celadon flowing healer robes, emei sect",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, modern clothes, flat chest",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, so yu-hwa, soft dark chestnut hair, gentle hazel eyes, soft voluptuous body, large natural breasts, peach-toned soft skin, wide hips"
+}

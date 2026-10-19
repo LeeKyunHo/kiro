@@ -1,0 +1,18 @@
+{
+  "prefix": "ykn_mai",
+  "name": "유키노 [메이드] (Yukino - Maid)",
+  "gender": "female",
+  "appearance": {
+    "face_and_hair": "A remarkably beautiful adult woman with silky waist-length jet-black hair tied with small red ribbons on each side, wispy straight bangs framing her face, sharp intelligent deep blue eyes with a cool composed cold expression, flawless pale porcelain skin",
+    "physique": "slender graceful figure with a narrow waist and voluminous large breasts, voluptuous bust, elegant posture, slender long legs",
+    "outfit": "classic micro maid outfit, heart cutout bodice, ruffled white lace apron, short ruffled miniskirt, white frilled maid headband, garter straps with sheer black stockings"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "Authentic Japanese 2D anime illustration, clean crisp defined lineart, delicate anime coloring, vivid expressive anime eyes, 2D anime visual novel aesthetic, beautiful anime color palette, no 3D rendering, no semi-realism, masterpiece quality, 8k resolution",
+  "sdxl_positive": "masterpiece, best quality, very aesthetic, absurdres, newest, glossy skin, delicate anime coloring BREAK 1girl, solo, adult, (yukinoshita_yukino:1.25), (yahari_ore_no_seishun_love_come_wa_machigatteiru.:1.1), (long black hair:1.15), straight hair, (small red hair ribbons on sides:1.15), blunt bangs, sidelocks, (deep blue eyes:1.15), cool expression, smart, kuudere, (slender body:1.15), slender waist, (large breasts:1.25), cleavage, maid outfit, cleavage cutout, micro skirt, sheer frilled apron, frilled maid headdress, garter straps, sheer black thighhighs, high heels, pale skin, refined posture",
+  "sdxl_negative": "(photorealistic, realistic, 3d, render, cgi:1.25), (multiple characters, character sheet, concept art, reference sheet, mannequin:1.3), (worst quality, bad quality:1.2), lowres, bad anatomy, sketch, old, oldest, flat color, simple shading, bad proportions, bad hands, missing fingers, extra digits, deformed, jpeg artifacts, signature, watermark, username, artist name, blurry, 1boy, male, multiple moles, freckles, dark circles, dark eyelids, heavy shadow on face, overexposed, (cat ears, animal ears, kemonomimi:1.3), (comic:1.2), (multiple views:1.2), (panel layout:1.2), (flat chest:1.3), muscular, bulky, manly",
+  "ref_weight": 0.5
+}

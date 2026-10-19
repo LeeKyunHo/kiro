@@ -1,0 +1,12 @@
+{
+  "_schema": "campus 로스터 포즈별 추천 배경 매핑 (V2)",
+  "default_background": "default",
+  "pose_mappings": {
+    "000-059": "default",
+    "060-079": "bedroom",
+    "080-149": "bedroom",
+    "150-219": "bedroom",
+    "A00-A32": "default",
+    "B01-B28": "default"
+  }
+}

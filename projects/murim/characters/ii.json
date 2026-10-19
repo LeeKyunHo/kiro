@@ -1,0 +1,16 @@
+{
+  "prefix": "ii",
+  "name": "천소희 (마교 교주 / 절대자 천마)",
+  "gender": "female",
+  "faction": "demonic_cult_leader",
+  "appearance": {
+    "face_and_hair": "flowing waist-length pure jet-black hair with crimson tips, intimidating glowing ruby-crimson eyes, haughty queenly tsurime, cruel yet breathtakingly seductive aristocratic smile, alabaster pale skin",
+    "physique": "imposing tall hourglass figure, majestic very large breasts, hips, overwhelming dark demonic presence",
+    "outfit": "majestic high-collared black and blood-red imperial silk demonic robe, heavy ornate gold and dragon embroidery, flowing dark translucent cape with dark demonic miasma wisps"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Cheon So-hee, absolute supreme leader Heavenly Demon of Demonic Cult, flowing long jet-black hair with crimson highlights, glowing ruby-red eyes, intimidating sharp tsurime, cruel seductive haughty smile, tall imposing voluptuous hourglass figure, very large breasts, wearing opulent black and imperial blood-red high-collar demonic robes with gold dragon embroidery, flowing dark cape, sinister dark crimson aura wisps, dark throne room background, supreme oriental villainess wuxia",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, friendly smile, cute, holy outfit, modern clothes, sneakers, blonde hair",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, cheon so-hee, heavenly demon cult leader, jet black hair crimson tips, glowing ruby eyes, haughty smile, tall voluptuous, very large breasts, black and blood red imperial demonic robes, gold dragon embroidery, dark crimson aura, supreme villainess wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, friendly, holy dress, modern clothes",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, cheon so-hee, long black hair crimson tips, glowing red eyes, tall imposing voluptuous body, very large breasts, wide hips, alabaster pale skin, black demonic tattoo markings on hip"
+}

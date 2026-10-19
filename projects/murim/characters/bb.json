@@ -1,0 +1,16 @@
+{
+  "prefix": "bb",
+  "name": "남궁채원 (남궁세가 소가주 / 오만한 창천검희)",
+  "gender": "female",
+  "faction": "righteous_namgung",
+  "appearance": {
+    "face_and_hair": "long luxurious golden-brown wavy hair partially pinned with ornate gold comb, piercing golden-amber eyes, confident tsurime, proud arrogant expression, fair aristocratic skin",
+    "physique": "voluptuous hourglass figure, very large breasts, narrow waist, aristocratic haughty stance",
+    "outfit": "opulent azure and golden embroidered noble martial arts coat, form-fitting white inner silk bodice, gold-inlaid leather sword scabbard belt"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Namgung Chae-won, young matriarch of Namgung Clan, long wavy golden-brown hair with ornate gold hairpins, sharp golden-amber eyes, haughty confident expression, tsurime, voluptuous hourglass figure, very large breasts, narrow waist, wearing luxurious azure blue and gold-trimmed noble silk oriental martial robe, gold embroidered sash, noble aristocratic wuxia aesthetic",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, modern clothes, sneakers, casual wear, glasses, flat chest",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, namgung chae-won, golden brown wavy long hair, gold hairpins, sharp golden eyes, tsurime, arrogant, voluptuous, very large breasts, hourglass figure, azure blue and gold martial arts robes, noble oriental wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, modern clothes, flat chest",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, namgung chae-won, golden brown wavy hair, gold hairpins, sharp golden eyes, voluptuous hourglass figure, very large breasts, pale fair skin, wide hips"
+}

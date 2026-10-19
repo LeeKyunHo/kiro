@@ -1,0 +1,16 @@
+{
+  "prefix": "dd",
+  "name": "흑연화 (사파 총군사의 수양딸 / 요염한 독화 요녀)",
+  "gender": "female",
+  "faction": "unorthodox_sinister",
+  "appearance": {
+    "face_and_hair": "voluminous deep raven-black twin-tails tied with crimson silk ribbons, alluring feline violet-crimson eyes, beauty mark under left eye, mischievous seductive smirk, porcelain pale skin",
+    "physique": "curvaceous seductive figure, exposed slender waist, ample bust, dangerous sensual aura",
+    "outfit": "daring black and crimson silk exposed midriff martial bodice, side-slit sheer skirt, silver scorpion chain ornaments, fingerless leather gloves"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Heuk Yeon-hwa, seductive demoness of unorthodox faction, raven-black hair in stylized twintails with crimson ribbons, alluring cat-like crimson-violet eyes, beauty mark under left eye, dangerous mischievous seductive smile, voluptuous body, ample breasts, exposed midriff, wearing revealing black and deep red silk assassin hanfu, side-slit translucent skirt, silver scorpion jewelry, dark oriental wuxia femme fatale",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, holy outfit, nun robes, plain clothing, deformed fingers",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, heuk yeon-hwa, raven black twintails, crimson ribbons, seductive violet eyes, beauty mark under eye, smirk, voluptuous, large breasts, black and crimson revealing martial arts outfit, exposed midriff, side slit skirt, femme fatale wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, plain clothes",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, heuk yeon-hwa, raven black twintails, seductive violet eyes, beauty mark under eye, sultry smile, voluptuous body, large perk breasts, narrow waist, pale smooth skin"
+}

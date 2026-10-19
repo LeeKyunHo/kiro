@@ -1,0 +1,13 @@
+{
+  "prefix": "ser",
+  "name": "설세린 (2녀 - 정통 히메컷 & 쿨뷰티 & 매력적인 힙라인)",
+  "gender": "female",
+  "appearance": {
+    "face_and_hair": "jet-black straight hair with authentic Japanese hime cut, sharp jaw-length blunt sidelocks, neat straight bangs, dark eyes, beauty mark under left eye",
+    "physique": "elegant feminine figure, medium breasts, slender waist, shapely wide hips, plump attractive buttocks, beautiful lower body curves",
+    "outfit": "soft white cable-knit cardigan over pastel blue blouse, dark pleated skirt"
+  },
+  "sdxl_positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, 20yo, elegant feminine figure, medium breasts, slender waist, wide hips, shapely hips, ((pure jet-black hair, solid black hair:1.35)), ((hime cut:1.4)), ((blunt sidelocks:1.35)), ((jaw-length straight sidelocks:1.3)), (straight bangs, sleek straight hair:1.2), (dark eyes:1.2), (single beauty mark directly under left eye:1.25), ((white cable-knit cardigan:1.3)), ((pastel blue blouse:1.3)), ((dark pleated skirt:1.2)), fair skin with healthy complexion",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, (2boys:1.5), (multiple boys:1.5), (multiple men:1.5), (two men:1.5), 1boy, male, masculine, beard, mustache, facial hair, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (border:1.5), (frame:1.5), (ornate border:1.5), (decorative frame:1.5), monochrome, greyscale, ((pink hair, purple hair, red hair, blonde hair, brown hair, silver hair, white hair, blue hair, green hair, colored hair:1.5)), ((red ribbon, hair ribbon, hair bow:1.5)), ((hair ornament, hair accessory:1.5)), ((ponytail, twintails, braid:1.5)), ((hair bun, bun:1.5)), ((curly hair, wavy hair:1.5)), ((multiple beauty marks, beauty marks on neck, beauty mark on chin, beauty mark on cheek:1.5)), short hair, bob cut, pixie cut, pants, jeans, school uniform, blazer, large breasts, huge breasts",
+  "ref_weight": 0.5
+}

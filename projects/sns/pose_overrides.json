@@ -1,0 +1,95 @@
+{
+  "_note": "SNS 인플루언서 로스터 전용 포즈 오버라이드 (V2 규격 동기화)",
+  "_usage": "projects/sns/characters/*.json 및 슬롯 048~052, 130~135 연동",
+  "events": {
+    "048": {
+      "label": "옥상 릴스 댄스",
+      "description": "SNS 전용: 파란 하늘이 보이는 도심 옥상에서 음악에 맞춰 춤추다 멈춘 전신 포즈",
+      "prompt": "1girl, solo, ((standing on urban rooftop:1.25)), ((blue sky background, low angle shot:1.3)), dynamic dance pose, one arm raised, full body, looking down at viewer with confident smirk, bright natural daylight, cowboy shot",
+      "prompt_otokonoko": "1boy, otokonoko, solo, ((standing on urban rooftop:1.25)), ((blue sky background, low angle shot:1.3)), dynamic dance pose, one arm raised, full body, looking down at viewer, bright natural daylight, cowboy shot",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "049": {
+      "label": "캔음료 스냅",
+      "description": "SNS 전용: 야간 서킷 펜스 앞에서 캡모자를 쓰고 머리 위에 캔 음료를 얹어 균형을 잡는 장난기 가득한 스트릿 스냅",
+      "prompt": "1girl, solo, ((standing in front of metal chainlink fence, outdoor night:1.3)), blurred stadium track lights, ((plaid checked baseball cap:1.25)), ((holding red aluminum drink can on top of head with one hand:1.35)), (balancing drink can on cap:1.25), other arm raised behind head, ((playful mischievous expression, slight tongue out, cheerful wink:1.25)), trendy street snap, medium shot",
+      "prompt_otokonoko": "1boy, otokonoko, solo, ((standing in front of metal chainlink fence, outdoor night:1.3)), blurred stadium track lights, ((plaid checked baseball cap:1.25)), ((holding red aluminum drink can on top of head with one hand:1.35)), (balancing drink can on cap:1.25), other arm raised behind head, ((playful mischievous expression, slight tongue out, cheerful wink:1.25)), trendy street snap, medium shot",
+      "negative_add": "(camera frame, viewfinder, border, HUD:1.4)",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "050": {
+      "label": "야경 테라스 과시",
+      "description": "SNS 전용: 화려한 도시 야경이 내려다보이는 고급 테라스에서 뒤돌아보는 럭셔리 포즈",
+      "prompt": "1girl, solo, ((glamorous night city terrace:1.25)), looking back over bare shoulder at viewer, alluring gaze, warm ambient streetlights, glowing bokeh, elegant posture, cowboy shot",
+      "prompt_otokonoko": "1boy, otokonoko, solo, ((glamorous night city terrace:1.25)), looking back over bare shoulder at viewer, alluring gaze, warm ambient streetlights, glowing bokeh, elegant posture, cowboy shot",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "051": {
+      "label": "탑다운 미러셀카",
+      "description": "SNS 전용: 거울 앞에서 스마트폰을 높이 들어 가슴골과 잘록한 허리, 언더웨어 밴드를 내려다보는 하이앵글 바디체크 미러 셀카",
+      "prompt": "1girl, solo, ((taking mirror selfie from high angle:1.35)), ((smartphone held high overhead, looking down into mirror:1.3)), ((top-down angle, view from above:1.3)), deep cleavage seen from above, ((emphasizing extremely narrow waist and curvy hips:1.25)), (jacket loosely slipping off shoulders:1.15), (exposed underwear waistband above low-rise pants:1.15), hotel hallway mirror, warm indoor ambient lighting, aesthetic reflection, cowboy shot",
+      "prompt_otokonoko": "1boy, otokonoko, solo, ((taking mirror selfie from high angle:1.35)), ((smartphone held high overhead, looking down into mirror:1.3)), ((top-down angle, view from above:1.3)), ((emphasizing flat chest and narrow feminine waist:1.25)), (jacket loosely slipping off shoulders:1.15), (exposed underwear waistband above low-rise pants:1.15), hotel hallway mirror, warm indoor ambient lighting, aesthetic reflection, cowboy shot",
+      "negative_add": "(camera frame, viewfinder, border, HUD, screen corners:1.4)",
+      "required_outfit": "default",
+      "section": "events"
+    },
+    "052": {
+      "label": "바이럴 더블피스",
+      "description": "SNS 전용: 양손 브이와 장난스럽고 과감한 표정으로 렌즈에 바짝 다가선 클로즈업 셀카",
+      "prompt": "1girl, solo, ((extreme close-up portrait, upper body zoom:1.35)), ((double peace, two peace signs near face:1.3)), ((ahegao, tongue out, rolling eyes slightly:1.25)), heavy blush on cheeks, tilted head, playful chaotic influencer selfie, ring light reflection in eyes, smartphone screen POV",
+      "prompt_otokonoko": "1boy, otokonoko, solo, ((extreme close-up portrait, upper body zoom:1.35)), ((double peace, two peace signs near face:1.3)), ((ahegao, tongue out, rolling eyes slightly:1.25)), heavy blush on cheeks, tilted head, playful chaotic influencer selfie, ring light reflection in eyes, smartphone screen POV",
+      "negative_add": "(camera frame, viewfinder, border, HUD, screen corners:1.4)",
+      "required_outfit": "default",
+      "section": "events"
+    }
+  },
+  "special_h": {
+    "130": {
+      "label": "층계참 밀착",
+      "description": "SNS 전용: 층계참 벽을 양손으로 짚고 상체를 숙인 후방 밀착 자세, 대부분 탈의된 의상과 절정 연출",
+      "prompt": "1girl, 1boy, ((hidden in stair landing between staircase flights:1.4)), ((narrow space between stairs:1.35)), ((leaning forward with hands pressed flat against concrete wall:1.45)), ((doggystyle from behind:1.4)), ((clothing mostly stripped, dress pulled down off shoulders and waist, nearly naked, exposed bare skin:1.4)), looking back over shoulder with intense ecstasy face, breathlessness, flushed cheeks, ((glistening messy bodily fluids:1.25)), thrilling secret intimacy in shadows, high contrast stairwell lighting, ((single male partner behind:1.3))",
+      "required_outfit": "default",
+      "section": "special_h"
+    },
+    "131": {
+      "label": "차안 백시트",
+      "description": "SNS 전용: 틴팅된 차량 뒷좌석에 누워 진행되는 백시트 결합 자세, 대부분 탈의된 의상과 절정 연출",
+      "prompt": "1girl, 1boy, ((inside car interior, vehicle backseat:1.45)), ((lying on back across car rear seat:1.45)), ((missionary position on car backseat:1.4)), leather car seats, tinted car windows with night streetlights blurred outside, ((clothing mostly stripped, dress pulled down and pushed aside, nearly naked, exposed bare skin:1.4)), arched back in intense ecstasy, ecstatic flushed face, open mouth moaning, tears of pleasure, ((splattered bodily fluids, glistening skin:1.25)), intimate narrow space, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_h"
+    },
+    "132": {
+      "label": "탈의실펠라",
+      "description": "SNS 전용: 쇼핑몰 또는 피팅룸 커튼 안 좁은 공간에서 무릎 꿇고 올려다보는 봉사 씬",
+      "prompt": "1girl, 1boy, ((inside clothing fitting room, dressing room curtain:1.35)), ((kneeling fellatio, blowjob:1.4)), looking up at partner with devoted bedroom eyes, parted lips, disheveled clothing, narrow fitting room mirror, intimate soft lighting, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_h"
+    }
+  },
+  "special_otokonoko": {
+    "133": {
+      "label": "층계참 밀착",
+      "description": "SNS 전용: 층계참 벽을 양손으로 짚고 상체를 숙인 오토코노코 후방 밀착 자세, 대부분 탈의된 의상과 절정 연출",
+      "prompt": "((2boys, otokonoko:1.4)), ((hidden in stair landing between staircase flights:1.4)), ((narrow space between stairs:1.35)), ((leaning forward with hands pressed flat against concrete wall:1.45)), ((anal doggystyle from behind:1.4)), ((clothing mostly stripped, outfit pulled down off body, nearly naked, exposed bare skin:1.4)), looking back over shoulder with intense ecstasy face, breathlessness, flushed cheeks, ((glistening messy bodily fluids:1.25)), thrilling secret intimacy in shadows, high contrast stairwell lighting, ((single male partner behind:1.3))",
+      "required_outfit": "default",
+      "section": "special_otokonoko"
+    },
+    "134": {
+      "label": "차안 백시트",
+      "description": "SNS 전용: 틴팅된 차량 뒷좌석에 누워 진행되는 오토코노코 백시트 결합 자세, 대부분 탈의된 의상과 절정 연출",
+      "prompt": "((2boys, otokonoko:1.4)), ((inside car interior, vehicle backseat:1.45)), ((lying on back across car rear seat:1.45)), ((anal missionary position on car backseat:1.4)), leather car seats, tinted windows, night bokeh outside, ((clothing mostly stripped, outfit pushed aside, nearly naked, exposed bare skin:1.4)), arched back in intense ecstasy, ecstatic flushed face, open mouth moaning, ((splattered bodily fluids, glistening skin:1.25)), breathless pleasure, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_otokonoko"
+    },
+    "135": {
+      "label": "탈의실펠라",
+      "description": "SNS 전용: 피팅룸 커튼 안에서 올려다보며 봉사하는 오토코노코 전용 씬",
+      "prompt": "((2boys, otokonoko:1.4)), kneeling fellatio inside dressing room, looking up with flushed cheeks, parted lips, narrow fitting room, soft lighting, ((single male partner:1.3))",
+      "required_outfit": "default",
+      "section": "special_otokonoko"
+    }
+  }
+}

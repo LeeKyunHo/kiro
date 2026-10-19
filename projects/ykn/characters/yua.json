@@ -1,0 +1,13 @@
+{
+  "prefix": "yua",
+  "name": "설유아 (1녀 - 사이드 테일 & 메가데레 & 풍만한 볼륨)",
+  "gender": "female",
+  "appearance": {
+    "face_and_hair": "jet-black hair tied into elegant side ponytail over one shoulder, straight bangs, delicate sidelocks, dark eyes, beauty mark under left eye",
+    "physique": "voluptuous feminine figure, large soft breasts, narrow slender waist, wide soft hips, rich feminine curves",
+    "outfit": "soft cream-colored knit cardigan over crisp white collared blouse, dark pleated skirt"
+  },
+  "sdxl_positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, 20yo, voluptuous feminine figure, large breasts, narrow waist, wide soft hips, rich feminine curves, ((pure jet-black hair, solid black hair:1.35)), ((side ponytail:1.35)), ((single ponytail over shoulder:1.3)), ((hair tied on one side:1.3)), (straight bangs, delicate sidelocks framing face:1.2), (dark eyes:1.2), (single beauty mark directly under left eye:1.25), ((soft cream knit cardigan:1.3)), ((crisp white collared blouse:1.3)), ((dark pleated skirt:1.2)), fair skin with healthy complexion",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, (2boys:1.5), (multiple boys:1.5), (multiple men:1.5), (two men:1.5), 1boy, male, masculine, beard, mustache, facial hair, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (border:1.5), (frame:1.5), (ornate border:1.5), (decorative frame:1.5), monochrome, greyscale, ((pink hair, purple hair, red hair, blonde hair, brown hair, silver hair, white hair, blue hair, green hair, colored hair:1.5)), ((twintails, twin tails, pigtails, double ponytails:1.5)), ((hair bun, bun:1.5)), ((hair down, loose hair:1.5)), ((multiple beauty marks, beauty marks on neck, beauty mark on chin, beauty mark on cheek:1.5)), short hair, bob cut, pants, jeans, school uniform, blazer",
+  "ref_weight": 0.5
+}

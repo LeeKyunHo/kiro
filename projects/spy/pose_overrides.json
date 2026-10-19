@@ -1,0 +1,63 @@
+{
+  "_note": "스파이 로스터 전용 포즈 오버라이드 (V2 11대 플러그인 슬롯 체계)",
+  "events": {
+    "048": {
+      "label": "술대접",
+      "required_outfit": "default",
+      "prompt": "solo, cowboy shot, eye level, ((holding crystal whiskey glass in raised hand, offering drink:1.25)), ((other hand resting on hip:1.15)), leaning against wooden bar counter, alluring seductive smile, looking at viewer, warm amber lighting, soft bokeh",
+      "description": "비밀 살롱 바 카운터에 기대어 한 손으로 크리스탈 위스키 잔을 쥐고 상대방을 유혹하듯 접대하는 씬 (세계관 일상 1)",
+      "section": "events"
+    },
+    "049": {
+      "label": "잠입수색",
+      "required_outfit": "default",
+      "prompt": "solo, cowboy shot, eye level, ((holding small tactical flashlight in hand, bright beam of light:1.25)), ((other hand pulling open metal filing cabinet drawer:1.2)), looking back over shoulder, dark office at night, cautious alert expression, stealth infiltration, dramatic shadows",
+      "description": "심야의 기밀 보관실에 잠입해 한 손으로 소형 손전등을 비추며 서류함 서랍을 수색하는 씬 (세계관 일상 2)",
+      "section": "events"
+    },
+    "050": {
+      "label": "도청",
+      "required_outfit": "default",
+      "prompt": "solo, upper body, eye level, ((one hand pressing communication earpiece to ear:1.25)), ((other hand reaching down adjusting dials on vintage tape recorder on desk:1.2)), listening intently, head tilted, calm focused expression, covert wiretap surveillance, dim noir lighting",
+      "description": "한 손으로 귀의 통신 이어피스를 누르고 다른 손으로 도청 녹음기를 조작하며 기밀 대화를 감청하는 씬 (세계관 일상 3)",
+      "section": "events"
+    },
+    "051": {
+      "label": "권총겨누기",
+      "required_outfit": "default",
+      "prompt": "solo, cowboy shot, eye level, ((holding a single handgun with both hands:1.3)), ((two-handed firearm grip, aiming single silenced pistol forward:1.3)), combat stance, sharp cold glare, tense focused expression, dramatic noir lighting, shadows",
+      "description": "양손으로 한 정의 소음 권총을 견착 파지해 정면의 표적을 차갑게 겨누는 첩보 대치 씬 (세계관 전문 활동)",
+      "section": "events"
+    },
+    "052": {
+      "label": "포박",
+      "required_outfit": "default",
+      "prompt": "solo, cowboy shot, ((sitting on wooden chair with both wrists bound together behind chair back:1.25)), ((tied wrists, ropes on arms, immobilized:1.2)), heavy breathing, flushed cheeks, defiant angry glare, looking up at viewer, captured agent crisis, dramatic shadows",
+      "description": "적에게 붙잡혀 의자 등받이 뒤로 두 손목이 포박당한 채 거친 숨을 몰아쉬며 노려보는 위기 씬 (세계관 특별 상황)",
+      "section": "events"
+    }
+  },
+  "special_h": {
+    "130": {
+      "label": "골목섹스",
+      "required_outfit": "default",
+      "prompt": "1girl, 1boy, ((standing sex in dark alley against brick wall:1.35)), ((skirt lifted up, standing embrace:1.25)), pinned against brick wall, ((ecstatic expression, head tilted back in intense pleasure, blissful gasping face, heavily flushed face, trembling with delight, misty half-closed eyes:1.3)), dim street lamp lighting, thrilling covert sex, shadows, dark night alleyway, cowboy shot",
+      "description": "심야의 어두운 벽돌 벽 골목길에 밀착하여 치마를 걷어올린 채 진행되는 스릴 넘치는 야간 골목 결합 씬 (스파이 시그니처 1)",
+      "section": "special_h"
+    },
+    "131": {
+      "label": "밀실심문",
+      "required_outfit": "default",
+      "prompt": "1girl, 1boy, ((sitting on edge of wooden desk with legs spread:1.3)), ((partner between legs, intense interrogation sex:1.35)), ((one hand gripping partner chin:1.2)), dominant seductive smirk, half-closed eyes, flushed cheeks, secret interrogation room, dramatic noir lighting, shadows, cowboy shot",
+      "description": "비밀 취조실 책상 모서리에 걸터앉아 다리를 벌린 채 상대를 유혹하며 심문하는 밀실 성인 씬 (스파이 시그니처 2)",
+      "section": "special_h"
+    },
+    "132": {
+      "label": "접견",
+      "required_outfit": "default",
+      "prompt": "1girl, 1boy, ((sitting on plush boudoir bed:1.25)), ((clothes disheveled, collar pulled open:1.2)), ((intimate secret transaction sex:1.35)), sultry seductive gaze, heavy blush, parted lips, passionate secret deal, warm amber lighting, soft bokeh, cowboy shot",
+      "description": "사적 침실 침대 위에서 은밀한 거래를 나누며 진행되는 농밀한 접견 결합 씬 (스파이 시그니처 3)",
+      "section": "special_h"
+    }
+  }
+}

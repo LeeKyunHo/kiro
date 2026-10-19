@@ -1,0 +1,10 @@
+{
+  "_schema": "hey 로스터 포즈별 추천 배경 매핑",
+  "default_background": "default",
+  "pose_mappings": {
+    "000-019": "default",
+    "020-039": "default",
+    "040-059": "default",
+    "140-159": "default"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "none": "simple background, white background, solid background, studio background",
+  "default": "aesthetic soft modern campus interior, minimalist neutral cream wall and light wood room, gentle natural window daylight, bright clean atmosphere, neutral color balance, cinematic shallow depth of field, heavily blurred background, smooth soft bokeh",
+  "bedroom": "cozy private apartment bedroom, close-up tall plain wall, warm bedside lamp glow, strong depth of field, heavily blurred background",
+  "yur_hall": "university campus hallway, modern classroom background, close-up tall pale wall, strong depth of field, heavily blurred background, soft bokeh",
+  "kao_band": "band club rehearsal room, music instruments background, close-up tall acoustic wall panels, strong depth of field, heavily blurred background",
+  "aya_tea": "modern minimalist campus cafe terrace, close-up tall concrete wall with large window, neutral daylight, strong depth of field, heavily blurred background",
+  "shz_izakaya": "cozy student apartment living room, close-up tall plain cream wall, warm bedside lamp glow, strong depth of field, heavily blurred background",
+  "har_club": "literature club room, bookshelf and wooden desk background, close-up tall bookshelf wall, strong depth of field, heavily blurred background",
+  "mai_office": "professor office interior, organized bookstacks and academic desk background, close-up tall bookshelf wall, warm desk lamp glow, strong depth of field, heavily blurred background"
+}

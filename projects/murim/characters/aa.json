@@ -1,0 +1,16 @@
+{
+  "prefix": "aa",
+  "name": "백설아 (화산 대사저 / 청아한 매화검수)",
+  "gender": "female",
+  "faction": "righteous_mount_hua",
+  "appearance": {
+    "face_and_hair": "pure long jet-black hair tied in high elegant ponytail with plum blossom jade hairpin, clear crystal obsidian eyes, refined cool beauty, pale porcelain skin",
+    "physique": "slender yet toned athletic figure, elegant collarbone, medium-large perk breasts, graceful swordsman posture",
+    "outfit": "white and plum-blossom pink silk martial arts hanfu robes, silver embroidered sword belt, black leather bracers, flowing hemline"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Baek Seol-ah, righteous Mount Hua senior swordswoman, high ponytail jet-black sleek hair tied with jade hairpin, crystal sharp obsidian eyes, cool beauty, slender athletic body, medium perk breasts, wearing white and pale plum-blossom silk oriental martial arts hanfu robes, silver sword belt, leather bracers, ancient oriental wuxia atmosphere",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, modern clothes, sneakers, western fantasy armor, glasses, neon colors, deformed fingers",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, baek seol-ah, mount hua swordswoman, jet black high ponytail hair, jade hairpin, obsidian eyes, cool beauty, slender athletic body, medium breasts, white and plum blossom martial arts robes, silver sword belt, leather bracers, oriental wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, modern clothes, jeans, t-shirt, glasses, blonde hair",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, baek seol-ah, jet black high ponytail hair, jade hairpin, obsidian eyes, slender athletic body, pale porcelain skin, medium perk breasts, narrow waist, toned belly"
+}

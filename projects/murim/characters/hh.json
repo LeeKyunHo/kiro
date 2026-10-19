@@ -1,0 +1,16 @@
+{
+  "prefix": "hh",
+  "name": "미아 (묘족 영물 수호 무녀 / 신비로운 주술 얀데레)",
+  "gender": "female",
+  "faction": "nanman_miao_shaman",
+  "appearance": {
+    "face_and_hair": "long straight deep indigo-violet hair reaching hips, elaborate Miao silver butterfly headdress with chiming bells, mysterious glowing amethyst eyes with swirl pattern, pale ethereal skin",
+    "physique": "petite slender delicate body, surprisingly full round breasts, mystical alluring posture",
+    "outfit": "deep indigo batik dyed traditional Miao pleated tribal dress, intricate jingling silver pectoral torque necklace, silver bangles on wrists and ankles, delicate purple veil"
+  },
+  "flux_positive": "1girl, solo, masterpiece, best quality, ultra-detailed, Mia, Miao shamaness of poisonous spirits, long straight indigo-violet hair, ornate Miao traditional silver crown with dangling bells, mysterious glowing amethyst eyes, pale ethereal fair skin, slender delicate figure with full breasts, wearing traditional indigo dyed batik Miao embroidered tribal dress, heavy chiming silver collar jewelry, mystical purple glowing butterflies around, eerie sacred oriental jungle wuxia vibe",
+  "flux_negative": "worst quality, low quality, bad anatomy, bad hands, modern clothes, sneakers, western fantasy dress, plain clothing",
+  "sdxl_positive": "masterpiece, best quality, absurdres, 1girl, solo, mia, indigo violet long hair, miao silver crown bells, glowing amethyst eyes, pale skin, delicate body with full breasts, traditional indigo miao tribal dress, ornate silver necklace, spiritual wuxia",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, deformed, modern clothes",
+  "sdxl_nude_positive": "masterpiece, best quality, absurdres, 1girl, solo, mia, long indigo hair, silver hair ornaments, glowing amethyst eyes, pale porcelain skin, delicate slender body, full round perk breasts, narrow waist, silver ankle bells"
+}

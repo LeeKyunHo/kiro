@@ -1,0 +1,16 @@
+{
+  "prefix": "sample",
+  "name": "샘플 캐릭터",
+  "gender": "female",
+  "default_mode": "flux",
+  "appearance": {
+    "face_and_hair": "A captivating young woman with dark chestnut brown hair tied into a neat ponytail with an amber hair clip, luminous warm amber eyes, refined facial features, gentle healthy skin tone",
+    "physique": "slender waist, soft feminine curves, graceful posture",
+    "outfit": "a pristine fitted white blouse under a beige tailored jacket, paired with a matching pleated short skirt"
+  },
+  "lora": {
+    "name": null,
+    "weight": 0.8
+  },
+  "style_keywords": "cinematic anime digital artwork, subtle depth of field, exquisite fabric textures, masterpiece quality, 8k resolution"
+}

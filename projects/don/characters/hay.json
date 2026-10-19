@@ -1,0 +1,13 @@
+{
+  "prefix": "hay",
+  "name": "하율",
+  "gender": "female",
+  "appearance": {
+    "face_and_hair": "midnight blue black waist-length hair styled into elegant half-up crown braid with long straight hair flowing down, neat blunt bangs, delicate sidelocks, dark eyes, beauty mark under left eye",
+    "physique": "slender graceful figure with large breasts straining against fitted blazer, narrow waist, slender long legs, refined posture",
+    "outfit": "fitted navy blue blazer straining across large bust, white collared shirt underneath with visible button strain, pencil skirt"
+  },
+  "sdxl_positive": "masterpiece, best quality, newest, absurdres, aesthetic illustration, delicate anime coloring, soft shaded skin, finely detailed beautiful eyes BREAK 1girl, solo, 20yo, slender graceful figure, ((large breasts, huge breasts:1.3)), narrow waist, slender long legs, refined posture, ((midnight blue hair, dark blue black hair:1.35)), ((half-up crown braid:1.35)), ((long straight hair flowing down:1.3)), (neat blunt bangs, delicate sidelocks framing face:1.2), (dark eyes:1.2), (single beauty mark directly under left eye:1.25), ((fitted navy blue blazer:1.35)), ((blazer straining across bust, tight blazer:1.3)), ((white collared shirt underneath:1.3)), ((visible button strain on shirt:1.25)), ((buttons pulling taut:1.2)), ((pencil skirt:1.2)), fair skin with healthy complexion",
+  "sdxl_negative": "worst quality, low quality, bad anatomy, bad proportions, bad hands, extra fingers, missing fingers, mutated hands, extra limbs, deformed, jpeg artifacts, watermark, signature, text, (2boys:1.5), (multiple boys:1.5), (multiple men:1.5), (two men:1.5), 1boy, male, masculine, beard, mustache, facial hair, photorealistic, realistic, 3d, render, cgi, flat color, thick lineart, paint, body paint, stains, smudge, colored skin, (multiple views:1.5), (comic:1.5), (panel layout:1.4), (speech bubble:1.4), (text box:1.3), (split screen:1.4), (border:1.5), (frame:1.5), (ornate border:1.5), (decorative frame:1.5), monochrome, greyscale, ((pink hair, purple hair, red hair, blonde hair, brown hair, silver hair, white hair, green hair, colored hair:1.5)), ((loose blazer, oversized blazer:1.5)), ((double bun, two buns, twin buns, odango, twintails, twin braids, pigtails, multiple hair buns:1.5)), ((hair bun on top of head, high hair bun, bun on crown:1.5)), ((multiple beauty marks, beauty marks on neck, beauty mark on chin, beauty mark on cheek:1.5)), short hair, bob cut, pants, jeans, small breasts, flat chest",
+  "ref_weight": 0.5
+}
