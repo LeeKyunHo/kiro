@@ -202,8 +202,15 @@ def print_warnings(db: PoseDatabase) -> None:
     print()
 
 
-def resolve_profile(db: PoseDatabase, requested: str | None) -> Profile:
-    """기본 프로필(FALLBACK_PROFILE)을 반환한다."""
+def resolve_profile(
+    db: PoseDatabase | None = None, requested: str | None = None
+) -> Profile:
+    """내장 기본 프로필(FALLBACK_PROFILE)을 반환한다.
+
+    V2 파이프라인에서는 포즈 DB 내 프로필 섹션을 제거하고 캐릭터별 JSON
+    (`positive`/`negative`) 또는 공통 기본 프롬프트(`POS_BASE`/`COMMON_NEG`)를
+    사용하므로, `db` 및 `requested` 인자는 기존 호출부 호환성을 위해서만 유지한다.
+    """
     return Profile(FALLBACK_PROFILE, POS_BASE, COMMON_NEG)
 
 

@@ -450,11 +450,11 @@ def run_batch(
                     try:
                         png_bytes = generate_image(payload)
                     except requests.exceptions.HTTPError as e:
-                        if e.response.status_code in (422, 500):
+                        if e.response is not None and e.response.status_code in (422, 500):
                             print(f"\n[WARN] 확장 기능 충돌 감지 (HTTP {e.response.status_code}). 순정 모드로 재시도...")
                             fallback_payload = build_txt2img_payload(
                                 prompt=full_prompt,
-                                negative_prompt=negative_prompt,
+                                negative_prompt=actual_negative,
                                 sampler_name=actual_sampler,
                                 width=actual_width,
                                 height=actual_height,
@@ -484,7 +484,7 @@ def run_batch(
                                 is_offscreen_partner=is_offscreen_partner,
                                 is_kiss_scene=is_kiss,
                                 section=entry.section,
-                                pose_code=code,
+                                prompt=pose_prompt,
                             )
                             if not passed:
                                 if attempt < max_retries:
@@ -826,7 +826,7 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
 
     naming_mode = getattr(args, "naming", "code")
     print(build_genit_block(prefix, existing, db, width, badge, naming=naming_mode))
-    return 1 if result.aborted else 0
+    return 1 if (result.aborted or result.failed) else 0
 
 
 def run_all_chars(

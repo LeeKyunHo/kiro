@@ -26,6 +26,15 @@ MEMORY_URL = f"{API_HOST}/sdapi/v1/memory"
 MEMORY_TIMEOUT = 5
 GIB = 1024 ** 3
 
+
+def get_api_url(endpoint: str = "/sdapi/v1/txt2img", host: str | None = None) -> str:
+    """현재 API_HOST(또는 지정 host) 기준으로 WebUI API URL 을 동적으로 조립한다."""
+    base = (host or API_HOST or DEFAULT_HOST).rstrip("/")
+    if not endpoint:
+        return base
+    path = endpoint if endpoint.startswith("/") else f"/{endpoint}"
+    return f"{base}{path}"
+
 SAMPLER_CANDIDATES = ( "DPM++ 2M Karras", "DPM++ 2M SDE Karras", "DPM++ 2M","Euler", "Euler a")
 
 SAMPLERS_TIMEOUT = 5

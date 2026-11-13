@@ -24,26 +24,26 @@
 
 ## 데이터 모델 및 상수 [노트북]
 
-- [ ] 2. 상수 및 데이터 모델 추가
-  - `REFERENCES_DIRNAME`, `REFERENCE_EXTENSIONS` (`.png`/`.jpg`/`.jpeg`/`.webp`)
-  - `REF_WEIGHT_DEFAULT=0.7`, `REF_WEIGHT_MIN=0.0`, `REF_WEIGHT_MAX=2.0`
-  - `CN_MODULES_URL`, `CN_MODELS_URL`, `INTERROGATE_URL`
-  - `IP_ADAPTER_MODEL_PATTERNS`, `IP_ADAPTER_MODULE_PATTERNS`
-  - `INTERROGATORS`, `INTERROGATE_DEFAULT`, `GENDER_TAGS`
-  - `ReferenceImage`, `ControlNetSpec`, `InterrogateResult` dataclass
+- [ ] 2. 상수 및 데이터 모델 추가 (참조 이미지·ControlNet 구현 완료, Interrogator 미구현)
+  - [x] `REFERENCES_DIRNAME`, `REFERENCE_EXTENSIONS` (`.png`/`.jpg`/`.jpeg`/`.webp`)
+  - [x] `REF_WEIGHT_DEFAULT=0.7`, `REF_WEIGHT_MIN=0.0`, `REF_WEIGHT_MAX=2.0`
+  - [x] `CN_MODULES_URL`, `CN_MODELS_URL` (`[ ] INTERROGATE_URL` 미구현)
+  - [x] `IP_ADAPTER_MODEL_PATTERNS`, `IP_ADAPTER_MODULE_PATTERNS`
+  - [ ] `INTERROGATORS`, `INTERROGATE_DEFAULT`, `GENDER_TAGS`
+  - [x] `ReferenceImage`, `ControlNetSpec` (`[ ] InterrogateResult` 미구현)
   - `contextlib.contextmanager`, `tempfile`, `shutil` import 추가
   - _Requirements: R1, R2, R3, R4_
 
 ## 참조 이미지 해석 [노트북]
 
-- [ ] 3. `load_reference()` 구현
+- [x] 3. `load_reference()` 구현
   - 바이트 읽기 실패 → `ConfigError`
   - `Image.verify()` 로 헤더 검증 후 **재오픈**하여 크기 취득
     (verify 후 객체 재사용 불가한 Pillow 특성)
   - 원본 바이트를 그대로 base64 인코딩 (Pillow 재인코딩 금지)
   - _Requirements: R1.6, R1.7, R1.8_
 
-- [ ] 4. `resolve_reference_image()` 구현
+- [x] 4. `resolve_reference_image()` 구현
   - `--ref_image` 명시 시: 부재/디렉터리 → `ConfigError`
   - 자동 탐색: `references/{prefix}{ext}` 를 우선순위대로
   - 다중 확장자 발견 시 첫 번째 채택 + 무시 목록 경고
@@ -51,31 +51,31 @@
   - `--no_ref` 지정 시 즉시 `None`
   - _Requirements: R1.1~R1.5, R6.3_
 
-- [ ] 5. `validate_ref_weight()` 구현
+- [x] 5. `validate_ref_weight()` 구현
   - 0.0~2.0 범위 검증, 벗어나면 `ConfigError` + 실무 범위 힌트
   - _Requirements: R2.6, R2.7_
 
 ## 페이로드 조립 (순수 함수) [노트북]
 
-- [ ] 6. `generate_image()` 분리
+- [x] 6. `generate_image()` 분리
   - `build_txt2img_payload()` 신규 — 조립만, 네트워크 없음
   - `generate_image(payload)` 로 시그니처 변경 — 전송만
   - 전송되는 페이로드 내용은 기존과 완전히 동일해야 함 (회귀 금지)
   - _Requirements: R2.5, R6.4_
 
-- [ ] 7. ControlNet 유닛 조립 및 주입
+- [x] 7. ControlNet 유닛 조립 및 주입
   - `build_controlnet_unit()` — `enabled`/`input_image`/`module`/`model`/
     `weight`/`resize_mode`/`control_mode`/`pixel_perfect`
   - `inject_controlnet()` — **원본 dict 를 변경하지 않고 새 dict 반환**
   - 참조 또는 spec 이 없으면 호출하지 않음 (빈 `alwayson_scripts` 금지)
   - _Requirements: R2.1~R2.4_
 
-- [ ] 8. `match_model_name()` 순수 함수 구현
+- [x] 8. `match_model_name()` 순수 함수 구현
   - 부분 문자열·대소문자 무시 매칭, 패턴 순서가 우선순위
   - 해시 포함 모델명(`ip-adapter_xl [4209e9f7]`)에서 동작해야 함
   - _Requirements: R3.1, R3.2_
 
-- [ ] 9. `resolve_controlnet_spec()` 구현 (HTTP 껍데기)
+- [x] 9. `resolve_controlnet_spec()` 구현 (HTTP 껍데기)
   - `--cn_module` + `--cn_model` 둘 다 있으면 조회 생략, `source="manual"`
   - 조회 실패 → 경고 후 `None` (배치는 계속)
   - 매칭 실패 → **조회된 모듈·모델 목록 전체를 출력** 후 `None`
@@ -98,32 +98,32 @@
 
 ## CLI 및 실행 모드 [노트북]
 
-- [ ] 11. 플래그 추가 및 배선
-  - `--ref_image`, `--ref_weight`, `--no_ref`, `--cn_module`, `--cn_model`,
-    `--from_image`, `--interrogator`
+- [ ] 11. 플래그 추가 및 배선 (참조 플래그·배선 완료, `--from_image`/`--interrogator` 미구현)
+  - [x] `--ref_image`, `--ref_weight`, `--no_ref`, `--cn_module`, `--cn_model`
+  - [ ] `--from_image`, `--interrogator`
   - 모드 우선순위: `--test` > `--from_image` > `--dry-run` > `--mock` > 기본
   - `--from_image` 시 필수 인자 검증 면제
-  - `run_batch()` 에 `reference`/`cn_spec`/`ref_weight` 전달
-  - `make_dummy_png()` 에 `reference` 전달 → `MOCK +REF` 표시
-  - `execute()` 에 참조 해석 단계 추가 및 로그 출력
+  - [x] `run_batch()` 에 `reference`/`cn_spec`/`ref_weight` 전달
+  - [x] `make_dummy_png()` 에 `reference` 전달 → `MOCK +REF` 표시
+  - [x] `execute()` 에 참조 해석 단계 추가 및 로그 출력
     - 기본/mock: `[REF] mika.png (768x1024) weight 0.7`
     - dry-run: 경로와 weight 만 (인코딩 생략)
   - _Requirements: R5.1~R5.3_
 
 ## 자체 검증 [노트북]
 
-- [ ] 12. `--test` 항목 T21~T30 추가
-  - `_temp_reference()` contextmanager — Pillow 로 임시 이미지 생성/정리
-  - T21 확장자 우선순위 (`.png` 채택 확인)
-  - T22 참조 부재 시 `None`, 예외 없음
-  - T23 base64 왕복 (디코딩 후 Pillow 로 열어 크기 일치)
-  - T24 유닛 필수 키 7개 및 `enabled is True`
-  - T25 참조 없을 때 `alwayson_scripts` 미주입
-  - T26 주입 위치 및 **원본 페이로드 불변성**
-  - T27 weight 경계값 (`-0.1`/`2.1` 거부, `0.0`/`0.7`/`2.0` 허용)
-  - T28 interrogate 페이로드 구조 및 기본 모델명
-  - T29 성별 태그 필터 (유지/제거 분리)
-  - T30 해시 포함 모델명 부분 매칭
+- [ ] 12. `--test` 항목 T21~T30 추가 (T21~T27·T30 완료, T28~T29 미구현)
+  - [x] `_temp_reference()` contextmanager — Pillow 로 임시 이미지 생성/정리
+  - [x] T21 확장자 우선순위 (`.png` 채택 확인)
+  - [x] T22 참조 부재 시 `None`, 예외 없음
+  - [x] T23 base64 왕복 (디코딩 후 Pillow 로 열어 크기 일치)
+  - [x] T24 유닛 필수 키 및 `enabled is True`
+  - [x] T25 참조 없을 때 `alwayson_scripts` 미주입
+  - [x] T26 주입 위치 및 **원본 페이로드 불변성**
+  - [x] T27 weight 경계값 (`-0.1`/`2.1` 거부, `0.0`/`0.7`/`2.0` 허용)
+  - [ ] T28 interrogate 페이로드 구조 및 기본 모델명
+  - [ ] T29 성별 태그 필터 (유지/제거 분리)
+  - [x] T30 해시 포함 모델명 부분 매칭
   - 네트워크 요청 없음, 임시 파일 정리 확인
   - _Requirements: R5.4~R5.6_
 

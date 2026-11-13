@@ -1,5 +1,5 @@
 """
-plepa_engine.qa_validator
+generator.qa_validator
 생성된 일러스트 이미지의 품질 및 구도 불량(인원수 오류, 머리 복제, 손 증식, 모브 얼굴 노출)을
 전문 애니메이션 딥러닝 감지기(imgutils.detect)로 자동 판정하는 Auto-QC 모듈.
 """
@@ -57,10 +57,19 @@ def validate_generated_image(
     section: Optional[str] = None,
     conf_threshold: float = 0.55,
     prompt: Optional[str] = None,
-    **kwargs: Any,
 ) -> Tuple[bool, str, Dict[str, Any]]:
     """
     생성된 이미지를 정밀 분석하여 불량(Reject) 여부와 사유를 판정합니다.
+
+    Args:
+        image: 검사할 이미지(Path, 파일 경로 문자열 또는 PIL Image).
+        is_solo_scene: 1인 단독 씬 여부.
+        is_two_person: 2인 상호작용 씬 여부.
+        is_offscreen_partner: 파트너가 화면 밖에 위치하는 POV 씬 여부.
+        is_kiss_scene: 키스 씬 여부 (호환성 유지용 메타데이터).
+        section: 포즈 DB 섹션명 (호환성 유지용 메타데이터).
+        conf_threshold: 사람/머리 감지기 신뢰도 임계치.
+        prompt: POV 손 개입 키워드 판별에 사용하는 포즈 프롬프트 문자열.
 
     Returns:
         (is_valid, reject_reason, metrics)

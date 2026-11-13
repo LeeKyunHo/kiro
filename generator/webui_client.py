@@ -7,9 +7,12 @@ from __future__ import annotations
 
 import base64
 import colorsys
+import copy
 import io
 import os
 import sys
+import time
+import urllib.error
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
@@ -18,12 +21,10 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 
 from generator.config import (
-    API_URL,
     CFG_SCALE,
     GIB,
     IMAGE_SIZE,
     MEMORY_TIMEOUT,
-    MEMORY_URL,
     MOCK_FONT_BIG_SIZE,
     MOCK_FONT_SMALL_SIZE,
     MOCK_GAP_BIG,
@@ -36,7 +37,6 @@ from generator.config import (
     PARTIAL_SUFFIX,
     SAMPLER_CANDIDATES,
     SAMPLERS_TIMEOUT,
-    SAMPLERS_URL,
     SEPARATOR,
     STEPS,
     TXT2IMG_TIMEOUT,
@@ -44,6 +44,7 @@ from generator.config import (
     WEBP_QUALITY,
     ConfigError,
     FontLike,
+    get_api_url,
 )
 from generator.models import PoseEntry, ReferenceImage
 
@@ -54,14 +55,15 @@ def get_session() -> requests.Session:
     return requests.Session()
 
 
-def resolve_sampler() -> str:
+def resolve_sampler(host: str | None = None) -> str:
     """WebUI가 지원하는 샘플러 목록과 대조해 사용 가능한 첫 후보를 반환한다."""
     try:
-        response = get_session().get(SAMPLERS_URL, timeout=SAMPLERS_TIMEOUT)
+        url = get_api_url("/sdapi/v1/samplers", host=host)
+        response = get_session().get(url, timeout=SAMPLERS_TIMEOUT)
         response.raise_for_status()
         available = {item["name"] for item in response.json()}
-    except Exception:
-        print("[SAMPLER] 목록 조회 실패 - 기본값 사용")
+    except Exception as e:
+        print(f"[SAMPLER] 목록 조회 실패 ({e}) - 기본값 사용")
         return SAMPLER_CANDIDATES[0]
 
     for candidate in SAMPLER_CANDIDATES:
@@ -73,11 +75,11 @@ def resolve_sampler() -> str:
     return SAMPLER_CANDIDATES[0]
 
 
-def interrupt_forge() -> bool:
+def interrupt_forge(host: str | None = None) -> bool:
     """WebUI Forge 백엔드에 즉시 생성 중단(Interrupt) 신호를 전송한다."""
     try:
-        from generator.config import INTERRUPT_URL
-        res = get_session().post(INTERRUPT_URL, timeout=3.0)
+        url = get_api_url("/sdapi/v1/interrupt", host=host)
+        res = get_session().post(url, timeout=3.0)
         return res.status_code == 200
     except Exception as e:
         print(f"[WARN] Forge 중단 신호 전송 실패: {e}")
@@ -204,13 +206,18 @@ def inject_alwayson_scripts(
     freeu_s2: float = 0.2,
     enable_adetailer: bool = False,
 ) -> dict[str, Any]:
-    """페이로드의 alwayson_scripts 에 Forge 기능 + ControlNet 유닛 주입 (원본 불변)."""
+    """페이로드의 alwayson_scripts 에 Forge 기능 + ControlNet 유닛 주입 (기존 스크립트 보존, 원본 불변)."""
     merged = dict(payload)
-    scripts = _build_forge_scripts(
+    existing_scripts = payload.get("alwayson_scripts")
+    scripts: dict[str, Any] = (
+        copy.deepcopy(existing_scripts) if isinstance(existing_scripts, dict) else {}
+    )
+    forge_scripts = _build_forge_scripts(
         enable_freeu, freeu_b1, freeu_b2, freeu_s1, freeu_s2, enable_adetailer
     )
+    scripts.update(forge_scripts)
     if controlnet_units:
-        scripts["controlnet"] = {"args": controlnet_units}
+        scripts["controlnet"] = {"args": list(controlnet_units)}
     merged["alwayson_scripts"] = scripts
     return merged
 
@@ -250,22 +257,64 @@ def extract_vram_peak(payload: dict[str, Any]) -> tuple[float, float] | None:
     return peak / GIB, total / GIB
 
 
-def fetch_vram_peak() -> tuple[float, float] | None:
+def fetch_vram_peak(host: str | None = None) -> tuple[float, float] | None:
     """VRAM 피크를 조회한다. 실패하면 None."""
     try:
-        response = get_session().get(MEMORY_URL, timeout=MEMORY_TIMEOUT)
+        url = get_api_url("/sdapi/v1/memory", host=host)
+        response = get_session().get(url, timeout=MEMORY_TIMEOUT)
         response.raise_for_status()
         return extract_vram_peak(response.json())
     except Exception:
         return None
 
 
-def generate_image(payload: dict[str, Any]) -> bytes:
-    """조립된 페이로드를 전송해 PNG 바이트를 받는다."""
-    response = get_session().post(API_URL, json=payload, timeout=TXT2IMG_TIMEOUT)
-    response.raise_for_status()
+def generate_image(
+    payload: dict[str, Any],
+    host: str | None = None,
+    max_retries: int = 2,
+) -> bytes:
+    """조립된 페이로드를 전송해 PNG 바이트를 받는다 (일시적 네트워크 오류 백오프 재시도 지원)."""
+    url = get_api_url("/sdapi/v1/txt2img", host=host)
+    transient_errors = (
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+        urllib.error.URLError,
+        TimeoutError,
+        ConnectionError,
+    )
 
-    images = response.json().get("images") or []
+    response: requests.Response | None = None
+    attempts = max(0, max_retries) + 1
+    for attempt in range(attempts):
+        try:
+            response = get_session().post(url, json=payload, timeout=TXT2IMG_TIMEOUT)
+            response.raise_for_status()
+            break
+        except transient_errors as e:
+            if attempt >= attempts - 1:
+                raise
+            wait_sec = 0.5 * (attempt + 1)
+            print(
+                f"\n[WARN] WebUI 통신 일시 오류 ({e.__class__.__name__}), "
+                f"{wait_sec:.1f}초 후 재시도 ({attempt + 1}/{max_retries})..."
+            )
+            time.sleep(wait_sec)
+
+    assert response is not None
+    try:
+        data = response.json()
+    except ValueError as e:
+        snippet = (response.text or "").strip()[:200]
+        raise RuntimeError(
+            f"WebUI API 응답이 유효한 JSON이 아닙니다 ({e}): {snippet!r}"
+        ) from e
+
+    if not isinstance(data, dict):
+        raise RuntimeError(
+            f"WebUI API 응답 형식이 JSON 객체가 아닙니다: {type(data).__name__}"
+        )
+
+    images = data.get("images") or []
     if not images:
         raise RuntimeError("API 응답에 images 가 없습니다")
 
