@@ -1,7 +1,7 @@
 """
-plepa_engine.censor
+generator.censor
 2D 애니메이션 일러스트 전용 자동 성기 검열(Censorship) 모듈.
-- 남성기+고환 외곽선 블랙 실루엣 (Black Silhouette via MobileSAM)
+- 화이트/블랙 실루엣 (White / Black Silhouette via MobileSAM)
 - 와이드 솔리드 캡슐 바 (Wide Solid Bar)
 - 슬림 사선 블랙 바 (Thin Black Bar)
 - 그림자 음영 박스 (Shadow Box)
@@ -98,8 +98,8 @@ def apply_silhouette(
                         crop_p[p_box[1]:p_box[3], p_box[0]:p_box[2]] = 255
                         pm = cv2.bitwise_and(pm, crop_p)
                         protection_mask = np.maximum(protection_mask, pm)
-                except Exception:
-                    pass
+                except Exception as p_err:
+                    logger.debug(f"[Censor] 보호 영역 세그멘테이션 예외 (무시): {p_err}")
     except Exception as pe:
         logger.debug(f"[Censor] 보호 영역 검출 생략: {pe}")
 
@@ -177,8 +177,8 @@ def apply_silhouette(
                     fg_mask = np.where((grab_mask == 2) | (grab_mask == 0), 0, 255).astype(np.uint8)
                     final_mask[ey1:ey2, ex1:ex2] = np.maximum(final_mask[ey1:ey2, ex1:ex2], fg_mask)
                     mask_obtained = True
-            except Exception:
-                pass
+            except Exception as grab_err:
+                logger.warning(f"[Censor] GrabCut 전경 마스크 추출 실패, 사각형 폴백 적용: {grab_err}")
 
         # 3. 최후 폴백: 둥근 직사각형
         if not mask_obtained:
@@ -423,7 +423,7 @@ def get_pose_anchor_box(
 
 def censor_image(
     image: Union[Image.Image, Path, str],
-    style: str = "silhouette",
+    style: str = "white_silhouette",
     targets: Sequence[str] = ("penis", "pussy"),
     min_confidence: float = 0.20,
     pose_code: Optional[Union[str, int]] = None,
@@ -540,7 +540,7 @@ def censor_file(
 ) -> Optional[Path]:
     """
     파일 경로를 입력받아 검열본을 생성하고 저장합니다.
-    - dst_path 미지정 시 'stem_censored.webp'로 자동 저장.
+    - dst_path 미지정 시 'stem_censored{원본확장자}'로 자동 저장.
     - backup_dir 지정 시 감지 성공 여부와 무관하게 원본 파일을 해당 폴더로 안전하게 선제 복사 백업.
     - 감지된 검열 대상이 없는 경우 검열본을 생성하지 않고 None 반환.
     """
@@ -555,7 +555,14 @@ def censor_file(
         if not b_path.exists():
             shutil.copy2(src, b_path)
 
-    img = Image.open(src).convert("RGB")
+    with Image.open(src) as opened:
+        orig_alpha = (
+            opened.convert("RGBA").getchannel("A")
+            if opened.mode in ("RGBA", "LA", "PA") or (opened.mode == "P" and "transparency" in opened.info)
+            else None
+        )
+        img = opened.convert("RGB")
+
     censored_img, count = censor_image(
         img,
         style=style,
@@ -574,7 +581,16 @@ def censor_file(
         target_dst = Path(dst_path)
 
     target_dst.parent.mkdir(parents=True, exist_ok=True)
-    censored_img.save(target_dst, "WEBP", quality=quality)
+    ext = target_dst.suffix.lower()
+    if ext == ".png":
+        save_img = censored_img.convert("RGBA") if orig_alpha is not None else censored_img
+        if orig_alpha is not None:
+            save_img.putalpha(orig_alpha)
+        save_img.save(target_dst, "PNG", optimize=True)
+    elif ext in (".jpg", ".jpeg"):
+        censored_img.convert("RGB").save(target_dst, "JPEG", quality=quality, subsampling=0)
+    else:
+        censored_img.convert("RGB").save(target_dst, "WEBP", quality=quality)
     return target_dst
 
 
@@ -610,7 +626,7 @@ def run_batch_censor(
     recursive: bool = True,
     targets: Sequence[str] = ("penis", "pussy"),
     min_confidence: float = 0.15,
-    enable_anchor_fallback: bool = True,
+    enable_anchor_fallback: bool = False,
 ) -> int:
     """폴더 내의 모든 일러스트 에셋을 스캔하여 일괄 검열을 수행합니다."""
     base_dir = Path(folder_path).resolve()

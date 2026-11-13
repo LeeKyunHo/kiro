@@ -17,13 +17,13 @@ import requests
 from nicegui import app, run, ui
 
 from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
-from generator.config import API_HOST, API_URL, REFERENCES_DIRNAME
+from generator.config import API_HOST, API_URL, REF_WEIGHT_DEFAULT, REFERENCES_DIRNAME
 from generator.models import CharacterConfig, PoseDatabase, RosterPaths
 from generator.pose_db import load_pose_db, looks_like_code_expr, parse_codes_expr, resolve_targets
 from generator.precheck import run_precheck
 from generator.reference import find_reference_candidates
 from generator.reporter import build_genit_block, code_width, open_in_explorer
-from generator.roster import RosterPathManager, apply_character_to_args, load_character
+from generator.roster import RosterPathManager, _resolve_default_mode, apply_character_to_args, load_character
 from generator.runner import execute
 from generator.webui_client import interrupt_forge
 
@@ -37,6 +37,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "use_reference": True,
     "naming": "hybrid",
     "overwrite": True,
+    "auto_qc": False,
+    "max_retries": 3,
+    "censor": False,
+    "censor_style": "white_silhouette",
 }
 
 
@@ -343,6 +347,8 @@ def build_gui(base_dir: Path):
                 with ui.column().classes("w-[48%] gap-1"):
                     overwrite_check = ui.checkbox("기존 파일 덮어쓰기", value=settings.get("overwrite", False)).classes("text-xs")
                     mock_check = ui.checkbox("모의 생성 (WebUI 통신 없음)", value=False).classes("text-xs")
+                    auto_qc_check = ui.checkbox("Auto-QC 자동 검수/재시도", value=settings.get("auto_qc", False)).classes("text-xs")
+                    censor_check = ui.checkbox("성인 씬 자동 검열", value=settings.get("censor", False)).classes("text-xs")
 
             with ui.row().classes("w-full justify-end mt-2"):
                 save_cfg_btn = ui.button(
@@ -394,9 +400,8 @@ def build_gui(base_dir: Path):
                     copy_btn = ui.button("📋 클립보드 복사", on_click=lambda: copy_markdown()).props("outline dense").classes("text-xs")
                     open_btn = ui.button("📁 결과 폴더 열기", on_click=lambda: open_folder()).props("outline dense").classes("text-xs")
 
-    # ── 액션 핸들러 ──
-    def do_save_settings():
-        new_data = {
+    def _collect_current_settings() -> dict[str, Any]:
+        return {
             "steps": int(steps_input.value or 25),
             "sampler": str(sampler_select.value),
             "scheduler": str(scheduler_select.value),
@@ -404,8 +409,15 @@ def build_gui(base_dir: Path):
             "use_reference": bool(ref_switch.value),
             "naming": str(naming_select.value),
             "overwrite": bool(overwrite_check.value),
+            "auto_qc": bool(auto_qc_check.value),
+            "max_retries": int(settings.get("max_retries", 3)),
+            "censor": bool(censor_check.value),
+            "censor_style": str(settings.get("censor_style", "white_silhouette")),
         }
-        save_gui_settings(base_dir, new_data)
+
+    # ── 액션 핸들러 ──
+    def do_save_settings():
+        save_gui_settings(base_dir, _collect_current_settings())
         ui.notify("생성 파라미터가 gui_settings.json에 성공적으로 저장되었습니다!", color="emerald")
 
     async def do_precheck():
@@ -465,24 +477,14 @@ def build_gui(base_dir: Path):
         # 최신 pose_database.json 및 캐릭터 JSON 리로드, 현재 파라미터 자동 저장
         state.db = load_pose_db(state.base_dir, state.roster.events_file)
         state.load_selected_char()
-        user_steps = int(steps_input.value or 25)
-        user_sampler = str(sampler_select.value)
-        user_scheduler = str(scheduler_select.value)
-        user_cfg = float(cfg_input.value or 6.0)
-        use_ref = bool(ref_switch.value)
+        current_cfg = _collect_current_settings()
+        user_steps = current_cfg["steps"]
+        user_sampler = current_cfg["sampler"]
+        user_scheduler = current_cfg["scheduler"]
+        user_cfg = current_cfg["cfg_scale"]
+        use_ref = current_cfg["use_reference"]
 
-        save_gui_settings(
-            base_dir,
-            {
-                "steps": user_steps,
-                "sampler": user_sampler,
-                "scheduler": user_scheduler,
-                "cfg_scale": user_cfg,
-                "use_reference": use_ref,
-                "naming": str(naming_select.value),
-                "overwrite": bool(overwrite_check.value),
-            },
-        )
+        save_gui_settings(base_dir, current_cfg)
 
         was_running = state.is_running
         state.active_run_id += 1
@@ -518,16 +520,65 @@ def build_gui(base_dir: Path):
         def _expand_all_target_mode(target_mode: str, codes_arg: str | None, char_gender: str) -> str:
             if target_mode == "all" and not codes_arg:
                 is_otk = str(char_gender).lower() in ("otokonoko", "femboy")
-                base_secs = (
-                    ["emotions", "poses", "genit_actions", "scenes_otokonoko"]
-                    if is_otk
-                    else ["emotions", "poses", "genit_actions", "h_scenes"]
-                )
-                active_secs = [s for s in base_secs if s in state.db.sections]
-                builtin_sections = {"emotions", "poses", "genit_actions", "h_scenes", "scenes_otokonoko"}
-                custom_sections = [sec for sec in state.db.sections if sec not in builtin_sections]
-                return ",".join(active_secs + custom_sections)
+                return _resolve_default_mode("otokonoko" if is_otk else "female", state.db)
             return target_mode
+
+        def _build_runner_args(
+            char_name: str,
+            cfg: CharacterConfig,
+            progress_cb,
+        ) -> argparse.Namespace:
+            """GUI 실행용 argparse.Namespace 조립 및 캐릭터 설정/옵션 일괄 반영."""
+            mode_val, codes_val = _resolve_char_mode_and_codes(expr, cfg.gender)
+            args = argparse.Namespace(
+                roster=state.current_roster_name,
+                char=char_name,
+                prefix=None,
+                char_prompt=None,
+                profile=None,
+                custom_neg="",
+                positive=None,
+                negative=None,
+                mode=mode_val,
+                codes=codes_val,
+                bg=None,
+                bg_preset="default",
+                ref_image=None,
+                ref_weight=REF_WEIGHT_DEFAULT,
+                no_ref=not use_ref,
+                cn_module=None,
+                cn_model=None,
+                dry_run=False,
+                mock=mock_check.value,
+                enable_freeu=False,
+                freeu_b1=1.1,
+                freeu_b2=1.2,
+                freeu_s1=0.9,
+                freeu_s2=0.2,
+                enable_adetailer=False,
+                enable_lightning=False,
+                lightning_steps=2,
+                lightning_cfg=1.0,
+                lightning_lora_name="sdxl_lightning_2step_lora",
+                steps=user_steps,
+                sampler=user_sampler,
+                scheduler=user_scheduler,
+                cfg_scale=user_cfg,
+                naming=naming_select.value,
+                overwrite=overwrite_check.value,
+                nude_positive=None,
+                gender=None,
+                outfits=None,
+                auto_qc=current_cfg["auto_qc"],
+                max_retries=current_cfg["max_retries"],
+                censor=current_cfg["censor"],
+                censor_style=current_cfg["censor_style"],
+                ckpt_profile=ckpt_select.value,
+                progress_callback=progress_cb,
+                is_cancelled=is_run_cancelled,
+            )
+            apply_character_to_args(cfg, args, state.db)
+            return args
 
         # ── 전체 캐릭터 순차 생성 (ALL) 분기 ──
         if state.is_all_chars():
@@ -574,50 +625,7 @@ def build_gui(base_dir: Path):
                         zoom_btn.classes(remove="hidden")
                         preview_placeholder.classes(add="hidden")
 
-                char_mode_val, char_codes_val = _resolve_char_mode_and_codes(expr, cfg.gender)
-                args = argparse.Namespace(
-                    roster=state.current_roster_name,
-                    char=char_name,
-                    prefix=cfg.prefix,
-                    char_prompt=cfg.char_prompt,
-                    profile=cfg.profile,
-                    custom_neg=cfg.custom_neg,
-                    positive=cfg.positive,
-                    negative=cfg.negative,
-                    mode=char_mode_val,
-                    codes=char_codes_val,
-                    bg=cfg.background,
-                    bg_preset="default",
-                    ref_image=None,
-                    ref_weight=cfg.ref_weight if cfg.ref_weight is not None else 0.7,
-                    no_ref=not use_ref,
-                    cn_module=None,
-                    cn_model=None,
-                    dry_run=False,
-                    mock=mock_check.value,
-                    enable_freeu=False,
-                    freeu_b1=1.1,
-                    freeu_b2=1.2,
-                    freeu_s1=0.9,
-                    freeu_s2=0.2,
-                    enable_adetailer=False,
-                    enable_lightning=False,
-                    lightning_steps=2,
-                    lightning_cfg=1.0,
-                    lightning_lora_name="sdxl_lightning_2step_lora",
-                    steps=user_steps,
-                    sampler=user_sampler,
-                    scheduler=user_scheduler,
-                    cfg_scale=user_cfg,
-                    naming=naming_select.value,
-                    overwrite=overwrite_check.value,
-                    nude_positive=cfg.nude_positive,
-                    gender=cfg.gender,
-                    outfits=cfg.outfits,
-                    ckpt_profile=ckpt_select.value,
-                    progress_callback=all_progress_cb,
-                    is_cancelled=is_run_cancelled,
-                )
+                args = _build_runner_args(char_name, cfg, all_progress_cb)
                 try:
                     exit_code = await run.io_bound(lambda _a=args: execute(_a, state.roster))
                 except Exception as e:
@@ -655,49 +663,10 @@ def build_gui(base_dir: Path):
         save_dir.mkdir(parents=True, exist_ok=True)
         state.ensure_static_mounted(state.char_cfg.prefix, save_dir)
 
-        single_mode_val, single_codes_val = _resolve_char_mode_and_codes(expr, state.char_cfg.gender)
-        args = argparse.Namespace(
-            roster=state.current_roster_name,
-            char=state.selected_char_name,
-            prefix=state.char_cfg.prefix,
-            char_prompt=state.char_cfg.char_prompt,
-            profile=state.char_cfg.profile,
-            custom_neg=state.char_cfg.custom_neg,
-            positive=state.char_cfg.positive,
-            negative=state.char_cfg.negative,
-            mode=single_mode_val,
-            codes=single_codes_val,
-            bg=state.char_cfg.background,
-            bg_preset="default",
-            ref_image=None,
-            ref_weight=state.char_cfg.ref_weight if state.char_cfg.ref_weight is not None else 0.7,
-            no_ref=not use_ref,
-            cn_module=None,
-            cn_model=None,
-            dry_run=False,
-            mock=mock_check.value,
-            enable_freeu=False,
-            freeu_b1=1.1,
-            freeu_b2=1.2,
-            freeu_s1=0.9,
-            freeu_s2=0.2,
-            enable_adetailer=False,
-            enable_lightning=False,
-            lightning_steps=2,
-            lightning_cfg=1.0,
-            lightning_lora_name="sdxl_lightning_2step_lora",
-            steps=user_steps,
-            sampler=user_sampler,
-            scheduler=user_scheduler,
-            cfg_scale=user_cfg,
-            naming=naming_select.value,
-            overwrite=overwrite_check.value,
-            nude_positive=state.char_cfg.nude_positive,
-            gender=state.char_cfg.gender,
-            outfits=state.char_cfg.outfits,
-            ckpt_profile=ckpt_select.value,
-            progress_callback=lambda c, l, p, cur, tot: (None if is_run_cancelled() else on_progress_update(c, l, p, cur, tot)),
-            is_cancelled=is_run_cancelled,
+        args = _build_runner_args(
+            state.selected_char_name,
+            state.char_cfg,
+            lambda c, l, p, cur, tot: (None if is_run_cancelled() else on_progress_update(c, l, p, cur, tot)),
         )
         try:
             exit_code = await run.io_bound(lambda _a=args: execute(_a, state.roster))
