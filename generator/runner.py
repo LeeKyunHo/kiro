@@ -13,7 +13,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence
 
 import requests
 
@@ -44,8 +44,13 @@ from generator.prompt import (
     validate_ref_weight,
 )
 from generator.reference import (
+    INTERROGATE_DEFAULT,
+    INTERROGATORS,
+    InterrogateResult,
     build_controlnet_unit,
+    filter_gender_tags,
     find_reference_candidates,
+    load_reference,
     resolve_controlnet_spec,
     resolve_reference_image,
 )
@@ -64,11 +69,74 @@ from generator.webui_client import (
     fetch_vram_peak,
     generate_image,
     inject_alwayson_scripts,
+    interrogate_image,
     interrupt_forge,
     make_dummy_png,
     resolve_sampler,
     save_as_webp,
 )
+
+
+def run_interrogate(
+    image_path: str | Path,
+    model: str = INTERROGATE_DEFAULT,
+    host: str | None = None,
+    session: Any | None = None,
+) -> int:
+    """단일 이미지에서 태그를 역추출해 성별 태그 필터링 결과와 실행 예시를 출력한다."""
+    if model not in INTERROGATORS:
+        raise ConfigError(
+            f"지원하지 않는 interrogator 모델입니다: '{model}'",
+            f"사용 가능: {', '.join(INTERROGATORS)}",
+        )
+
+    target = Path(image_path).expanduser()
+    if target.is_dir():
+        raise ConfigError(
+            f"--from_image 에 디렉터리가 지정되었습니다: {target}",
+            "이미지 파일 경로를 지정하세요.",
+        )
+    if not target.is_file():
+        raise ConfigError(
+            f"--from_image 이미지 파일을 찾을 수 없습니다: {target}",
+            "올바른 이미지 경로를 지정하세요.",
+        )
+
+    ref = load_reference(target)
+    try:
+        caption = interrogate_image(
+            ref.b64,
+            model=model,
+            host=host,
+            session=session,
+        )
+    except Exception as e:
+        print(f"[ERROR] WebUI 태그 역추출 실패 ({model}): {e}", file=sys.stderr)
+        print("        SD WebUI가 --api 옵션으로 실행 중인지 확인하세요.", file=sys.stderr)
+        return 1
+
+    if not caption:
+        print("[WARN] 추출된 태그가 비어 있습니다.", file=sys.stderr)
+        return 1
+
+    tags = [t.strip() for t in caption.split(",") if t.strip()]
+    _, removed = filter_gender_tags(tags)
+    res = InterrogateResult(raw=caption, tags=tags, gender_tags=removed)
+    recommended = res.filtered or caption
+
+    bar = "=" * 64
+    print(f"\n{bar}")
+    print(f"  태그 추출 결과 ({model}) | {ref.label}")
+    print(bar)
+    print(f"\n[원본]\n{res.raw}")
+    if res.gender_tags:
+        print(f"\n[WARN] 성별·인원 태그가 감지되었습니다: {res.gender_tags}")
+        print("       성별/인원은 캐릭터 기본 설정과 중복될 수 있으므로 제외 버전을 권장합니다.")
+    print(f"\n[권장]\n{recommended}")
+    print("\n[그대로 실행하려면]")
+    print(f'python sd_batch_generator.py --prefix PREFIX --char_prompt "{recommended}"')
+    print(bar)
+    return 0
 
 
 def run_batch(

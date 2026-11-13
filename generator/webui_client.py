@@ -321,6 +321,36 @@ def generate_image(
     return base64.b64decode(images[0])
 
 
+def interrogate_image(
+    b64: str,
+    model: str = "deepdanbooru",
+    host: str | None = None,
+    session: Any | None = None,
+    timeout: int = 60,
+) -> str:
+    """WebUI /sdapi/v1/interrogate 를 호출해 이미지 태그/캡션 문자열을 반환한다."""
+    url = get_api_url("/sdapi/v1/interrogate", host=host)
+    payload = {"image": b64, "model": model}
+    client = session if session is not None else get_session()
+    response = client.post(url, json=payload, timeout=timeout)
+    response.raise_for_status()
+
+    try:
+        data = response.json()
+    except ValueError as e:
+        snippet = (getattr(response, "text", "") or "").strip()[:200]
+        raise RuntimeError(
+            f"WebUI interrogate 응답이 유효한 JSON이 아닙니다 ({e}): {snippet!r}"
+        ) from e
+
+    if not isinstance(data, dict):
+        raise RuntimeError(
+            f"WebUI interrogate 응답 형식이 JSON 객체가 아닙니다: {type(data).__name__}"
+        )
+
+    return str(data.get("caption") or "").strip()
+
+
 def _hue_color(code: int) -> tuple[int, int, int]:
     """코드값으로 배경색을 분산시켜 이미지 구분이 육안으로 가능하게 한다."""
     red, green, blue = colorsys.hsv_to_rgb(((code * 37) % 360) / 360.0, 0.35, 0.90)

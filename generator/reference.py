@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import io
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -23,6 +24,30 @@ from generator.config import (
     ConfigError,
 )
 from generator.models import ControlNetSpec, ReferenceImage
+
+INTERROGATORS: tuple[str, ...] = ("deepdanbooru", "clip")
+INTERROGATE_DEFAULT = "deepdanbooru"
+GENDER_TAGS: frozenset[str] = frozenset({
+    "1girl", "2girls", "multiple girls", "girl",
+    "1boy", "2boys", "multiple boys", "boy",
+    "male", "female", "male focus", "female focus",
+    "solo",
+})
+
+
+@dataclass(frozen=True, slots=True)
+class InterrogateResult:
+    """WebUI interrogate 결과 및 성별/인원 태그 필터링 결과."""
+
+    raw: str
+    tags: list[str]
+    gender_tags: list[str]
+
+    @property
+    def filtered(self) -> str:
+        """성별·인원 태그를 제거한 권장 프롬프트 문자열을 반환한다."""
+        excluded = {t.lower() for t in self.gender_tags}
+        return ", ".join(t for t in self.tags if t.lower() not in excluded)
 
 
 def load_reference(path: Path) -> ReferenceImage:
@@ -166,3 +191,25 @@ def resolve_controlnet_spec(
         return None
 
     return ControlNetSpec(module, model, "auto")
+
+
+def build_interrogate_payload(
+    b64: str, model: str = INTERROGATE_DEFAULT
+) -> dict[str, str]:
+    """/sdapi/v1/interrogate 요청 페이로드를 조립한다 (순수 함수)."""
+    return {"image": b64, "model": model}
+
+
+def filter_gender_tags(tags: Sequence[str]) -> tuple[list[str], list[str]]:
+    """태그 목록에서 성별·인원 태그를 분리해 (유지 태그, 제거된 태그)를 반환한다."""
+    kept: list[str] = []
+    removed: list[str] = []
+    for raw_tag in tags:
+        clean = raw_tag.strip()
+        if not clean:
+            continue
+        if clean.lower() in GENDER_TAGS:
+            removed.append(clean)
+        else:
+            kept.append(clean)
+    return kept, removed

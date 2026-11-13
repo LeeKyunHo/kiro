@@ -57,11 +57,17 @@ from generator.prompt import (
 from generator.precheck import run_precheck
 from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
 from generator.reference import (
+    INTERROGATE_DEFAULT,
+    INTERROGATORS,
+    InterrogateResult,
     build_controlnet_unit,
+    build_interrogate_payload,
+    filter_gender_tags,
     find_reference_candidates,
     match_model_name,
     resolve_reference_image,
 )
+from generator.runner import run_interrogate
 from generator.reporter import asset_filename, build_genit_block, code_width
 from generator.roster import (
     _resolve_default_mode,
@@ -494,6 +500,67 @@ def _test_reference(report: TestReport) -> None:
         f"오통과 {wrongly_accepted} / 오거부 {wrongly_rejected}"
         if (wrongly_accepted or wrongly_rejected)
         else f"거부 {len(REF_WEIGHT_REJECT)}종 / 허용 {len(REF_WEIGHT_ACCEPT)}종",
+    )
+
+    interrogate_payload = build_interrogate_payload("AAAA", INTERROGATE_DEFAULT)
+    clip_payload = build_interrogate_payload("BBBB", "clip")
+    t28_ok = (
+        set(interrogate_payload.keys()) == {"image", "model"}
+        and interrogate_payload["image"] == "AAAA"
+        and interrogate_payload["model"] == "deepdanbooru"
+        and INTERROGATORS == ("deepdanbooru", "clip")
+        and clip_payload["model"] == "clip"
+    )
+    report.check(
+        "T28 interrogate 페이로드 구조 및 기본 모델",
+        t28_ok,
+        f"모델={interrogate_payload.get('model')}, 후보={INTERROGATORS}",
+    )
+
+    kept_tags, removed_tags = filter_gender_tags(["1girl", "solo", "silver hair"])
+    ir_obj = InterrogateResult(
+        raw="1girl, solo, silver hair",
+        tags=["1girl", "solo", "silver hair"],
+        gender_tags=removed_tags,
+    )
+    report.check(
+        "T29 성별 태그 필터링",
+        kept_tags == ["silver hair"]
+        and removed_tags == ["1girl", "solo"]
+        and ir_obj.filtered == "silver hair",
+        f"유지={kept_tags}, 제거={removed_tags}",
+    )
+
+    class _MockInterrogateResp:
+        text = '{"caption": "1girl, solo, silver hair, blue eyes"}'
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, str]:
+            return {"caption": "1girl, solo, silver hair, blue eyes"}
+
+    class _MockInterrogateSession:
+        def post(self, url: str, json: Any = None, timeout: int = 60) -> _MockInterrogateResp:
+            assert url.endswith("/sdapi/v1/interrogate")
+            return _MockInterrogateResp()
+
+    missing_raised = False
+    try:
+        run_interrogate(Path("nonexistent_ref_image_xyz.png"), session=_MockInterrogateSession())
+    except ConfigError:
+        missing_raised = True
+
+    with _temp_reference((".png",)) as tmp_img_dir:
+        buf_out = io.StringIO()
+        import contextlib
+        with contextlib.redirect_stdout(buf_out):
+            rc = run_interrogate(tmp_img_dir / "t.png", session=_MockInterrogateSession())
+        t29b_ok = missing_raised and rc == 0 and "silver hair, blue eyes" in buf_out.getvalue()
+    report.check(
+        "T29b --from_image 오프라인 연동 및 예외 처리",
+        t29b_ok,
+        "존재하지 않는 파일 ConfigError 차단 + 모의 HTTP 역추출 정상",
     )
 
     matched_model = match_model_name(CN_MODEL_FIXTURE, ("ip-adapter", "ipadapter"))

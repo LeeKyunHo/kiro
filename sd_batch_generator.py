@@ -325,6 +325,18 @@ def build_parser(
         choices=["white_silhouette", "black_silhouette", "mosaic", "wide_bar", "slim_bar", "shadow"],
         help="검열 렌더링 스타일 (기본 white_silhouette)",
     )
+
+    from generator.reference import INTERROGATE_DEFAULT, INTERROGATORS
+
+    interrogate_group = parser.add_argument_group("이미지 태그 역추출 (--from_image)")
+    interrogate_group.add_argument(
+        "--from_image", default=None, metavar="PATH",
+        help="참조 이미지에서 외형 태그를 역추출하고 출력 후 종료 (--prefix/--char_prompt 불필요)",
+    )
+    interrogate_group.add_argument(
+        "--interrogator", default=INTERROGATE_DEFAULT, choices=INTERROGATORS,
+        help=f"태그 역추출 모델 선택 (기본: {INTERROGATE_DEFAULT})",
+    )
     return parser
 
 
@@ -342,6 +354,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     sections, profiles = peek_choices(base_dir)
     parser = build_parser(sections, profiles)
     args = parser.parse_args(argv)
+
+    if getattr(args, "from_image", None):
+        from generator.runner import run_interrogate
+        try:
+            return run_interrogate(args.from_image, model=args.interrogator)
+        except ConfigError as e:
+            print(f"[ERROR] {e}", file=sys.stderr)
+            if e.hint:
+                print(f"        {e.hint}", file=sys.stderr)
+            return 1
 
     rpm = RosterPathManager(base_dir)
     roster = rpm.resolve_roster(getattr(args, "roster", None))

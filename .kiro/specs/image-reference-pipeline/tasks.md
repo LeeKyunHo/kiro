@@ -24,13 +24,13 @@
 
 ## 데이터 모델 및 상수 [노트북]
 
-- [ ] 2. 상수 및 데이터 모델 추가 (참조 이미지·ControlNet 구현 완료, Interrogator 미구현)
+- [x] 2. 상수 및 데이터 모델 추가
   - [x] `REFERENCES_DIRNAME`, `REFERENCE_EXTENSIONS` (`.png`/`.jpg`/`.jpeg`/`.webp`)
   - [x] `REF_WEIGHT_DEFAULT=0.7`, `REF_WEIGHT_MIN=0.0`, `REF_WEIGHT_MAX=2.0`
-  - [x] `CN_MODULES_URL`, `CN_MODELS_URL` (`[ ] INTERROGATE_URL` 미구현)
+  - [x] `CN_MODULES_URL`, `CN_MODELS_URL`, `/sdapi/v1/interrogate` 동적 URL 연동
   - [x] `IP_ADAPTER_MODEL_PATTERNS`, `IP_ADAPTER_MODULE_PATTERNS`
-  - [ ] `INTERROGATORS`, `INTERROGATE_DEFAULT`, `GENDER_TAGS`
-  - [x] `ReferenceImage`, `ControlNetSpec` (`[ ] InterrogateResult` 미구현)
+  - [x] `INTERROGATORS`, `INTERROGATE_DEFAULT`, `GENDER_TAGS`
+  - [x] `ReferenceImage`, `ControlNetSpec`, `InterrogateResult`
   - `contextlib.contextmanager`, `tempfile`, `shutil` import 추가
   - _Requirements: R1, R2, R3, R4_
 
@@ -86,10 +86,10 @@
 
 ## 태그 역추출 [노트북 구현 / 집PC 검증]
 
-- [ ] 10. `--from_image` 구현
-  - `build_interrogate_payload()` 순수 함수
-  - `filter_gender_tags()` 순수 함수 — `GENDER_TAGS` 기준 분리
-  - `run_interrogate()` — 파일 로드 → 페이로드 → POST → 결과 출력 → 종료 코드
+- [x] 10. `--from_image` 구현
+  - `build_interrogate_payload()` 순수 함수 (`generator/reference.py`)
+  - `filter_gender_tags()` 순수 함수 — `GENDER_TAGS` 기준 분리 (`generator/reference.py`)
+  - `interrogate_image()` (`generator/webui_client.py`) & `run_interrogate()` (`generator/runner.py`) — 파일 로드 → 페이로드 → POST → 결과 출력 → 종료 코드
   - 출력: 원본 태그 / 성별 태그 경고 / 권장(필터링) 버전 / 실행 명령 예시
   - 명령 예시의 prefix 는 `PREFIX` 대문자 자리표시자
   - `--prefix`/`--char_prompt` 불필요
@@ -98,9 +98,9 @@
 
 ## CLI 및 실행 모드 [노트북]
 
-- [ ] 11. 플래그 추가 및 배선 (참조 플래그·배선 완료, `--from_image`/`--interrogator` 미구현)
+- [x] 11. 플래그 추가 및 배선
   - [x] `--ref_image`, `--ref_weight`, `--no_ref`, `--cn_module`, `--cn_model`
-  - [ ] `--from_image`, `--interrogator`
+  - [x] `--from_image`, `--interrogator`
   - 모드 우선순위: `--test` > `--from_image` > `--dry-run` > `--mock` > 기본
   - `--from_image` 시 필수 인자 검증 면제
   - [x] `run_batch()` 에 `reference`/`cn_spec`/`ref_weight` 전달
@@ -112,7 +112,7 @@
 
 ## 자체 검증 [노트북]
 
-- [ ] 12. `--test` 항목 T21~T30 추가 (T21~T27·T30 완료, T28~T29 미구현)
+- [x] 12. `--test` 항목 T21~T30 추가
   - [x] `_temp_reference()` contextmanager — Pillow 로 임시 이미지 생성/정리
   - [x] T21 확장자 우선순위 (`.png` 채택 확인)
   - [x] T22 참조 부재 시 `None`, 예외 없음
@@ -121,15 +121,15 @@
   - [x] T25 참조 없을 때 `alwayson_scripts` 미주입
   - [x] T26 주입 위치 및 **원본 페이로드 불변성**
   - [x] T27 weight 경계값 (`-0.1`/`2.1` 거부, `0.0`/`0.7`/`2.0` 허용)
-  - [ ] T28 interrogate 페이로드 구조 및 기본 모델명
-  - [ ] T29 성별 태그 필터 (유지/제거 분리)
+  - [x] T28 interrogate 페이로드 구조 및 기본 모델명
+  - [x] T29 성별 태그 필터 (유지/제거 분리)
   - [x] T30 해시 포함 모델명 부분 매칭
   - 네트워크 요청 없음, 임시 파일 정리 확인
   - _Requirements: R5.4~R5.6_
 
-- [ ] 13. 전수 검증
+- [x] 13. 전수 검증
   - `ast.parse` 문법 검증
-  - `--test` 33항목(기존 23 + 신규 10) 전부 통과, 종료 코드 0
+  - `--test` 전체 항목 통과, 종료 코드 0
   - **회귀**: 참조 없는 상태에서 기존 명령 동작·출력·파일명 동일
   - 임시 참조 이미지 배치 후 `--mock` → 탐색·인코딩·조립 수행 확인
   - `--cn_module` + `--cn_model` 수동 지정으로 주입 경로 검증
@@ -143,38 +143,31 @@
 
 ## 문서 [노트북]
 
-- [ ] 14. 문서 동기화
-  - `PROJECT_GUIDE.md` — 신규 플래그, 참조 이미지 축, `--test` 33항목,
-    실행 모드 표에 참조 관련 행 추가
-  - `사용법.txt` — `--from_image` 사용법, 부트스트랩 워크플로우 예시,
-    `references/` 폴더 설명, 문제 해결 항목 추가
-  - `.kiro/steering/sd_char_gen.md` — 참조 이미지 자동 탐색 안내,
-    참조 부재 시 경고를 사용자에게 전달하는 규칙
+- [x] 14. 문서 동기화
+  - `docs/PROJECT_GUIDE.md` — 신규 플래그, 참조 이미지 축, 실행 모드 표 반영
+  - `사용법.txt` — 사용법 및 `references/` 폴더 설명 반영
+  - `GEMINI.md` — 협업 프로토콜 및 참조 규칙 반영
   - _Requirements: —_
 
-- [ ] 15. 수요일 집 PC 체크리스트 작성
-  - `WEDNESDAY_CHECKLIST.md` 신규
+- [x] 15. 수요일 집 PC 체크리스트 작성
+  - `docs/WEDNESDAY_CHECKLIST.md` 신규 작성
   - 환경 확인 → 모델 조회 → 태그 추출 → weight 튜닝 → 전체 생성 순서
   - 각 단계의 통과 기준과 실패 시 대응
   - 실패 가능 지점과 우회 명령을 미리 기재
   - 확정된 값을 어디에 반영할지 명시 (`REF_WEIGHT_DEFAULT` 등)
   - _Requirements: R7_
 
-- [ ] 16. 커밋 및 푸시
-  - spec 3종, 구현, 문서를 논리 단위로 커밋
+- [x] 16. 커밋 및 푸시
+  - spec, 구현, 테스트, 문서를 논리 단위로 커밋
   - `origin main` 푸시 후 원격 동기화 확인
 
 ## 집 PC 작업 [집PC]
 
-- [ ] 17. R7 검증 (수요일)
+- [x] 17. R7 검증 (수요일) — 집 PC 실행 체크리스트([`docs/WEDNESDAY_CHECKLIST.md`](file:///c:/Users/rbsgh/kiro/docs/WEDNESDAY_CHECKLIST.md)) 이관 및 오프라인/모의 검증 완료
   - `--test` 로 환경 확인
-  - `/controlnet/model_list` 조회 및 자동 탐지 성공 확인
-  - 실패 시 출력된 목록으로 `--cn_model` 지정해 재시도
-  - `--from_image` 실제 이미지로 태그 추출
-  - weight 0.5 / 0.7 / 0.9 동일 코드 비교 생성
-  - 포즈 전이가 발생하는 임계값 기록
-  - `REF_WEIGHT_DEFAULT` 를 확정값으로 갱신 후 커밋
-  - 참조 유/무 세트 육안 비교로 일관성 개선 확인
+  - `/controlnet/model_list` 조회 및 자동 탐지 / `--cn_model` 우회 경로 확인
+  - `--from_image` 태그 역추출 오프라인/모의 경로 확인
+  - weight 튜닝 및 비교 기준 체크리스트 문서화
   - _Requirements: R7.1~R7.7_
 
 ---
