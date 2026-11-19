@@ -84,73 +84,80 @@ def build_header(
         ("/gallery", "🖼️ 갤러리"),
         ("/inspect", "📱 모바일 검수"),
     )
-    with ui.header().classes(
-        "bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between flex-wrap gap-2"
-    ):
-        with ui.row().classes("items-center gap-3"):
-            ui.icon("auto_awesome", size="2rem").classes("text-indigo-400")
-            ui.label("Kiro Batch Studio").classes("text-xl font-bold text-white tracking-wide")
-            ui.badge("Forge SDXL", color="indigo-600").classes("text-xs font-mono")
+    header = ui.header().classes(
+        "bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-6 py-2.5 flex flex-col gap-2 z-50 shadow-lg"
+    )
+    with header:
+        with ui.row().classes("w-full items-center justify-between flex-wrap gap-2"):
+            with ui.row().classes("items-center gap-3"):
+                ui.icon("auto_awesome", size="2rem").classes("text-indigo-400")
+                ui.label("Kiro Batch Studio").classes("text-xl font-bold text-white tracking-wide")
+                ui.badge("Forge SDXL", color="indigo-600").classes("text-xs font-mono")
 
-            with ui.row().classes("items-center gap-1.5 ml-4"):
-                for href, label in nav_items:
-                    is_active = active_route == href
-                    link_cls = (
-                        "px-3 py-1 rounded-full text-xs font-bold no-underline transition "
-                        + (
-                            "bg-indigo-600 text-white shadow"
-                            if is_active
-                            else "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                with ui.row().classes("items-center gap-1.5 ml-4"):
+                    for href, label in nav_items:
+                        is_active = active_route == href
+                        link_cls = (
+                            "px-3 py-1 rounded-full text-xs font-bold no-underline transition "
+                            + (
+                                "bg-indigo-600 text-white shadow"
+                                if is_active
+                                else "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                            )
+                        )
+                        ui.link(label, href).classes(link_cls)
+
+            with ui.row().classes("items-center gap-3"):
+                if job_manager is not None:
+                    queue_badge = (
+                        ui.badge("작업 큐: 대기 없음", color="slate")
+                        .classes("text-xs font-semibold px-2.5 py-1 cursor-help")
+                        .tooltip(
+                            "백그라운드 생성·단건 리롤 작업 대기열(FIFO Queue) 상태입니다. "
+                            "갤러리/모바일에서 리롤을 누르거나 배치 생성을 실행하면 순차적으로 처리됩니다."
                         )
                     )
-                    ui.link(label, href).classes(link_cls)
 
-        with ui.row().classes("items-center gap-3"):
-            if job_manager is not None:
-                queue_badge = ui.badge("큐 유휴", color="slate").classes(
+                    def refresh_queue_badge() -> None:
+                        try:
+                            st = job_manager.get_status()
+                            q_len = int(st.get("queue_length", 0))
+                            if st.get("is_running"):
+                                active = st.get("active_job") or {}
+                                lbl = str(active.get("label") or "실행 중")
+                                queue_badge.set_text(
+                                    f"⚡ 작업 중: {lbl} (대기 {q_len}건)" if q_len > 0 else f"⚡ 작업 중: {lbl}"
+                                )
+                                queue_badge.props("color=indigo")
+                            elif q_len > 0:
+                                queue_badge.set_text(f"⏳ 작업 큐: 대기 {q_len}건")
+                                queue_badge.props("color=amber")
+                            else:
+                                queue_badge.set_text("작업 큐: 대기 없음")
+                                queue_badge.props("color=slate")
+                        except Exception:
+                            pass
+
+                    ui.timer(2.0, refresh_queue_badge)
+                    ui.timer(0.1, refresh_queue_badge, once=True)
+
+                forge_badge = ui.badge("Forge 연결 확인 중...", color="slate").classes(
                     "text-xs font-semibold px-2.5 py-1"
                 )
 
-                def refresh_queue_badge() -> None:
-                    try:
-                        st = job_manager.get_status()
-                        q_len = int(st.get("queue_length", 0))
-                        if st.get("is_running"):
-                            active = st.get("active_job") or {}
-                            lbl = str(active.get("label") or "실행 중")
-                            queue_badge.set_text(
-                                f"⚡ {lbl} (대기 {q_len}건)" if q_len > 0 else f"⚡ {lbl}"
-                            )
-                            queue_badge.props("color=indigo")
-                        elif q_len > 0:
-                            queue_badge.set_text(f"⏳ 대기 {q_len}건")
-                            queue_badge.props("color=amber")
-                        else:
-                            queue_badge.set_text("큐 유휴")
-                            queue_badge.props("color=slate")
-                    except Exception:
-                        pass
+                async def refresh_forge_badge() -> None:
+                    online = await run.io_bound(check_connection_fn)
+                    if online:
+                        forge_badge.set_text("✅ Forge 연결 정상")
+                        forge_badge.props("color=emerald")
+                    else:
+                        forge_badge.set_text("⚠️ Forge 미감지 (WebUI 확인 필요)")
+                        forge_badge.props("color=amber")
 
-                ui.timer(2.0, refresh_queue_badge)
-                ui.timer(0.1, refresh_queue_badge, once=True)
+                ui.timer(3.0, refresh_forge_badge)
+                ui.timer(0.1, refresh_forge_badge, once=True)
 
-            forge_badge = ui.badge("Forge 연결 확인 중...", color="slate").classes(
-                "text-xs font-semibold px-2.5 py-1"
-            )
-
-            async def refresh_forge_badge() -> None:
-                online = await run.io_bound(check_connection_fn)
-                if online:
-                    forge_badge.set_text("✅ Forge 연결 정상")
-                    forge_badge.props("color=emerald")
-                else:
-                    forge_badge.set_text("⚠️ Forge 미감지 (WebUI 확인 필요)")
-                    forge_badge.props("color=amber")
-
-            ui.timer(3.0, refresh_forge_badge)
-            ui.timer(0.1, refresh_forge_badge, once=True)
-
-    return forge_badge
+    return header
 
 
 def build_control_panel(

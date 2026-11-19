@@ -174,7 +174,7 @@ def render_gallery_page(
 
     ui.dark_mode(True)
     ui.page_title("Kiro Studio - 통합 갤러리")
-    build_header(check_forge_connection, active_route="/gallery", job_manager=jobs)
+    top_header = build_header(check_forge_connection, active_route="/gallery", job_manager=jobs)
 
     retouch_script = build_retouch_editor_script(
         on_saved_js="if (typeof emitEvent === 'function') { emitEvent('kiro_retouch_saved', savedPayload); }",
@@ -441,49 +441,52 @@ def render_gallery_page(
     ui.on("kiro_retouch_saved", _handle_retouch_saved)
     ui.on("kiro_retouch_notify", _handle_retouch_notify)
 
-    # ── 메인 레이아웃 ─────────────────────────────────────────────
-    with ui.column().classes("w-full max-w-[1520px] mx-auto p-6 gap-4"):
-        with ui.card().classes("w-full bg-slate-900/90 border border-slate-800 p-4 rounded-xl"):
-            with ui.row().classes("w-full items-center justify-between flex-wrap gap-3"):
-                with ui.row().classes("items-center gap-3 flex-wrap"):
-                    ui.label("🖼️ 통합 에셋 갤러리").classes("text-lg font-bold text-indigo-300")
-                    roster_sel = ui.select(
-                        label="로스터",
-                        options=available_rosters,
-                        value=g_state["roster"],
-                        on_change=lambda e: on_filter_change("roster", e.value),
-                    ).props("dense outlined dark options-dense").classes("w-40 text-xs")
-                    char_sel = ui.select(
-                        label="캐릭터",
-                        options={"all": "전체 캐릭터"},
-                        value="all",
-                        on_change=lambda e: on_filter_change("char_filter", e.value),
-                    ).props("dense outlined dark options-dense").classes("w-48 text-xs")
-                    section_sel = ui.select(
-                        label="V2 섹션",
-                        options=V2_SECTION_LABELS,
-                        value="all",
-                        on_change=lambda e: on_filter_change("section", e.value),
-                    ).props("dense outlined dark options-dense").classes("w-48 text-xs")
-                    ui.select(
-                        label="재검열 스타일",
-                        options=censor_style_choices,
-                        value=g_state["censor_style"],
-                        on_change=lambda e: g_state.__setitem__("censor_style", str(e.value)),
-                    ).props("dense outlined dark options-dense").classes("w-40 text-xs")
+    # ── 상단 고정 필터 바 (스크롤 시에도 상단 헤더에 항상 고정) ─────
+    with top_header:
+        with ui.row().classes(
+            "w-full max-w-[1520px] mx-auto items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-800/90"
+        ):
+            with ui.row().classes("items-center gap-2.5 flex-wrap"):
+                ui.label("🖼️ 갤러리 필터").classes("text-sm font-bold text-indigo-300 mr-1")
+                roster_sel = ui.select(
+                    label="로스터",
+                    options=available_rosters,
+                    value=g_state["roster"],
+                    on_change=lambda e: on_filter_change("roster", e.value),
+                ).props("dense outlined dark options-dense").classes("w-40 text-xs")
+                char_sel = ui.select(
+                    label="캐릭터",
+                    options={"all": "전체 캐릭터"},
+                    value="all",
+                    on_change=lambda e: on_filter_change("char_filter", e.value),
+                ).props("dense outlined dark options-dense").classes("w-48 text-xs")
+                section_sel = ui.select(
+                    label="V2 포즈 섹션",
+                    options=V2_SECTION_LABELS,
+                    value="all",
+                    on_change=lambda e: on_filter_change("section", e.value),
+                ).props("dense outlined dark options-dense").classes("w-48 text-xs")
+                ui.select(
+                    label="재검열 스타일",
+                    options=censor_style_choices,
+                    value=g_state["censor_style"],
+                    on_change=lambda e: g_state.__setitem__("censor_style", str(e.value)),
+                ).props("dense outlined dark options-dense").classes("w-40 text-xs")
 
-                with ui.row().classes("items-center gap-2"):
-                    ui.toggle(
-                        {"grid": "그리드 뷰", "matrix": "매트릭스 비교"},
-                        value="grid",
-                        on_change=lambda e: on_filter_change("view_mode", e.value),
-                    ).props("dense dark").classes("text-xs")
-                    ui.button("🔄 새로고침", on_click=lambda: reload_gallery()).props(
-                        "outline dense"
-                    ).classes("text-xs")
+            with ui.row().classes("items-center gap-2 flex-wrap"):
+                summary_label = ui.label("").classes("text-xs text-slate-300 font-mono mr-1")
+                stream_badge = ui.badge("준비 중", color="slate").classes("text-xs font-mono")
+                ui.toggle(
+                    {"grid": "그리드 뷰", "matrix": "매트릭스 비교"},
+                    value="grid",
+                    on_change=lambda e: on_filter_change("view_mode", e.value),
+                ).props("dense dark").classes("text-xs")
+                ui.button("🔄 새로고침", on_click=lambda: reload_gallery()).props(
+                    "outline dense"
+                ).classes("text-xs")
 
         undo_banner = ui.row().classes(
-            "w-full items-center justify-between bg-amber-950/70 border border-amber-700 px-4 py-2 rounded-lg hidden"
+            "w-full max-w-[1520px] mx-auto items-center justify-between bg-amber-950/90 border border-amber-700 px-3 py-1.5 rounded-lg hidden"
         )
         with undo_banner:
             undo_label = ui.label("").classes("text-xs text-amber-200")
@@ -491,9 +494,8 @@ def render_gallery_page(
                 "dense color=amber"
             ).classes("text-xs")
 
-        with ui.row().classes("w-full items-center justify-between"):
-            summary_label = ui.label("").classes("text-xs text-slate-400 font-mono")
-            stream_badge = ui.badge("준비 중", color="slate").classes("text-xs font-mono")
+    # ── 메인 갤러리 콘텐츠 영역 ───────────────────────────────────
+    with ui.column().classes("w-full max-w-[1520px] mx-auto p-6 gap-4"):
         content_container = ui.column().classes("w-full gap-4")
 
     _suppress_filter_event = {"active": False}
