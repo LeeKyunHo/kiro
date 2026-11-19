@@ -32,7 +32,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["generator*"]
+include = ["generator*", "gui*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from pathlib import Path
 import re
 import shutil
@@ -671,6 +672,51 @@ def detect_genitals(
         return []
 
 
+def _restore_from_origin_dirs(
+    base_dir: Path,
+    allowed_chars: Optional[set[str]] = None,
+) -> int:
+    """
+    _origin 백업 폴더에서 원본 에셋을 작업 폴더로 안전하게 복원한다.
+    (_origin 내부 파일은 읽기 전용으로만 참조하며 절대 수정하지 않는다.)
+    """
+    extensions = ("*.webp", "*.png", "*.jpg", "*.jpeg")
+    origin_pairs: list[tuple[Path, Path]] = []
+
+    if base_dir.name.endswith("_origin"):
+        char_name = base_dir.name[: -len("_origin")]
+        if not allowed_chars or char_name in allowed_chars:
+            origin_pairs.append((base_dir, base_dir.parent / char_name))
+    else:
+        sibling_origin = base_dir.parent / f"{base_dir.name}_origin"
+        if sibling_origin.is_dir():
+            if not allowed_chars or base_dir.name in allowed_chars:
+                origin_pairs.append((sibling_origin, base_dir))
+
+        for child in sorted(base_dir.iterdir()):
+            if child.is_dir() and child.name.endswith("_origin"):
+                char_name = child.name[: -len("_origin")]
+                if not char_name:
+                    continue
+                if allowed_chars and char_name not in allowed_chars:
+                    continue
+                origin_pairs.append((child, base_dir / char_name))
+
+    restored = 0
+    for origin_dir, asset_dir in origin_pairs:
+        asset_dir.mkdir(parents=True, exist_ok=True)
+        for ext in extensions:
+            for orig_file in sorted(origin_dir.glob(ext)):
+                if orig_file.name.startswith(".tmp_"):
+                    continue
+                shutil.copy2(orig_file, asset_dir / orig_file.name)
+                restored += 1
+
+    if restored:
+        logger.info(f"[Censor] _origin 원본 {restored}장 복원 완료")
+    return restored
+
+
 def run_batch_censor(
     folder_path: Union[Path, str],
     style: str = "white_silhouette",
@@ -679,12 +725,36 @@ def run_batch_censor(
     targets: Sequence[str] = ("penis", "pussy"),
     min_confidence: float = 0.15,
     enable_anchor_fallback: bool = False,
+    *,
+    backup_origin: bool = True,
+    restore_origin: bool = False,
+    char_names: Optional[Sequence[str]] = None,
 ) -> int:
-    """폴더 내의 모든 일러스트 에셋을 스캔하여 일괄 검열을 수행합니다."""
+    """
+    폴더 내의 모든 일러스트 에셋을 스캔하여 일괄 검열을 수행한다 (단일 코어 SSOT).
+    - backup_origin=True & overwrite=True 시 assets/{char}_origin/ 에 무검열 원본을 선제 보존.
+    - restore_origin=True 시 검열 전 _origin 원본을 먼저 복원해 클린 상태에서 재검열 수행.
+    - char_names 지정 시 해당 캐릭터 폴더/프리픽스만 필터링.
+    - 원자적 임시 파일(.tmp_) 교체로 중단 시 파일 손상 원천 방지.
+    """
     base_dir = Path(folder_path).resolve()
     if not base_dir.exists():
         logger.error(f"[오류] 대상 폴더를 찾을 수 없습니다: {base_dir}")
         return 0
+
+    allowed_chars: Optional[set[str]] = None
+    if char_names:
+        parsed = {
+            token.strip()
+            for raw in char_names
+            for token in str(raw).split(",")
+            if token.strip()
+        }
+        if parsed:
+            allowed_chars = parsed
+
+    if restore_origin:
+        _restore_from_origin_dirs(base_dir, allowed_chars=allowed_chars)
 
     extensions = ["*.webp", "*.png", "*.jpg", "*.jpeg"]
     image_files: List[Path] = []
@@ -695,14 +765,25 @@ def run_batch_censor(
             image_files.extend(base_dir.glob(ext))
 
     target_files = [
-        f for f in image_files
+        f
+        for f in sorted(set(image_files))
         if not f.stem.endswith("_censored")
         and not any("_origin" in part for part in f.parts)
         and not any("backup" in part.lower() for part in f.parts)
         and not f.name.startswith(".tmp_")
+        and (
+            allowed_chars is None
+            or f.parent.name in allowed_chars
+            or any(f.name.startswith(f"{c}_") for c in allowed_chars)
+        )
     ]
     total = len(target_files)
     processed_count = 0
+
+    logger.info(
+        f"[Censor] 스캔 시작: 총 {total}장 검사 (스타일={style}, 덮어쓰기={overwrite}, "
+        f"원본백업={backup_origin and overwrite}, 원본복원={restore_origin})"
+    )
 
     for idx, file_path in enumerate(target_files, 1):
         pose_code = extract_pose_code(file_path.name)
@@ -710,8 +791,19 @@ def run_batch_censor(
         if pose_code is not None and not is_censor_target(pose_code):
             continue
 
+        tmp_censored = file_path.parent / f".tmp_{file_path.name}"
         try:
-            dst = file_path if overwrite else file_path.with_name(f"{file_path.stem}_censored{file_path.suffix}")
+            if overwrite and backup_origin:
+                origin_path = get_origin_backup_path(file_path)
+                origin_path.parent.mkdir(parents=True, exist_ok=True)
+                if not origin_path.exists():
+                    shutil.copy2(file_path, origin_path)
+
+            dst = (
+                tmp_censored
+                if overwrite
+                else file_path.with_name(f"{file_path.stem}_censored{file_path.suffix}")
+            )
             saved = censor_file(
                 src_path=file_path,
                 dst_path=dst,
@@ -722,10 +814,19 @@ def run_batch_censor(
                 enable_anchor_fallback=enable_anchor_fallback,
             )
             if saved is not None:
+                if overwrite and tmp_censored.exists():
+                    os.replace(tmp_censored, file_path)
                 processed_count += 1
+                logger.info(f"[{idx}/{total}] 검열 완료: {file_path.name}")
+            else:
+                if tmp_censored.exists():
+                    tmp_censored.unlink(missing_ok=True)
         except Exception as e:
+            if tmp_censored.exists():
+                tmp_censored.unlink(missing_ok=True)
             logger.warning(f"[Censor] 배치 검열 실패: {file_path.name} ({e})")
 
+    logger.info(f"[Censor] 작업 완료: 총 {processed_count}장 정밀 검열 적용")
     return processed_count
 
 

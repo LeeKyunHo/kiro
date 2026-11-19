@@ -1,23 +1,19 @@
 """
 auto_censor.py
-키로(kiro) 고정밀 일러스트 자동 검열 CLI 진입점 스크립트.
-내부적으로 `generator.censor` 엔진을 호출하며, 레거시 인자(-d, -m)와 신규 스타일, _origin 안전 백업을 지원합니다.
+키로(kiro) 고정밀 일러스트 자동 검열 경량 CLI 진입점.
+내부 배치·백업·원본 복원(_origin) 로직은 모두 `generator.censor.run_batch_censor` 단일 코어에 위임합니다.
 
-지원 스타일:
-- white_silhouette (기본값): 화이트 외곽선 실루엣 (MobileSAM/Contour)
-- black_silhouette: 블랙 외곽선 실루엣
-- wide_bar (black_bar 호환): 라운드 캡슐 와이드 바
-- slim_bar: 사선 미니멀 블랙 띠
-- shadow: 선화 디테일 차단 그림자 음영
-- mosaic: 클래식 픽셀 격자 모자이크
+지원 옵션:
+- `-d / --dir`: 검열할 폴더 경로
+- `-r / --roster`: 로스터 이름(예: dar, spy, sea)으로 `projects/{roster}/assets` 자동 지정
+- `-c / --char`: 특정 캐릭터(들)만 필터링 (예: `--char cla evl` 또는 `--char cla,evl`)
+- `--restore-origin`: 기존 `assets/{char}_origin/` 원본을 선제 복원한 뒤 클린 재검열 수행
+- `-f / --file`: 단일 이미지 파일 검열
 """
 
 from __future__ import annotations
 
 import argparse
-import os
-import re
-import shutil
 import sys
 from pathlib import Path
 from typing import Sequence
@@ -29,6 +25,18 @@ from generator.censor import (
     is_censor_target,
     run_batch_censor,
 )
+from generator.config import configure_stdio
+from generator.roster import RosterPathManager
+
+__all__ = [
+    "censor_file",
+    "extract_pose_code",
+    "get_origin_backup_path",
+    "is_censor_target",
+    "run_batch_censor",
+    "run_batch_censor_with_backup",
+    "main",
+]
 
 
 def run_batch_censor_with_backup(
@@ -38,86 +46,54 @@ def run_batch_censor_with_backup(
     targets: Sequence[str] = ("penis", "pussy"),
     min_confidence: float = 0.15,
     enable_anchor_fallback: bool = False,
+    *,
+    restore_origin: bool = False,
+    char_names: Sequence[str] | None = None,
 ) -> int:
-    """_origin 무검열 원본 격리 백업과 함께 일괄 검열을 수행합니다."""
-    base_dir = Path(folder_path).resolve()
-    if not base_dir.exists():
-        print(f"[오류] 경로를 찾을 수 없습니다: {base_dir}")
-        return 0
-
-    extensions = ["*.webp", "*.png", "*.jpg", "*.jpeg"]
-    image_files: list[Path] = []
-    for ext in extensions:
-        image_files.extend(base_dir.rglob(ext))
-
-    target_files = [
-        f for f in image_files
-        if not f.stem.endswith("_censored")
-        and not any("_origin" in part for part in f.parts)
-        and not any("backup" in part.lower() for part in f.parts)
-        and not f.name.startswith(".tmp_")
-    ]
-    total = len(target_files)
-
-    print(f"\n[스캔 시작] 총 {total}장의 일러스트 에셋을 검사합니다.")
-    print(f"[설정] 스타일: {style} | 원본 덮어쓰기: {overwrite} | 안전 앵커: {enable_anchor_fallback}")
-
-    processed_count = 0
-    for idx, file_path in enumerate(target_files, 1):
-        pose_code = extract_pose_code(file_path.name)
-
-        if not is_censor_target(pose_code):
-            continue
-
-        try:
-            # 1. 무검열 원본 assets/{char}_origin/ 격리 백업
-            if overwrite:
-                origin_path = get_origin_backup_path(file_path)
-                origin_path.parent.mkdir(parents=True, exist_ok=True)
-                if not origin_path.exists():
-                    shutil.copy2(file_path, origin_path)
-
-            dst = file_path if overwrite else file_path.with_name(f"{file_path.stem}_censored{file_path.suffix}")
-            tmp_censored = file_path.parent / f".tmp_{file_path.name}"
-            saved = censor_file(
-                src_path=file_path,
-                dst_path=tmp_censored if overwrite else dst,
-                style=style,
-                targets=targets,
-                min_confidence=min_confidence,
-                pose_code=pose_code,
-                enable_anchor_fallback=enable_anchor_fallback,
-            )
-            if saved is not None:
-                if overwrite:
-                    if file_path.exists():
-                        file_path.unlink()
-                    tmp_censored.rename(file_path)
-                processed_count += 1
-                print(f"[{idx}/{total}] 검열 완료 (백업: _origin/): {file_path.name}")
-            else:
-                if overwrite and tmp_censored.exists():
-                    tmp_censored.unlink()
-        except Exception as e:
-            print(f"[{idx}/{total}] 처리 실패: {file_path.name} ({e})")
-
-    print(f"\n[작업 완료] 총 {processed_count}장의 에셋에 정밀 검열을 적용했습니다.\n")
-    return processed_count
+    """하위 호환 래퍼: `generator.censor.run_batch_censor` 단일 코어로 위임합니다."""
+    return run_batch_censor(
+        folder_path=folder_path,
+        style=style,
+        overwrite=overwrite,
+        targets=targets,
+        min_confidence=min_confidence,
+        enable_anchor_fallback=enable_anchor_fallback,
+        backup_origin=True,
+        restore_origin=restore_origin,
+        char_names=char_names,
+    )
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="키로(kiro) 2D 애니메이션 일러스트 고정밀 성기 자동 검열 도구"
     )
     parser.add_argument(
         "-d", "--dir",
         type=str,
-        help="검열을 수행할 일러스트 폴더 경로"
+        help="검열을 수행할 일러스트 폴더 경로",
+    )
+    parser.add_argument(
+        "-r", "--roster",
+        type=str,
+        default=None,
+        help="검열을 수행할 로스터 이름 (예: dar, spy, sea -> projects/{roster}/assets)",
+    )
+    parser.add_argument(
+        "-c", "--char",
+        nargs="+",
+        default=None,
+        help="특정 캐릭터 prefix 만 필터링 (예: --char cla evl 또는 --char cla,evl)",
+    )
+    parser.add_argument(
+        "--restore-origin",
+        action="store_true",
+        help="검열 전 assets/{char}_origin/ 무검열 원본을 먼저 복원한 뒤 클린 재검열 수행",
     )
     parser.add_argument(
         "-f", "--file",
         type=str,
-        help="검열을 수행할 단일 이미지 파일 경로"
+        help="검열을 수행할 단일 이미지 파일 경로",
     )
     parser.add_argument(
         "-m", "--mode", "--style",
@@ -131,36 +107,40 @@ def main():
             "slim_bar",
             "shadow",
             "mosaic",
-            "black_bar",  # 레거시 호환
+            "black_bar",
         ],
-        help="검열 렌더링 스타일 (기본값: white_silhouette)"
+        help="검열 렌더링 스타일 (기본값: white_silhouette)",
     )
     parser.add_argument(
         "--targets",
         nargs="+",
         default=["penis", "pussy"],
-        help="검열 대상 라벨 (기본값: penis pussy)"
+        help="검열 대상 라벨 (기본값: penis pussy)",
     )
     parser.add_argument(
         "--conf",
         type=float,
         default=0.15,
-        help="검출 신뢰도 임계치 (기본값: 0.15)"
+        help="검출 신뢰도 임계치 (기본값: 0.15)",
     )
     parser.add_argument(
         "--no-overwrite",
         action="store_true",
-        help="원본 파일을 덮어쓰지 않고 _censored 파일로 별도 저장"
+        help="원본 파일을 덮어쓰지 않고 _censored 파일로 별도 저장",
     )
     parser.add_argument(
         "--enable-anchor",
         action="store_true",
         help="AI 미탐지 시 체위별 세이프 앵커 폴백 활성화 (주의: 엉덩이/골반 과대 검열 가능)",
     )
+    return parser
 
-    args = parser.parse_args()
 
-    # 레거시 스타일명 매핑
+def main(argv: Sequence[str] | None = None) -> int:
+    configure_stdio()
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
     style = "wide_bar" if args.style == "black_bar" else args.style
     anchor_fallback = getattr(args, "enable_anchor", False)
 
@@ -168,34 +148,54 @@ def main():
         file_path = Path(args.file).resolve()
         if not file_path.exists():
             print(f"[오류] 파일을 찾을 수 없습니다: {file_path}")
-            sys.exit(1)
+            return 1
 
-        dst = None if not args.no_overwrite else file_path.with_name(f"{file_path.stem}_censored{file_path.suffix}")
+        dst = (
+            None
+            if not args.no_overwrite
+            else file_path.with_name(f"{file_path.stem}_censored{file_path.suffix}")
+        )
         out = censor_file(
             src_path=file_path,
             dst_path=dst,
             style=style,
             targets=args.targets,
             min_confidence=args.conf,
+            pose_code=extract_pose_code(file_path.name),
             enable_anchor_fallback=anchor_fallback,
         )
         if out:
             print(f"[완료] 검열본 저장 완료: {out}")
         else:
             print("[통과] 검열 대상 부위가 감지되지 않았습니다.")
+        return 0
 
-    elif args.dir:
-        run_batch_censor_with_backup(
-            folder_path=args.dir,
+    target_dir: Path | None = None
+    if args.dir:
+        target_dir = Path(args.dir).resolve()
+    elif args.roster:
+        base_dir = Path(__file__).resolve().parent
+        rpm = RosterPathManager(base_dir)
+        roster_paths = rpm.resolve_roster(args.roster)
+        target_dir = roster_paths.assets_dir
+
+    if target_dir is not None:
+        run_batch_censor(
+            folder_path=target_dir,
             style=style,
             overwrite=not args.no_overwrite,
             targets=args.targets,
             min_confidence=args.conf,
             enable_anchor_fallback=anchor_fallback,
+            backup_origin=True,
+            restore_origin=bool(args.restore_origin),
+            char_names=args.char,
         )
-    else:
-        parser.print_help()
+        return 0
+
+    parser.print_help()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
