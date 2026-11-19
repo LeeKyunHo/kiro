@@ -266,8 +266,11 @@ def _generate_and_validate_image(
                     section=entry.section,
                     gender=gender,
                 )
+                # ADR-100: mob_tier 0~2(단독·손/팔·상반신 밀착)는 노출 비필수이므로 strict_censor_qc 리롤 제외
+                tier_requires_exposure = entry.mob_tier not in (0, 1, 2)
                 requires_exposure = (
-                    is_censor_target(
+                    tier_requires_exposure
+                    and is_censor_target(
                         code,
                         section=entry.section,
                         is_nude_scene=scene.is_nude_scene,
@@ -463,7 +466,7 @@ def run_batch(
             enable_freeu=enable_freeu, enable_lightning=enable_lightning,
             lightning_steps=lightning_steps, lightning_cfg=lightning_cfg,
             lightning_lora_name=lightning_lora_name, base_controlnet_unit=base_cn_unit,
-            enable_clamp_weights=clamp_weights,
+            enable_clamp_weights=clamp_weights, signature_accessories=(options.signature_accessories if options else None),
         )
 
         if dry_run:
@@ -944,6 +947,7 @@ def run_all_chars(
             nude_positive=None,
             gender=None,
             outfits=None,
+            signature_accessories=None,
             char_gen_overrides=None,
         )
         apply_character_to_args(cfg, char_opts, db)

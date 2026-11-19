@@ -119,6 +119,17 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 prompt_female = str(value.get("prompt_female", "") or "").strip()
                 prompt_otokonoko = str(value.get("prompt_otokonoko", "") or "").strip()
                 negative_add = str(value.get("negative_add", "") or "").strip()
+                raw_tier = value.get("mob_tier")
+                mob_tier: int | None = None
+                if raw_tier is not None and not isinstance(raw_tier, bool):
+                    try:
+                        parsed_tier = int(raw_tier)
+                        if 0 <= parsed_tier <= 3:
+                            mob_tier = parsed_tier
+                    except (TypeError, ValueError):
+                        mob_tier = None
+                raw_ppos = value.get("partner_pos")
+                partner_pos = str(raw_ppos).strip() if isinstance(raw_ppos, str) and raw_ppos.strip() else None
                 if not isinstance(prompt, str) or not prompt.strip():
                     db.warnings.append(f"코드 {key} 의 prompt 가 비어 있음 - 무시")
                     continue
@@ -132,6 +143,8 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 prompt_female = ""
                 prompt_otokonoko = ""
                 negative_add = ""
+                mob_tier = None
+                partner_pos = None
             else:
                 db.warnings.append(f"코드 {key} 의 값이 문자열/딕셔너리가 아님 - 무시")
                 continue
@@ -158,6 +171,8 @@ def parse_pose_db(raw: dict[str, Any]) -> PoseDatabase:
                 prompt_female,
                 prompt_otokonoko,
                 negative_add,
+                mob_tier,
+                partner_pos,
             )
             section_codes.append(code)
 

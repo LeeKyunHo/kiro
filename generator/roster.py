@@ -143,6 +143,12 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
     outfits = dict(raw_outfits) if isinstance(raw_outfits, dict) else {}
     override_keys = ("steps", "cfg", "cfg_scale", "sampler", "scheduler", "width", "height", "clip_skip")
     gen_overrides = {k: raw[k] for k in override_keys if k in raw and raw[k] is not None}
+    raw_sig_acc = raw.get("signature_accessories")
+    signature_accessories = (
+        [str(item).strip() for item in raw_sig_acc if str(item).strip()]
+        if isinstance(raw_sig_acc, list)
+        else []
+    )
 
     return CharacterConfig(
         name=name,
@@ -159,6 +165,7 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
         gender=gender,
         outfits=outfits,
         gen_overrides=gen_overrides,
+        signature_accessories=signature_accessories,
     )
 
 
@@ -232,5 +239,7 @@ def apply_character_to_args(
         args.gender = cfg.gender
     if getattr(args, "outfits", None) is None:
         args.outfits = cfg.outfits
+    if cfg.signature_accessories and not getattr(args, "signature_accessories", None):
+        args.signature_accessories = list(cfg.signature_accessories)
     if cfg.gen_overrides and not getattr(args, "char_gen_overrides", None):
         args.char_gen_overrides = dict(cfg.gen_overrides)

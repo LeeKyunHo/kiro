@@ -60,6 +60,8 @@ class PoseEntry:
     prompt_female: str = ""            # 여성 전용 프롬프트 (optional)
     prompt_otokonoko: str = ""         # 오토코노코 전용 프롬프트 (optional)
     negative_add: str = ""             # 포즈별 추가 네거티브 (optional)
+    mob_tier: int | None = None        # 4-Tier 모브 등급 (0=단독, 1=손/팔, 2=밀착/상반신, 3=풀 인터랙션, None=기존)
+    partner_pos: str | None = None     # 방향성 파트너 위치 (above/below/behind/side_kiss/offscreen/carry/bury_chest)
 
     @property
     def label(self) -> str:
@@ -132,6 +134,7 @@ class CharacterConfig:
     gender: str = "female"  # 성별 (female, otokonoko 등)
     outfits: dict[str, str] = field(default_factory=dict)  # 테마 의상 매핑 (default, swimsuit, maid 등)
     gen_overrides: dict[str, Any] = field(default_factory=dict)  # 캐릭터별 선택 생성 수치 오버라이드 (steps/cfg/sampler 등)
+    signature_accessories: list[str] = field(default_factory=list)  # 캐릭터 고유 소품/장신구 (전단 우선 배치 및 네거티브 충돌 해제)
 
 
 @dataclass(frozen=True, slots=True)
@@ -295,6 +298,7 @@ class GenerationOptions:
     nude_positive: str | None = None
     gender: str | None = None
     outfits: dict[str, str] | None = None
+    signature_accessories: list[str] | None = None
     auto_qc: bool = False
     strict_censor_qc: bool = False
     max_retries: int = 3
@@ -363,6 +367,7 @@ class GenerationOptions:
             nude_positive=getattr(args, "nude_positive", None),
             gender=getattr(args, "gender", None),
             outfits=getattr(args, "outfits", None),
+            signature_accessories=getattr(args, "signature_accessories", None),
             auto_qc=auto_qc_val,
             strict_censor_qc=bool(getattr(args, "strict_censor_qc", False)),
             max_retries=int(getattr(args, "max_retries", 3)),

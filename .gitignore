@@ -23,6 +23,7 @@ venv/
 # ── 검증 임시 파일 ───────────────────────────
 _verify_tmp.py
 _tmp_*.py
+context_snapshot/
 
 # ── 로컬 GUI 개인 설정 ──────────────────────
 gui_settings.json

@@ -60,6 +60,13 @@ from generator.prompt import (
     validate_ref_weight,
 )
 from generator.precheck import PrecheckReport, run_precheck
+from generator.option_specs import (
+    GENERATION_OPTION_SPECS,
+    OPTION_SPEC_OBJECTS,
+    OptionSpec,
+    get_gui_option_specs,
+    get_option_spec,
+)
 from generator.checkpoint import (
     CheckpointProfile,
     load_checkpoint_profiles,
@@ -194,6 +201,12 @@ __all__ = [
     "apply_composition_anti_drift",
     "compose_scene_prompt",
     "should_apply_background",
+    # option_specs
+    "GENERATION_OPTION_SPECS",
+    "OPTION_SPEC_OBJECTS",
+    "OptionSpec",
+    "get_gui_option_specs",
+    "get_option_spec",
     # runner
     "execute",
     "run_all_chars",

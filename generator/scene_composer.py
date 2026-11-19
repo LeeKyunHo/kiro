@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Sequence
 
 from generator.config import IMAGE_SIZE, LORA_STRING
 from generator.models import PoseEntry
@@ -139,6 +139,204 @@ def apply_composition_anti_drift(pose_prompt: str, negative_prompt: str) -> str:
     return negative_prompt
 
 
+# ── Phase S7 4-Tier 모브 표준 (ADR-100/101/105) 및 고유 소품 (ADR-106) ──
+_MOB_SHADOW_EYES_POS: str = (
+    "(dark-haired male mob:1.15), (short black hair, shaded upper face, "
+    "shadow over male eyes, eyes obscured by shadow, no visible male eyes:1.2)"
+)
+_MOB_EYELESS_BANGS_NEG: str = (
+    "(visible male eyes, detailed male eyes, visible male pupils, detailed male face, "
+    "male side profile, handsome male face, attractive male face, expressive male face, "
+    "silver-haired male, blonde male:1.25)"
+)
+
+_PARTNER_POS_SPECS: dict[str, str] = {
+    "above": "male hands pressing beside shoulders and gripping waist tightly, chest pressed close, partner shoulders at top edge, partner head out of frame",
+    "below": "male hands gripping her waist and hips from below, intimate close embrace, partner head out of frame",
+    "behind": "male torso tightly embracing from behind, male hands gripping her hips and waist firmly, lower body occluded, partner head out of frame",
+    "side_kiss": "cropped male torso and shoulder at edge, partner head out of frame, partner arms around waist",
+    "offscreen": "partner head out of frame, cropped male hands at frame edge",
+    "carry": "carried in dark-haired male partner's arms, male torso and shoulders supporting her",
+    "bury_chest": "back of dark-haired male head buried in her chest, male face completely obscured, partner arms around waist",
+}
+
+_MOB_TIER_SPECS: dict[int, dict[str, Any]] = {
+    0: {
+        "is_two_person": False,
+        "is_offscreen_partner": True,
+        "is_solo_scene": True,
+        "is_interactive": False,
+        "break_chunk": False,
+        "positive_tags": "",
+        "negative_tags": "1boy, male body, penis, disembodied limb",
+    },
+    1: {
+        "is_two_person": True,
+        "is_offscreen_partner": True,
+        "is_solo_scene": False,
+        "is_interactive": True,
+        "break_chunk": False,
+        "positive_tags": "(pov, disembodied male hands:1.05), cropped male arms, female focus",
+        "negative_tags": "(detailed male face, male eyes, full male head:1.25), male torso, muscular chest, full male body, lower body focus, crotch focus",
+    },
+    2: {
+        "is_two_person": True,
+        "is_offscreen_partner": True,
+        "is_solo_scene": False,
+        "is_interactive": True,
+        "break_chunk": False,
+        "positive_tags": "",
+        "negative_tags": "(detailed male face, male eyes, full male head:1.25), dark silhouette, heavy shadow, full body, wide shot, crotch focus",
+    },
+    3: {
+        "is_two_person": True,
+        "is_offscreen_partner": True,
+        "is_solo_scene": False,
+        "is_interactive": True,
+        "break_chunk": True,
+        "positive_tags": "BREAK (pov crotch:1.05), disembodied penis, (partially visible glans, compact shaft:1.05), cropped male lower torso",
+        "negative_tags": "(giant penis, hyper penis, huge penis:1.25), full male body, (detailed male face, male eyes, full male head:1.25), muscular chest",
+    },
+}
+
+_FACE_HAIR_ACCESSORY_KEYWORDS: tuple[str, ...] = (
+    "glasses", "eyeglasses", "sunglasses", "monocle",
+    "ribbon", "hair ribbon", "hairpin", "hair clip",
+    "beret", "hat", "cap", "headband", "earring", "earrings", "hair ornament",
+)
+
+_ACCESSORY_BASE_NOUNS: tuple[str, ...] = _FACE_HAIR_ACCESSORY_KEYWORDS + (
+    "necktie", "tie", "bowtie", "belt", "leather belt", "choker", "necklace",
+    "gloves", "stockings", "thighhighs", "pantyhose",
+)
+
+
+def _strip_tags_preserving_parens(text: str, inner_pattern: str) -> str:
+    """중첩/가중치 괄호 균형을 훼손하지 않고 일치하는 태그 토큰만 안전하게 제거한다."""
+    cleaned = re.sub(inner_pattern, "", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"(:\d+(?:\.\d+)?)\s*,\s*:\d+(?:\.\d+)?", r"\1", cleaned)
+    prev = None
+    while prev != cleaned:
+        prev = cleaned
+        cleaned = re.sub(r"\(\s*,\s*", "(", cleaned)
+        cleaned = re.sub(r",\s*(?=[:\)])", "", cleaned)
+        cleaned = re.sub(r"\(\s*(?::[0-9\.]+)?\s*\)", "", cleaned)
+    cleaned = re.sub(r"(,\s*){2,}", ", ", cleaned)
+    cleaned = re.sub(r"\bBREAK\s*,\s*", "BREAK ", cleaned)
+    cleaned = re.sub(r",\s*\bBREAK\b", " BREAK", cleaned)
+    return cleaned.strip(" ,")
+
+
+def _is_face_hair_accessory(tag: str) -> bool:
+    """탈의(nude) 상태에서도 유지할 얼굴/헤어 소품인지 판별한다."""
+    low = (tag or "").strip().lower()
+    return any(kw in low for kw in _FACE_HAIR_ACCESSORY_KEYWORDS)
+
+
+def _select_active_signature_accessories(
+    accessories: Sequence[str] | None,
+    is_nude: bool,
+) -> list[str]:
+    """현재 슬롯(착의/탈의)에 맞춰 활성화할 캐릭터 고유 소품 목록을 반환한다."""
+    if not accessories:
+        return []
+    items = [str(item).strip() for item in accessories if str(item).strip()]
+    if is_nude:
+        return [item for item in items if _is_face_hair_accessory(item)]
+    return items
+
+
+def _inject_signature_accessories(
+    base_pos: str,
+    accessories: Sequence[str] | None,
+    is_nude: bool = False,
+) -> str:
+    """signature_accessories를 캐릭터 외형 청크 선두(앵커 태그 직후)에 중복 없이 우선 배치한다."""
+    active = _select_active_signature_accessories(accessories, is_nude)
+    if not active:
+        return base_pos
+
+    if " BREAK " in base_pos:
+        head, char_part = base_pos.split(" BREAK ", 1)
+    else:
+        head, char_part = "", base_pos
+
+    cleaned_char = char_part
+    formatted_tags: list[str] = []
+    for acc in active:
+        core = normalize_tag(acc)
+        if not core:
+            continue
+        cleaned_char = _strip_tags_preserving_parens(
+            cleaned_char,
+            rf"\(?{re.escape(core)}(?::[0-9\.]+)?\)?",
+        )
+        formatted_tags.append(acc if ":" in acc else f"({core}:1.10)")
+
+    if not formatted_tags:
+        return base_pos
+
+    char_tokens = [t.strip() for t in cleaned_char.split(",") if t.strip()]
+    anchor_kws = ("1girl", "1boy", "solo", "androgynous", "otokonoko", "femboy")
+    insert_idx = 0
+    for idx, tok in enumerate(char_tokens[:4]):
+        tok_low = normalize_tag(tok)
+        if any(k in tok_low for k in anchor_kws):
+            insert_idx = idx + 1
+    new_char_tokens = char_tokens[:insert_idx] + formatted_tags + char_tokens[insert_idx:]
+    new_char_part = ", ".join(new_char_tokens)
+    return f"{head} BREAK {new_char_part}" if head else new_char_part
+
+
+def _strip_accessory_negative_conflicts(
+    neg: str,
+    accessories: Sequence[str] | None,
+) -> str:
+    """활성화된 signature_accessories와 충돌하는 네거티브 전체구문 및 핵심 소품 명사를 함께 제거한다."""
+    if not accessories or not neg:
+        return neg
+    patterns: list[str] = []
+    for sig_acc in accessories:
+        acc_core = normalize_tag(sig_acc)
+        if not acc_core:
+            continue
+        patterns.append(re.escape(acc_core))
+        for noun in _ACCESSORY_BASE_NOUNS:
+            if re.search(rf"\b{re.escape(noun)}\b", acc_core):
+                patterns.append(re.escape(noun))
+    if not patterns:
+        return neg
+    combined = r"\b(?:" + "|".join(sorted(set(patterns), key=len, reverse=True)) + r")\b(?::[0-9\.]+)?"
+    return _strip_tags_preserving_parens(neg, combined)
+
+
+def _inject_partner_pos_inline(
+    pos: str,
+    partner_pos: str | None,
+    pose_tag: str = "",
+) -> str:
+    """2인 구도 시 첫 청크 후미(BREAK 앞)에 방향성 파트너 엣지 크롭 태그를 인라인 주입한다."""
+    pose_low = (pose_tag or "").lower()
+    if partner_pos == "side_kiss" and any(kw in pose_low for kw in ("kiss", "french kiss")):
+        tags = "cropped dark-haired male jaw and lips at extreme frame edge, male eyes out of frame, partner arms around waist"
+    else:
+        tags = _PARTNER_POS_SPECS.get(partner_pos or "", "partner head out of frame, cropped male shoulders at frame edge")
+    if not tags:
+        return pos
+    if " BREAK " in pos:
+        head, tail = pos.split(" BREAK ", 1)
+        return f"{head}, {tags} BREAK {tail}"
+    return f"{pos}, {tags}"
+
+
+def _resolve_mob_tier(entry: PoseEntry) -> int | None:
+    """PoseEntry.mob_tier 명시값(0~3)을 검증해 반환한다. 미지정 시 None(기존 V2 동작 유지)."""
+    raw_tier = getattr(entry, "mob_tier", None)
+    if raw_tier in _MOB_TIER_SPECS:
+        return int(raw_tier)
+    return None
+
+
 @dataclass(frozen=True, slots=True)
 class SceneComposition:
     """단일 포즈 코드에 대해 조립된 프롬프트·네거티브·생성 파라미터 및 씬 분류 결과."""
@@ -166,6 +364,8 @@ class SceneComposition:
     is_kiss_scene: bool
     controlnet_units: list[dict[str, Any]]
     applied_global_lora: str | None = None
+    mob_tier: int | None = None
+    partner_pos: str | None = None
 
 
 def should_apply_background(entry: PoseEntry, pose_prompt: str) -> bool:
@@ -208,6 +408,7 @@ def compose_scene_prompt(
     base_controlnet_unit: dict[str, Any] | None = None,
     enable_clamp_weights: bool = False,
     global_lora_string: str | None = None,
+    signature_accessories: Sequence[str] | None = None,
 ) -> SceneComposition:
     """단일 포즈 엔트리에 대한 최종 포지티브/네거티브 및 실행 파라미터를 조립한다 (순수 함수)."""
     actual_sampler = sampler or sampler_name
@@ -289,6 +490,18 @@ def compose_scene_prompt(
     if active_char_prompt:
         active_char_prompt = harmonize_character_expression(active_char_prompt, pose_prompt)
 
+    # ADR-106: 캐릭터 고유 소품(signature_accessories)을 외형 전단에 중복 없이 우선 배치
+    active_accessories = _select_active_signature_accessories(signature_accessories, is_nude_scene)
+    if active_accessories:
+        if active_char_prompt:
+            active_char_prompt = _inject_signature_accessories(
+                active_char_prompt, active_accessories, is_nude=is_nude_scene
+            )
+        elif active_base_pos:
+            active_base_pos = _inject_signature_accessories(
+                active_base_pos, active_accessories, is_nude=is_nude_scene
+            )
+
     full_prompt = assemble_prompt(
         active_base_pos, active_char_prompt, pose_prompt, f"{prefix}_{tag}"
     )
@@ -318,25 +531,121 @@ def compose_scene_prompt(
 
     p_low = pose_prompt.lower()
     is_aftermath = any(kw in p_low for kw in ("aftermath", "aftersex", "afterglow"))
-    is_offscreen_partner = any(
-        kw in p_low for kw in ("off-screen", "offscreen", "completely off-screen")
-    )
-    is_solo_scene = (
-        "solo focus" in p_low
-        or "solo, " in p_low
-        or ", solo" in p_low
-        or ("spreading own legs" in p_low and "partner" not in p_low)
-    )
-    is_interactive = (
-        (
-            any(k in p_low for k in PARTNER_KEYWORDS)
-            or entry.section in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko")
-        )
-        and not is_aftermath
-        and not is_solo_scene
+    resolved_mob_tier = _resolve_mob_tier(entry)
+    resolved_partner_pos = entry.partner_pos
+    is_otokonoko_char = (
+        (gender or "").strip().lower() in ("otokonoko", "femboy")
+        or entry.section in ("scenes_otokonoko", "special_otokonoko")
+        or "otokonoko" in active_base_pos.lower()
+        or "otokonoko" in active_char_prompt.lower()
     )
 
-    if is_interactive:
+    if resolved_mob_tier in _MOB_TIER_SPECS:
+        tier_spec = _MOB_TIER_SPECS[resolved_mob_tier]
+        is_offscreen_partner = bool(tier_spec["is_offscreen_partner"])
+        is_solo_scene = bool(tier_spec["is_solo_scene"])
+        is_interactive = bool(tier_spec["is_interactive"]) and not is_aftermath
+
+        if resolved_mob_tier == 0:
+            tier0_neg = (
+                "1boy, male body, disembodied limb"
+                if is_otokonoko_char
+                else str(tier_spec["negative_tags"])
+            )
+            actual_negative = f"{actual_negative}, {tier0_neg}"
+        elif is_interactive:
+            neg_tags = [t.strip() for t in actual_negative.split(",") if t.strip()]
+            actual_negative = ", ".join(
+                t for t in neg_tags if normalize_tag(t) not in MALE_NEG_TOKENS
+            )
+            for solo_pat in (", solo", "solo,", " solo "):
+                full_prompt = full_prompt.replace(solo_pat, " ")
+            full_prompt = " ".join(full_prompt.split())
+
+            tier_neg = str(tier_spec["negative_tags"])
+            if resolved_mob_tier == 2 and resolved_partner_pos == "carry":
+                tier_neg = _strip_tags_preserving_parens(tier_neg, r"\bfull male head\b")
+            actual_negative = f"{actual_negative}, {tier_neg}, {_MOB_EYELESS_BANGS_NEG}"
+
+            if is_nude_scene:
+                actual_negative = (
+                    f"{actual_negative}, (clothes, clothing, dress, sleeves, collar, cuffs, fabric, "
+                    f"rags, swimsuit, swimwear, bikini, underboob, underbust, corset, bodice, bra, "
+                    f"crop top, halter, straps:1.35)"
+                )
+
+            if resolved_mob_tier == 1:
+                if tier_spec["positive_tags"]:
+                    full_prompt = f"{full_prompt}, {tier_spec['positive_tags']}"
+                if resolved_partner_pos and resolved_partner_pos != "offscreen":
+                    full_prompt = _inject_partner_pos_inline(
+                        full_prompt, resolved_partner_pos, pose_prompt
+                    )
+            elif resolved_mob_tier == 2:
+                full_prompt = _inject_partner_pos_inline(
+                    full_prompt, resolved_partner_pos, pose_prompt
+                )
+                if resolved_partner_pos == "carry":
+                    full_prompt = re.sub(
+                        r",?\s*\bpartner head out of frame\b",
+                        "",
+                        full_prompt,
+                        flags=re.IGNORECASE,
+                    )
+                if resolved_partner_pos != "bury_chest":
+                    has_shirtless_male = bool(
+                        re.search(r"\bshirtless male\b", full_prompt, flags=re.IGNORECASE)
+                    )
+                    if has_shirtless_male and not is_nude_scene:
+                        full_prompt = _strip_tags_preserving_parens(
+                            full_prompt, r"\bshirtless male\b"
+                        )
+                    if "closed eyes" not in p_low and not is_otokonoko_char:
+                        full_prompt = f"{full_prompt}, (clear visible female eyes:1.15)"
+                    mob_tail = (
+                        f"{_MOB_SHADOW_EYES_POS}, shirtless male"
+                        if (has_shirtless_male and not is_nude_scene)
+                        else _MOB_SHADOW_EYES_POS
+                    )
+                    full_prompt = f"{full_prompt} BREAK (tall dark-haired male mob:1.15), {mob_tail}"
+            elif resolved_mob_tier == 3:
+                if resolved_partner_pos:
+                    full_prompt = _inject_partner_pos_inline(
+                        full_prompt, resolved_partner_pos, pose_prompt
+                    )
+                if tier_spec["positive_tags"]:
+                    full_prompt = f"{full_prompt} {tier_spec['positive_tags']}"
+                if str(entry.code).strip().zfill(3) in ("126", "127") or any(
+                    kw in p_low for kw in ("under desk", "under table", "책상밑")
+                ):
+                    full_prompt = (
+                        f"{full_prompt}, ((clothed male partner:1.20)), "
+                        f"((wearing collared shirt, white shirt:1.20))"
+                    )
+                    actual_negative = (
+                        f"{actual_negative}, (shirtless male:1.35), (naked male:1.35), "
+                        f"(bare chest:1.35), (bare shoulders:1.35)"
+                    )
+    else:
+        is_offscreen_partner = any(
+            kw in p_low for kw in ("off-screen", "offscreen", "completely off-screen")
+        )
+        is_solo_scene = (
+            "solo focus" in p_low
+            or "solo, " in p_low
+            or ", solo" in p_low
+            or ("spreading own legs" in p_low and "partner" not in p_low)
+        )
+        is_interactive = (
+            (
+                any(k in p_low for k in PARTNER_KEYWORDS)
+                or entry.section in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko")
+            )
+            and not is_aftermath
+            and not is_solo_scene
+        )
+
+    if resolved_mob_tier is None and is_interactive:
         neg_tags = [t.strip() for t in actual_negative.split(",") if t.strip()]
         filtered_neg = [
             t for t in neg_tags if normalize_tag(t) not in MALE_NEG_TOKENS
@@ -546,6 +855,10 @@ def compose_scene_prompt(
     # 샷 사이즈별 반대 구도 이탈 방지 네거티브 주입 (CompositionAntiDrift)
     actual_negative = apply_composition_anti_drift(pose_prompt, actual_negative)
 
+    # ADR-106: 활성화된 캐릭터 고유 소품과 충돌하는 네거티브 태그 자동 해제
+    if active_accessories:
+        actual_negative = _strip_accessory_negative_conflicts(actual_negative, active_accessories)
+
     # 최종 정제: 모브 BREAK 블록을 격리한 상태에서 포지티브/네거티브 충돌 태그 자동 제거
     actual_negative, _removed_conflicts = remove_conflicting_tags_from_negative(
         full_prompt,
@@ -605,4 +918,6 @@ def compose_scene_prompt(
         is_kiss_scene=is_kiss_scene,
         controlnet_units=controlnet_units,
         applied_global_lora=applied_global_lora,
+        mob_tier=resolved_mob_tier,
+        partner_pos=resolved_partner_pos,
     )
