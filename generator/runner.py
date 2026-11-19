@@ -234,6 +234,11 @@ def _generate_and_validate_image(
                 is_kiss_scene=scene.is_kiss_scene,
                 section=entry.section,
                 prompt=scene.pose_prompt,
+                is_faceless_partner=(
+                    "faceless" in scene.full_prompt.lower()
+                    if scene.is_interactive and not scene.is_offscreen_partner
+                    else False
+                ),
             )
             if not passed:
                 if attempt < max_retries:

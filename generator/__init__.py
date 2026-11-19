@@ -36,13 +36,21 @@ from generator.pose_db import (
     resolve_targets,
 )
 from generator.prompt import (
+    DEFAULT_THEME_OUTFITS,
+    NEG_MAX_WEIGHT,
+    POS_MAX_WEIGHT,
     assemble_prompt,
+    clamp_prompt_weights,
     clamp_weights,
     find_tag_conflicts,
+    harmonize_character_expression,
     join_tags,
     normalize_tag,
+    remove_conflicting_tags_from_negative,
     resolve_background,
+    resolve_theme_outfit,
     split_tags,
+    strip_outfit_tags,
     validate_prefix,
     validate_ref_weight,
 )
@@ -65,6 +73,7 @@ from generator.roster import RosterPathManager, apply_character_to_args, list_ch
 from generator.runner import execute, run_all_chars, run_batch, run_interrogate
 from generator.scene_composer import (
     SceneComposition,
+    apply_composition_anti_drift,
     compose_scene_prompt,
     should_apply_background,
 )
@@ -130,13 +139,21 @@ __all__ = [
     "read_pose_json",
     "resolve_targets",
     # prompt
+    "DEFAULT_THEME_OUTFITS",
+    "POS_MAX_WEIGHT",
+    "NEG_MAX_WEIGHT",
     "assemble_prompt",
+    "clamp_prompt_weights",
     "clamp_weights",
     "find_tag_conflicts",
+    "harmonize_character_expression",
     "join_tags",
     "normalize_tag",
+    "remove_conflicting_tags_from_negative",
     "resolve_background",
+    "resolve_theme_outfit",
     "split_tags",
+    "strip_outfit_tags",
     "validate_prefix",
     "validate_ref_weight",
     # reference
@@ -157,6 +174,7 @@ __all__ = [
     "load_character",
     # scene_composer
     "SceneComposition",
+    "apply_composition_anti_drift",
     "compose_scene_prompt",
     "should_apply_background",
     # runner

@@ -14,10 +14,15 @@ from typing import Any
 from generator.config import IMAGE_SIZE, LORA_STRING
 from generator.models import PoseEntry
 from generator.prompt import (
+    NEG_MAX_WEIGHT,
+    POS_MAX_WEIGHT,
     assemble_prompt,
-    clamp_weights,
+    clamp_prompt_weights,
+    harmonize_character_expression,
     join_tags,
     normalize_tag,
+    remove_conflicting_tags_from_negative,
+    resolve_theme_outfit,
     strip_outfit_tags,
 )
 
@@ -104,6 +109,34 @@ WEDDING_CONFLICT_NEG: frozenset[str] = frozenset({
     "hair ornament",
     "headwear",
 })
+
+_COMPOSITION_ANTI_DRIFT_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (
+        ("tight bust portrait", "close-up bust shot", "intimate close-up"),
+        "(cowboy shot, full body, lower body, wide shot, knees, feet:1.25)",
+    ),
+    (
+        ("cowboy shot",),
+        "(tight bust portrait, close-up face, full body, wide shot, dutch angle, fisheye:1.2)",
+    ),
+    (
+        ("full body",),
+        "(cropped legs, tight bust portrait, close-up face, dutch angle, fisheye:1.2)",
+    ),
+)
+
+
+def apply_composition_anti_drift(pose_prompt: str, negative_prompt: str) -> str:
+    """샷 사이즈별 반대 구도 이탈 방지 네거티브를 자동 주입한다 (순수 함수)."""
+    pose_low = (pose_prompt or "").lower()
+    if not pose_low:
+        return negative_prompt
+    for shot_kws, anti_neg in _COMPOSITION_ANTI_DRIFT_RULES:
+        if "full body" in shot_kws and "portrait" in pose_low:
+            continue
+        if any(kw in pose_low for kw in shot_kws):
+            return f"{negative_prompt}, {anti_neg}" if negative_prompt else anti_neg
+    return negative_prompt
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,11 +258,7 @@ def compose_scene_prompt(
             active_base_pos = strip_outfit_tags(base_positive)
             active_char_prompt = strip_outfit_tags(char_prompt)
     elif entry.required_outfit and entry.required_outfit not in ("default", "nude"):
-        theme_outfit = (
-            outfits[entry.required_outfit].strip()
-            if (outfits and entry.required_outfit in outfits)
-            else ""
-        )
+        theme_outfit = resolve_theme_outfit(outfits, entry.required_outfit)
         if nude_positive and nude_positive.strip():
             cleaned_nude = strip_outfit_tags(nude_positive.strip())
             if not char_prompt and base_positive:
@@ -250,6 +279,15 @@ def compose_scene_prompt(
                 if theme_outfit
                 else stripped_char
             )
+
+    # 캐릭터 기본 외형 표정과 포즈 표정 간 충돌 자동 조화
+    if " BREAK " in active_base_pos:
+        q_part, c_part = active_base_pos.split(" BREAK ", 1)
+        active_base_pos = f"{q_part} BREAK {harmonize_character_expression(c_part, pose_prompt)}"
+    elif not active_char_prompt and active_base_pos:
+        active_base_pos = harmonize_character_expression(active_base_pos, pose_prompt)
+    if active_char_prompt:
+        active_char_prompt = harmonize_character_expression(active_char_prompt, pose_prompt)
 
     full_prompt = assemble_prompt(
         active_base_pos, active_char_prompt, pose_prompt, f"{prefix}_{tag}"
@@ -505,8 +543,31 @@ def compose_scene_prompt(
             f"see-through breasts:1.4))"
         )
 
+    # 샷 사이즈별 반대 구도 이탈 방지 네거티브 주입 (CompositionAntiDrift)
+    actual_negative = apply_composition_anti_drift(pose_prompt, actual_negative)
+
+    # 최종 정제: 모브 BREAK 블록을 격리한 상태에서 포지티브/네거티브 충돌 태그 자동 제거
+    actual_negative, _removed_conflicts = remove_conflicting_tags_from_negative(
+        full_prompt,
+        actual_negative,
+        isolate_mob_break=True,
+    )
+
+    # 가중치 클램핑은 기본 비활성(opt-in): 활성화 시 긍정(<=1.15)과 부정(<=1.25) 분리 클램핑
     if enable_clamp_weights:
-        full_prompt = clamp_weights(full_prompt)
+        full_prompt, actual_negative = clamp_prompt_weights(
+            full_prompt,
+            actual_negative,
+            pos_max=POS_MAX_WEIGHT,
+            neg_max=NEG_MAX_WEIGHT,
+            normalize_brackets=True,
+        )
+        full_prompt = re.sub(r"\(\s*,\s*", "(", full_prompt)
+        full_prompt = re.sub(r"\s*,\s*", ", ", full_prompt).strip().strip(",")
+        full_prompt = re.sub(r",?\s*BREAK\s*,?", " BREAK ", full_prompt).strip()
+        actual_negative = re.sub(r"\(\s*,\s*", "(", actual_negative)
+        actual_negative = re.sub(r",\s*,+", ", ", actual_negative)
+        actual_negative = re.sub(r"\s*,\s*", ", ", actual_negative).strip().strip(",")
 
     controlnet_units: list[dict[str, Any]] = []
     if base_controlnet_unit is not None:
