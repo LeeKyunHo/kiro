@@ -108,6 +108,9 @@ def build_parser() -> argparse.ArgumentParser:
             "shadow",
             "mosaic",
             "black_bar",
+            "manga_bar",
+            "manga_glow",
+            "debug_bbox",
         ],
         help="검열 렌더링 스타일 (기본값: white_silhouette)",
     )

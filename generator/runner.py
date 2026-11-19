@@ -44,13 +44,16 @@ from generator.models import (
     RosterPaths,
     RunHooks,
 )
+from generator.pose_background import default_pose_bg_service
 from generator.pose_db import (
     expand_v2_mode,
     load_pose_db,
     print_warnings,
+    resolve_pose_set_codes,
     resolve_targets,
 )
 from generator.prompt import (
+    compute_deterministic_pose_seed,
     find_tag_conflicts,
     join_tags,
     resolve_background,
@@ -269,7 +272,12 @@ def _apply_post_censor(
     censor_style: str,
 ) -> None:
     """성인/탈의 씬 검열 대상인 경우 _origin 원본 백업 후 자동 검열을 적용한다."""
-    from generator.censor import censor_file, get_origin_backup_path, is_censor_target
+    from generator.censor import (
+        _atomic_replace_with_retry,
+        censor_file,
+        get_origin_backup_path,
+        is_censor_target,
+    )
 
     if not is_censor_target(code, section=entry.section, is_nude_scene=is_nude_scene):
         return
@@ -279,8 +287,8 @@ def _apply_post_censor(
     if not origin_path.exists():
         save_as_webp(png_bytes, origin_path)
 
+    tmp_censored = save_path.parent / f".tmp_{filename}"
     try:
-        tmp_censored = save_path.parent / f".tmp_{filename}"
         c_res = censor_file(
             save_path,
             dst_path=tmp_censored,
@@ -289,16 +297,41 @@ def _apply_post_censor(
             enable_anchor_fallback=False,
         )
         if c_res and c_res.exists():
-            if save_path.exists():
-                save_path.unlink()
-            tmp_censored.rename(save_path)
+            _atomic_replace_with_retry(tmp_censored, save_path)
             logger.info(
                 f"  [검열본 적용: assets/{prefix}/{filename} (원본: {prefix}_origin/)]"
             )
         elif tmp_censored.exists():
-            tmp_censored.unlink()
+            tmp_censored.unlink(missing_ok=True)
     except Exception as ce:
+        if tmp_censored.exists():
+            tmp_censored.unlink(missing_ok=True)
         logger.warning(f"  [검열 처리 예외: {ce}]")
+
+
+def _resolve_batch_pose_context(
+    *,
+    code: int,
+    prefix: str,
+    active_bg: str | None,
+    roster: RosterPaths | None,
+    explicit_bg: str | None,
+    explicit_bg_preset: str,
+    seed: int | None,
+    deterministic_pose_seed: bool,
+) -> tuple[str | None, int | None]:
+    """포즈별 자동 배경(pose_background_mapping.json) 및 결정론적 시드를 해석한다."""
+    pose_bg = active_bg
+    if roster is not None and not (explicit_bg and explicit_bg.strip()) and explicit_bg_preset == "default":
+        roster_dir = roster.assets_dir.parent
+        if default_pose_bg_service.has_mapping(roster_dir):
+            pose_bg = default_pose_bg_service.resolve_pose_background(
+                roster_dir, code, cli_bg=explicit_bg, explicit_preset=explicit_bg_preset, bg_file=roster.background_file
+            )
+    effective_seed = (
+        seed if seed is not None else (compute_deterministic_pose_seed(code, prefix) if deterministic_pose_seed else None)
+    )
+    return pose_bg, effective_seed
 
 
 def run_batch(
@@ -318,11 +351,14 @@ def run_batch(
     outfits: dict[str, str] | None = None, dry_run: bool = False, mock: bool = False,
     auto_qc: bool = False, max_retries: int = 3, censor: bool = False,
     censor_style: str = "white_silhouette", clamp_weights: bool = False,
+    seed: int | None = None, deterministic_pose_seed: bool = False,
+    roster: RosterPaths | None = None,
     options: GenerationOptions | None = None, hooks: RunHooks | None = None,
     progress_callback: Callable[[int, str, Path, int, int], None] | None = None,
     is_cancelled: Callable[[], bool] | None = None,
 ) -> BatchResult:
     """단일 캐릭터의 타겟 포즈 코드 목록을 순회하며 이미지를 생성·저장한다."""
+    explicit_bg, explicit_bg_preset = None, "default"
     if options is not None:
         prefix = options.prefix or prefix
         enable_freeu, enable_adetailer = options.enable_freeu, options.enable_adetailer
@@ -334,6 +370,9 @@ def run_batch(
         dry_run, mock = options.dry_run, (options.mock and not options.dry_run)
         auto_qc, max_retries = options.auto_qc, options.max_retries
         censor, censor_style, clamp_weights = options.censor, options.censor_style, options.clamp_weights
+        seed = options.seed if options.seed is not None else seed
+        deterministic_pose_seed = options.deterministic_pose_seed or deterministic_pose_seed
+        explicit_bg, explicit_bg_preset = options.bg, (options.bg_preset or "default")
 
     progress_cb = hooks.progress_callback if (hooks and hooks.progress_callback) else progress_callback
     cancel_check = hooks.is_cancelled if (hooks and hooks.is_cancelled) else is_cancelled
@@ -352,11 +391,15 @@ def run_batch(
         tag = format_code(code, width)
         filename = asset_filename(prefix, code, width, label=entry.label, naming=naming)
         save_path = save_dir / filename
-
+        pose_bg, effective_seed = _resolve_batch_pose_context(
+            code=code, prefix=prefix, active_bg=active_bg, roster=roster,
+            explicit_bg=explicit_bg, explicit_bg_preset=explicit_bg_preset,
+            seed=seed, deterministic_pose_seed=deterministic_pose_seed,
+        )
         scene = compose_scene_prompt(
             entry=entry, prefix=prefix, tag=tag, base_positive=base_positive,
             char_prompt=char_prompt, negative_prompt=negative_prompt, sampler_name=sampler_name,
-            gender=gender, active_bg=active_bg, nude_positive=nude_positive, outfits=outfits,
+            gender=gender, active_bg=pose_bg, nude_positive=nude_positive, outfits=outfits,
             steps=steps, sampler=sampler, scheduler=scheduler, cfg_scale=cfg_scale,
             image_width=image_width, image_height=image_height,
             enable_freeu=enable_freeu, enable_lightning=enable_lightning,
@@ -390,7 +433,7 @@ def run_batch(
                 prompt=scene.full_prompt, negative_prompt=scene.actual_negative,
                 sampler_name=scene.actual_sampler, width=scene.actual_width, height=scene.actual_height,
                 steps=scene.actual_steps, cfg_scale=scene.actual_cfg,
-                scheduler=scene.actual_scheduler, clip_skip=clip_skip,
+                scheduler=scene.actual_scheduler, clip_skip=clip_skip, seed=effective_seed,
             )
             payload = inject_alwayson_scripts(
                 payload, scene.controlnet_units, enable_freeu=scene.actual_freeu,
@@ -580,14 +623,19 @@ def execute(
         opts, db, char_prompt
     )
 
-    # ── 대상 코드 / 저장 경로 (V2 섹션 확장 SSOT) ──────
+    # ── 대상 코드 / 저장 경로 (V2 섹션 확장 SSOT + pose_sets.json) ──────
+    codes_expr = opts.codes
+    if not codes_expr and opts.pose_set:
+        codes_expr = resolve_pose_set_codes(base_dir, opts.pose_set)
+        logger.info(f"[POSE-SET] '{opts.pose_set}' 프리셋 적용")
+
     target_mode = opts.mode
-    if target_mode == "all" and not opts.codes:
+    if target_mode == "all" and not codes_expr:
         target_mode = expand_v2_mode(
             "all", db, expand_all_by_gender=opts.gender or "female"
         )
 
-    targets = resolve_targets(db, target_mode, opts.codes)
+    targets = resolve_targets(db, target_mode, codes_expr)
     if not targets:
         raise ConfigError(
             "생성 대상 코드가 없습니다.", "--mode / --codes 값을 확인하세요."
@@ -666,6 +714,7 @@ def execute(
         image_height=resolved_params.height,
         clip_skip=resolved_params.clip_skip,
         active_bg=active_bg,
+        roster=roster,
         options=opts,
         hooks=active_hooks,
     )

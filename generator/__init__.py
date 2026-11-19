@@ -23,16 +23,20 @@ from generator.models import (
     TimingStats,
     summarize_durations,
 )
+from generator.pose_background import PoseBackgroundService, default_pose_bg_service
 from generator.pose_db import (
+    POSE_SETS_FILE,
     V2_BUILTIN_SECTIONS,
     V2_FEMALE_SECTIONS,
     V2_OTOKONOKO_SECTIONS,
     expand_v2_mode,
     load_pose_db,
+    load_pose_sets,
     parse_pose_db,
     peek_choices,
     print_warnings,
     read_pose_json,
+    resolve_pose_set_codes,
     resolve_targets,
 )
 from generator.prompt import (
@@ -42,6 +46,7 @@ from generator.prompt import (
     assemble_prompt,
     clamp_prompt_weights,
     clamp_weights,
+    compute_deterministic_pose_seed,
     find_tag_conflicts,
     harmonize_character_expression,
     join_tags,
@@ -79,6 +84,10 @@ from generator.scene_composer import (
 )
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "_atomic_replace_with_retry": ("generator.censor", "_atomic_replace_with_retry"),
+    "apply_debug_bbox": ("generator.censor", "apply_debug_bbox"),
+    "apply_manga_bar": ("generator.censor", "apply_manga_bar"),
+    "apply_manga_glow": ("generator.censor", "apply_manga_glow"),
     "censor_file": ("generator.censor", "censor_file"),
     "censor_image": ("generator.censor", "censor_image"),
     "detect_genitals": ("generator.censor", "detect_genitals"),
@@ -88,7 +97,12 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "get_pose_category": ("generator.censor", "get_pose_category"),
     "is_censor_target": ("generator.censor", "is_censor_target"),
     "run_batch_censor": ("generator.censor", "run_batch_censor"),
+    "unload_censor_models": ("generator.censor", "unload_censor_models"),
+    "verify_and_heal_censor": ("generator.censor", "verify_and_heal_censor"),
     "POSE_SAFE_ANCHORS": ("generator.censor", "POSE_SAFE_ANCHORS"),
+    "GenitExporter": ("generator.genit_exporter", "GenitExporter"),
+    "default_genit_exporter": ("generator.genit_exporter", "default_genit_exporter"),
+    "denormalize_genit_code": ("generator.genit_exporter", "denormalize_genit_code"),
     "validate_generated_image": ("generator.qa_validator", "validate_generated_image"),
 }
 

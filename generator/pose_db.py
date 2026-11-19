@@ -345,3 +345,43 @@ def resolve_targets(
         f"알 수 없는 모드 '{mode}'. 사용 가능: {['all'] + sorted(db.sections)}",
         "코드 리스트 직접 지정도 가능합니다. 예: --mode 0,5,12 / --mode 10-14",
     )
+
+
+POSE_SETS_FILE = "pose_sets.json"
+
+
+def load_pose_sets(base_dir: Path) -> dict[str, dict[str, Any]]:
+    """루트의 pose_sets.json 프리셋을 로드해 {set_id: entry} 딕셔너리로 반환한다."""
+    sets_path = base_dir / POSE_SETS_FILE
+    if not sets_path.is_file():
+        return {}
+    try:
+        raw = json.loads(sets_path.read_text(encoding="utf-8-sig"))
+    except Exception as e:
+        logger.warning(f"[WARN] pose_sets.json 로드 실패 ({sets_path}): {e}")
+        return {}
+
+    result: dict[str, dict[str, Any]] = {}
+    if isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict) and item.get("id") and isinstance(item.get("codes"), list):
+                result[str(item["id"]).strip()] = item
+    elif isinstance(raw, dict):
+        for key, item in raw.items():
+            if not str(key).startswith("_") and isinstance(item, dict) and isinstance(item.get("codes"), list):
+                result[str(key).strip()] = item
+    return result
+
+
+def resolve_pose_set_codes(base_dir: Path, set_id: str) -> str:
+    """포즈 세트 ID를 콤마 구분 코드 표현식으로 변환한다. 존재하지 않으면 ConfigError 발생."""
+    sets = load_pose_sets(base_dir)
+    key = (set_id or "").strip()
+    if key not in sets:
+        available = ", ".join(sorted(sets.keys())) or "(없음)"
+        raise ConfigError(
+            f"알 수 없는 포즈 세트 '{set_id}' 입니다.",
+            f"사용 가능한 --pose-set 목록: {available}",
+        )
+    codes = [str(c).strip() for c in sets[key].get("codes", []) if str(c).strip()]
+    return ",".join(codes)

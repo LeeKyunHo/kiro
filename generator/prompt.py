@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import zlib
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -412,3 +413,15 @@ def validate_prefix(prefix: str) -> str:
             "영문·숫자·밑줄·하이픈 1~64자만 허용합니다. (예: mika, test_01)",
         )
     return candidate
+
+
+def compute_deterministic_pose_seed(pose_code: str | int, char_prefix: str) -> int:
+    """포즈 코드 및 캐릭터 식별자 기반의 프로세스 독립적 결정론적 시드(CRC32)를 산출한다."""
+    code_digits = re.sub(r"\D", "", str(pose_code or "").strip())
+    numeric_code = (
+        int(code_digits)
+        if code_digits
+        else (zlib.crc32(str(pose_code or "").encode("utf-8")) % 1000)
+    )
+    char_offset = zlib.crc32(str(char_prefix or "").encode("utf-8")) % 100000
+    return numeric_code * 1000 + char_offset

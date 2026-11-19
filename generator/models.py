@@ -263,6 +263,7 @@ class GenerationOptions:
     negative: str | None = None
     mode: str = "all"
     codes: str | None = None
+    pose_set: str | None = None
     bg: str | None = None
     bg_preset: str = "default"
     ref_image: str | None = None
@@ -299,6 +300,8 @@ class GenerationOptions:
     censor: bool = False
     censor_style: str = "white_silhouette"
     clamp_weights: bool = False
+    seed: int | None = None
+    deterministic_pose_seed: bool = False
     ckpt_profile: str | None = None
     active_ckpt: Any = None
     char_gen_overrides: dict[str, Any] | None = None
@@ -320,6 +323,7 @@ class GenerationOptions:
             negative=getattr(args, "negative", None),
             mode=str(getattr(args, "mode", "all") or "all"),
             codes=getattr(args, "codes", None),
+            pose_set=getattr(args, "pose_set", None),
             bg=getattr(args, "bg", None),
             bg_preset=str(getattr(args, "bg_preset", "default") or "default"),
             ref_image=getattr(args, "ref_image", None),
@@ -365,6 +369,8 @@ class GenerationOptions:
                 getattr(args, "censor_style", "white_silhouette") or "white_silhouette"
             ),
             clamp_weights=bool(getattr(args, "clamp_weights", False)),
+            seed=getattr(args, "seed", None),
+            deterministic_pose_seed=bool(getattr(args, "deterministic_pose_seed", False)),
             ckpt_profile=getattr(args, "ckpt_profile", None),
             active_ckpt=getattr(args, "active_ckpt", None),
             char_gen_overrides=getattr(args, "char_gen_overrides", None),

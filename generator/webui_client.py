@@ -112,6 +112,7 @@ def build_txt2img_payload(
     width: int = IMAGE_SIZE[0], height: int = IMAGE_SIZE[1],
     steps: int | None = None, cfg_scale: float | None = None,
     scheduler: str | None = None, clip_skip: int | None = None,
+    seed: int | None = None,
 ) -> dict[str, Any]:
     """txt2img 페이로드를 조립한다 (순수 함수)."""
     payload: dict[str, Any] = {
@@ -129,6 +130,9 @@ def build_txt2img_payload(
 
     if scheduler:
         payload["scheduler"] = scheduler
+
+    if seed is not None:
+        payload["seed"] = int(seed)
 
     if clip_skip is not None:
         payload["override_settings"] = {"CLIP_stop_at_last_layers": int(clip_skip)}

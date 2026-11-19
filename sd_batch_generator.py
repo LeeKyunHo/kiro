@@ -86,6 +86,10 @@ def build_parser(
     parser.add_argument("--mode", default="all", help=mode_help)
     parser.add_argument("--codes", default=None, help="코드 직접 지정 (20-29 / 0,3,7)")
     parser.add_argument(
+        "--pose-set", "--pose_set", dest="pose_set", default=None,
+        help="pose_sets.json 프리셋 ID 지정 (예: sample10, daily_all, romance_all, h_female_all, female_full)",
+    )
+    parser.add_argument(
         "--bg", default=None,
         help="감정 씬 배경 프롬프트 직접 지정 (기존 clean background 대체)",
     )
@@ -191,7 +195,16 @@ def build_parser(
     )
     gen_opts.add_argument(
         "--clamp-weights", dest="clamp_weights", action="store_true",
-        help="과도한 프롬프트 강조 가중치를 1.15 이하로 클램핑 (선택 옵션, 기본 비활성)",
+        help="과도한 프롬프트 강조 가중치를 긍정 1.15 / 부정 1.25 이하로 클램핑 (선택 옵션, 기본 비활성)",
+    )
+    gen_opts.add_argument(
+        "--seed", type=int, default=None,
+        help="고정 시드 직접 지정 (지정 시 결정론적 포즈 시드보다 우선)",
+    )
+    gen_opts.add_argument(
+        "--deterministic-pose-seed", "--deterministic_pose_seed",
+        dest="deterministic_pose_seed", action="store_true",
+        help="포즈 코드·캐릭터 prefix 기반 CRC32 결정론적 시드 자동 적용 (재현성 확보)",
     )
 
     parser.add_argument(
@@ -236,8 +249,32 @@ def build_parser(
     )
     qc_group.add_argument(
         "--censor-style", default="white_silhouette",
-        choices=["white_silhouette", "black_silhouette", "mosaic", "wide_bar", "slim_bar", "shadow"],
+        choices=[
+            "white_silhouette",
+            "black_silhouette",
+            "mosaic",
+            "wide_bar",
+            "slim_bar",
+            "shadow",
+            "manga_bar",
+            "manga_glow",
+            "debug_bbox",
+        ],
         help="검열 렌더링 스타일 (기본 white_silhouette)",
+    )
+
+    export_group = parser.add_argument_group("젠잇(Genit) 에셋 패키징 내보내기")
+    export_group.add_argument(
+        "--export-genit", dest="export_genit", action="store_true",
+        help="로스터(또는 --char 지정 캐릭터)의 생성 에셋을 Genit 규격으로 패키징 내보내기 후 종료",
+    )
+    export_group.add_argument(
+        "--export-dir", dest="export_dir", default=None, metavar="DIR",
+        help="Genit 내보내기 출력 루트 폴더 (기본: dist/genit/{roster})",
+    )
+    export_group.add_argument(
+        "--export-code", dest="export_code", default=None, metavar="CODE",
+        help="단일 캐릭터 내보내기 시 2글자 Genit 코드 수동 오버라이드 (예: AA)",
     )
 
     interrogate_group = parser.add_argument_group("이미지 태그 역추출 (--from_image)")
@@ -316,6 +353,33 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.list_chars:
         return list_characters(roster.characters_dir)
+
+    if getattr(args, "export_genit", False):
+        from generator.genit_exporter import GenitExporter
+
+        exporter = GenitExporter(base_dir=base_dir)
+        out_root = Path(args.export_dir).resolve() if getattr(args, "export_dir", None) else None
+        if args.char:
+            try:
+                cfg = load_character(roster.characters_dir, args.char)
+                c_prefix, c_name = cfg.prefix, cfg.name
+            except ConfigError:
+                c_prefix, c_name = args.char, args.char
+            cnt, target_dir, exp_code = exporter.export_character(
+                roster,
+                c_prefix,
+                c_name,
+                output_dir=out_root,
+                custom_export_code=getattr(args, "export_code", None),
+            )
+            print(f"[GENIT] '{c_prefix}' -> {exp_code} ({cnt}개 내보냄): {target_dir}")
+        else:
+            exported = exporter.export_roster(roster, output_dir=out_root)
+            total_files = sum(item[1] for item in exported)
+            print(f"[GENIT] 로스터 '{roster.roster_name}' {len(exported)}명 / 총 {total_files}개 내보내기 완료")
+            for c_prefix, cnt, target_dir, exp_code in exported:
+                print(f"  - {c_prefix} -> {exp_code}: {cnt}개 ({target_dir})")
+        return 0
 
     if args.all_chars:
         return run_all_chars(
