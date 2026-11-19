@@ -98,7 +98,6 @@ class Profile:
 class PoseDatabase:
     entries: dict[int, PoseEntry] = field(default_factory=dict)
     sections: dict[str, list[int]] = field(default_factory=dict)
-    profiles: dict[str, Profile] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
 
     @property
@@ -108,10 +107,6 @@ class PoseDatabase:
     @property
     def section_names(self) -> list[str]:
         return list(self.sections)
-
-    @property
-    def profile_names(self) -> list[str]:
-        return list(self.profiles)
 
 
 @dataclass(frozen=True, slots=True)

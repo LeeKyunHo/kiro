@@ -33,7 +33,6 @@ from generator.pose_db import (
     peek_choices,
     print_warnings,
     read_pose_json,
-    resolve_profile,
     resolve_targets,
 )
 from generator.prompt import (
@@ -129,7 +128,6 @@ __all__ = [
     "peek_choices",
     "print_warnings",
     "read_pose_json",
-    "resolve_profile",
     "resolve_targets",
     # prompt
     "assemble_prompt",

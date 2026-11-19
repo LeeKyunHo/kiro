@@ -10,126 +10,29 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-# ── 패키지 심볼 Re-export (하위 호환성 100% 보장) ──
+from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
 from generator.config import (
-    API_HOST,
-    API_URL,
-    ASSETS_DIRNAME,
     CHARACTERS_DIRNAME,
-    CN_MODELS_URL,
-    CN_MODULES_URL,
-    COMMON_NEG,
-    DEFAULT_HOST,
     DEFAULT_PROFILE,
-    FALLBACK_PROFILE,
-    GIB,
-    IMAGE_SIZE,
-    IP_ADAPTER_MODEL_PATTERNS,
-    IP_ADAPTER_MODULE_PATTERNS,
-    LORA_STRING,
-    MAX_CODE,
-    MEMORY_TIMEOUT,
-    MEMORY_URL,
-    MIN_CODE_WIDTH,
-    MOCK_SIZE,
-    POS_BASE,
-    POSE_DB_FILE,
-    PROJECTS_DIRNAME,
     REF_WEIGHT_DEFAULT,
     REF_WEIGHT_MAX,
     REF_WEIGHT_MIN,
-    REFERENCE_EXTENSIONS,
     REFERENCES_DIRNAME,
-    ROSTER_ALIAS,
-    SAMPLER_CANDIDATES,
-    SAMPLERS_TIMEOUT,
-    SAMPLERS_URL,
-    SEPARATOR,
-    STEPS,
-    TXT2IMG_TIMEOUT,
-    URL_PLACEHOLDER,
-    WEBP_METHOD,
-    WEBP_QUALITY,
     ConfigError,
     configure_stdio,
 )
 from generator.diagnostics.self_test import run_self_test
-from generator.models import (
-    AllCharsResult,
-    BatchResult,
-    CharacterConfig,
-    ControlNetSpec,
-    GenerationOptions,
-    PoseDatabase,
-    PoseEntry,
-    Profile,
-    ReferenceImage,
-    RosterPaths,
-    RunHooks,
-    TestReport,
-    summarize_durations,
-)
-from generator.pose_db import (
-    load_pose_db,
-    looks_like_code_expr,
-    parse_codes_expr,
-    parse_pose_db,
-    peek_choices,
-    print_warnings,
-    read_pose_json,
-    resolve_profile,
-    resolve_targets,
-)
-from generator.prompt import (
-    assemble_prompt,
-    clamp_weights,
-    find_tag_conflicts,
-    join_tags,
-    normalize_tag,
-    resolve_background,
-    split_tags,
-    validate_prefix,
-    validate_ref_weight,
-)
-from generator.precheck import PrecheckReport, run_precheck
-from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
-from generator.reference import (
-    build_controlnet_unit,
-    find_reference_candidates,
-    load_reference,
-    match_model_name,
-    resolve_controlnet_spec,
-    resolve_reference_image,
-)
-from generator.reporter import (
-    asset_filename,
-    build_genit_block,
-    build_section_guide,
-    code_width,
-    format_code,
-    mode_badge,
-    open_in_explorer,
-    print_summary,
-)
+from generator.models import GenerationOptions
+from generator.pose_db import load_pose_db, peek_choices
+from generator.precheck import run_precheck
+from generator.reference import INTERROGATE_DEFAULT, INTERROGATORS
 from generator.roster import (
     RosterPathManager,
     apply_character_to_args,
     list_characters,
     load_character,
 )
-from generator.runner import execute, run_all_chars, run_batch
-from generator.webui_client import (
-    build_txt2img_payload,
-    extract_vram_peak,
-    fetch_vram_peak,
-    generate_image,
-    get_session,
-    inject_alwayson_scripts,
-    inject_controlnet,
-    make_dummy_png,
-    resolve_sampler,
-    save_as_webp,
-)
+from generator.runner import execute, run_all_chars, run_interrogate
 
 # ─────────────────────────────────────────────
 # CLI 파서 구성
@@ -337,8 +240,6 @@ def build_parser(
         help="검열 렌더링 스타일 (기본 white_silhouette)",
     )
 
-    from generator.reference import INTERROGATE_DEFAULT, INTERROGATORS
-
     interrogate_group = parser.add_argument_group("이미지 태그 역추출 (--from_image)")
     interrogate_group.add_argument(
         "--from_image", default=None, metavar="PATH",
@@ -367,7 +268,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if getattr(args, "from_image", None):
-        from generator.runner import run_interrogate
         try:
             return run_interrogate(args.from_image, model=args.interrogator)
         except ConfigError as e:

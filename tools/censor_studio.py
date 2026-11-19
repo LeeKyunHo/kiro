@@ -5,7 +5,7 @@
 - 인체 실루엣과 포즈 흐름을 살리는 슬림 사선 회전 바 (각도/두께 실시간 조절)
 - 마우스 휠 각도 회전 + 직전 각도/크기 자동 기억 (1클릭 1초 컷)
 - Space / Enter 키 원터치 고화질 덮어쓰기 저장 및 다음 이미지 자동 이동
-- H-씬(040~075, 140~170) 자동 필터링 기능
+- H-씬(V2 대역: 080~135, 150~200, 비노출 포즈 제외) 자동 필터링 기능
 """
 
 import os
@@ -313,7 +313,7 @@ HTML_TEMPLATE = """
         </div>
         <div class="nav-controls">
             <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; margin-right: 15px; cursor: pointer;">
-                <input type="checkbox" id="filterH" checked> 40번 이후 검열 대상만 보기 (040+)
+                <input type="checkbox" id="filterH" checked> V2 성인 씬 검열 대상만 보기 (080~135, 150~200)
             </label>
             <button class="btn" id="btnPrev" title="이전 (A, ←)">◀ 이전</button>
             <button class="btn" id="btnSkip" title="저장 없이 건너뛰기 (D, →)">건너뛰기 ▶</button>

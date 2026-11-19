@@ -12,16 +12,12 @@ from typing import Any, Iterable
 
 from generator.config import (
     CODE_EXPR_PATTERN,
-    COMMON_NEG,
-    DEFAULT_PROFILE,
-    FALLBACK_PROFILE,
     MAX_CODE,
     POSE_DB_FILE,
-    POS_BASE,
     SECTION_COMMENT_PREFIX,
     ConfigError,
 )
-from generator.models import PoseDatabase, PoseEntry, Profile
+from generator.models import PoseDatabase, PoseEntry
 
 logger = logging.getLogger(__name__)
 
@@ -263,18 +259,6 @@ def print_warnings(db: PoseDatabase) -> None:
     for message in db.warnings:
         logger.warning(f"[WARN] {message}")
     logger.info("")
-
-
-def resolve_profile(
-    db: PoseDatabase | None = None, requested: str | None = None
-) -> Profile:
-    """내장 기본 프로필(FALLBACK_PROFILE)을 반환한다.
-
-    V2 파이프라인에서는 포즈 DB 내 프로필 섹션을 제거하고 캐릭터별 JSON
-    (`positive`/`negative`) 또는 공통 기본 프롬프트(`POS_BASE`/`COMMON_NEG`)를
-    사용하므로, `db` 및 `requested` 인자는 기존 호출부 호환성을 위해서만 유지한다.
-    """
-    return Profile(FALLBACK_PROFILE, POS_BASE, COMMON_NEG)
 
 
 def _parse_code_token(token: str) -> Iterable[int]:

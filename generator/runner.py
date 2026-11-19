@@ -25,6 +25,9 @@ from generator.checkpoint import (
 )
 from generator.config import (
     CHARACTERS_DIRNAME,
+    COMMON_NEG,
+    FALLBACK_PROFILE,
+    POS_BASE,
     REF_WEIGHT_DEFAULT,
     REFERENCES_DIRNAME,
     ConfigError,
@@ -36,6 +39,7 @@ from generator.models import (
     GenerationOptions,
     PoseDatabase,
     PoseEntry,
+    Profile,
     ReferenceImage,
     RosterPaths,
     RunHooks,
@@ -44,7 +48,6 @@ from generator.pose_db import (
     expand_v2_mode,
     load_pose_db,
     print_warnings,
-    resolve_profile,
     resolve_targets,
 )
 from generator.prompt import (
@@ -447,7 +450,7 @@ def _setup_prompt(
         profile_label = "전용"
         effective_char = ""
     else:
-        profile = resolve_profile(db, opts.profile)
+        profile = Profile(FALLBACK_PROFILE, POS_BASE, COMMON_NEG)
         if opts.profile:
             logger.info(f"[PROFILE] '{profile.name}' 적용")
         else:

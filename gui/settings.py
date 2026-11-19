@@ -17,7 +17,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "steps": 30,
     "sampler": "DPM++ 2M",
     "scheduler": "Karras",
-    "cfg_scale": 8.0,
+    "cfg_scale": 6.0,
     "use_reference": True,
     "naming": "hybrid",
     "overwrite": True,

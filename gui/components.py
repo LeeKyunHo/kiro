@@ -41,7 +41,7 @@ class ControlPanelWidgets:
 
     def collect_settings(self, base_settings: dict[str, Any]) -> dict[str, Any]:
         return {
-            "steps": int(self.steps_input.value or 25),
+            "steps": int(self.steps_input.value or 30),
             "sampler": str(self.sampler_select.value),
             "scheduler": str(self.scheduler_select.value),
             "cfg_scale": float(self.cfg_input.value or 6.0),
@@ -210,7 +210,7 @@ def build_control_panel(
         with ui.row().classes("w-full gap-3 mt-1"):
             steps_input = ui.number(
                 label="생성 스텝 (Steps)",
-                value=settings.get("steps", 25),
+                value=settings.get("steps", 30),
                 min=10,
                 max=60,
                 step=1,
