@@ -22,6 +22,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "naming": "hybrid",
     "overwrite": True,
     "auto_qc": False,
+    "strict_censor_qc": False,
     "max_retries": 3,
     "censor": False,
     "censor_style": "white_silhouette",

@@ -33,6 +33,7 @@ class ControlPanelWidgets:
     overwrite_check: Any
     mock_check: Any
     auto_qc_check: Any
+    strict_censor_qc_check: Any
     censor_check: Any
     save_cfg_btn: Any
     precheck_btn: Any
@@ -49,6 +50,7 @@ class ControlPanelWidgets:
             "naming": str(self.naming_select.value),
             "overwrite": bool(self.overwrite_check.value),
             "auto_qc": bool(self.auto_qc_check.value),
+            "strict_censor_qc": bool(self.strict_censor_qc_check.value),
             "max_retries": int(base_settings.get("max_retries", 3)),
             "censor": bool(self.censor_check.value),
             "censor_style": str(base_settings.get("censor_style", "white_silhouette")),
@@ -328,6 +330,10 @@ def build_control_panel(
                 auto_qc_check = ui.checkbox(
                     "Auto-QC 자동 검수/재시도", value=settings.get("auto_qc", False)
                 ).classes("text-xs")
+                strict_censor_qc_check = ui.checkbox(
+                    "성인 씬 타겟 미탐지 리롤 (Strict QC)",
+                    value=settings.get("strict_censor_qc", False),
+                ).classes("text-xs")
                 censor_check = ui.checkbox(
                     "성인 씬 자동 검열", value=settings.get("censor", False)
                 ).classes("text-xs")
@@ -368,6 +374,7 @@ def build_control_panel(
         overwrite_check=overwrite_check,
         mock_check=mock_check,
         auto_qc_check=auto_qc_check,
+        strict_censor_qc_check=strict_censor_qc_check,
         censor_check=censor_check,
         save_cfg_btn=save_cfg_btn,
         precheck_btn=precheck_btn,

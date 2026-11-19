@@ -296,6 +296,7 @@ class GenerationOptions:
     gender: str | None = None
     outfits: dict[str, str] | None = None
     auto_qc: bool = False
+    strict_censor_qc: bool = False
     max_retries: int = 3
     censor: bool = False
     censor_style: str = "white_silhouette"
@@ -363,6 +364,7 @@ class GenerationOptions:
             gender=getattr(args, "gender", None),
             outfits=getattr(args, "outfits", None),
             auto_qc=auto_qc_val,
+            strict_censor_qc=bool(getattr(args, "strict_censor_qc", False)),
             max_retries=int(getattr(args, "max_retries", 3)),
             censor=bool(getattr(args, "censor", False)),
             censor_style=str(

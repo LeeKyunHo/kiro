@@ -53,6 +53,7 @@ def build_base_options(
         naming=str(current_cfg.get("naming", "hybrid")),
         overwrite=bool(current_cfg.get("overwrite", False)),
         auto_qc=bool(current_cfg.get("auto_qc", False)),
+        strict_censor_qc=bool(current_cfg.get("strict_censor_qc", False)),
         max_retries=int(current_cfg.get("max_retries", 3)),
         censor=bool(current_cfg.get("censor", False)),
         censor_style=str(current_cfg.get("censor_style", "white_silhouette")),

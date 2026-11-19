@@ -651,9 +651,14 @@ def _render_censored_style(
     boxes_with_labels: Sequence[Tuple[Any, ...]],
     style: str = "white_silhouette",
     *,
-    silhouette_fn: Optional[Callable[[Image.Image, Sequence[Tuple[Any, ...]], str], Image.Image]] = None,
+    silhouette_fn: Optional[Callable[..., Image.Image]] = None,
     skin_np: Optional[np.ndarray] = None,
     pose_cat: Optional[str] = None,
+    custom_seg_mask: Optional[np.ndarray] = None,
+    fallback_boxes: Optional[Sequence[Tuple[Any, ...]]] = None,
+    yolo_prior_masks: Optional[Sequence[Optional[np.ndarray]]] = None,
+    context_boxes: Optional[Sequence[Optional[Tuple[int, int, int, int]]]] = None,
+    extra_protection_mask: Optional[np.ndarray] = None,
 ) -> Image.Image:
     """검열 스타일명(`style`)에 대응하는 렌더러로 일관되게 라우팅한다."""
     detected_boxes = [item[0] for item in boxes_with_labels]
@@ -675,8 +680,27 @@ def _render_censored_style(
         return apply_mosaic(img, detected_boxes)
 
     if silhouette_fn is not None:
-        if style_clean in ("black_silhouette", "silhouette_black", "black"):
-            return silhouette_fn(img, boxes_with_labels, "black")
-        return silhouette_fn(img, boxes_with_labels, "white")
+        color_arg = "black" if style_clean in ("black_silhouette", "silhouette_black", "black") else "white"
+        extra_kwargs: Dict[str, Any] = {}
+        if skin_np is not None:
+            extra_kwargs["skin_np"] = skin_np
+        if pose_cat is not None:
+            extra_kwargs["pose_cat"] = pose_cat
+        if custom_seg_mask is not None:
+            extra_kwargs["custom_seg_mask"] = custom_seg_mask
+        if fallback_boxes is not None:
+            extra_kwargs["fallback_boxes"] = fallback_boxes
+        if yolo_prior_masks is not None:
+            extra_kwargs["yolo_prior_masks"] = yolo_prior_masks
+        if context_boxes is not None:
+            extra_kwargs["context_boxes"] = context_boxes
+        if extra_protection_mask is not None:
+            extra_kwargs["extra_protection_mask"] = extra_protection_mask
+        if extra_kwargs:
+            try:
+                return silhouette_fn(img, boxes_with_labels, color_arg, **extra_kwargs)
+            except TypeError:
+                return silhouette_fn(img, boxes_with_labels, color_arg)
+        return silhouette_fn(img, boxes_with_labels, color_arg)
 
     return apply_wide_solid_bar(img, detected_boxes)

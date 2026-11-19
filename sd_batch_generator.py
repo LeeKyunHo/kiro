@@ -240,6 +240,10 @@ def build_parser(
         help="Auto-QC 품질 검수 및 불량(인원 초과, 손/머리 증식 등) 감지 시 자동 재시도",
     )
     qc_group.add_argument(
+        "--strict-censor-qc", "--strict_censor_qc", dest="strict_censor_qc", action="store_true",
+        help="성인 노출 필수 씬에서 타겟 미탐지(0건) 시 구도 실패로 간주하고 자동 리롤 (--censor 와 독립 동작)",
+    )
+    qc_group.add_argument(
         "--max-retries", type=int, default=3,
         help="Auto-QC 불량 발생 시 최대 재시도 횟수 (기본 3)",
     )

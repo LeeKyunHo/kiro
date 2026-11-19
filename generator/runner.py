@@ -211,9 +211,13 @@ def _generate_and_validate_image(
     auto_qc: bool,
     max_retries: int,
     result: BatchResult,
+    strict_censor_qc: bool = False,
+    gender: str = "female",
+    roster_name: str | None = None,
 ) -> bytes:
-    """이미지 생성 및 Auto-QC 품질 검증/시드 리롤 루프를 수행한다."""
-    max_attempts = (max_retries + 1) if auto_qc else 1
+    """이미지 생성 및 Auto-QC / strict_censor_qc 품질 검증·시드 리롤 루프를 수행한다."""
+    qc_enabled = bool(auto_qc or strict_censor_qc)
+    max_attempts = (max_retries + 1) if qc_enabled else 1
     png_bytes = b""
 
     for attempt in range(max_attempts):
@@ -221,28 +225,64 @@ def _generate_and_validate_image(
             payload["seed"] = random.randint(1, 2**32 - 1)
         png_bytes = _request_image_with_fallback(payload, scene, clip_skip, tag)
 
-        if not auto_qc:
+        if not qc_enabled:
             break
 
         try:
             from PIL import Image
-            from generator.qa_validator import validate_generated_image
 
             img_pil = Image.open(io.BytesIO(png_bytes))
-            passed, fail_reason, _ = validate_generated_image(
-                image=img_pil,
-                is_solo_scene=scene.is_solo_scene,
-                is_two_person=scene.is_interactive,
-                is_offscreen_partner=scene.is_offscreen_partner,
-                is_kiss_scene=scene.is_kiss_scene,
-                section=entry.section,
-                prompt=scene.pose_prompt,
-                is_faceless_partner=(
-                    "faceless" in scene.full_prompt.lower()
-                    if scene.is_interactive and not scene.is_offscreen_partner
-                    else False
-                ),
-            )
+            passed = True
+            fail_reason = ""
+
+            if auto_qc:
+                from generator.qa_validator import validate_generated_image
+
+                passed, fail_reason, _ = validate_generated_image(
+                    image=img_pil,
+                    is_solo_scene=scene.is_solo_scene,
+                    is_two_person=scene.is_interactive,
+                    is_offscreen_partner=scene.is_offscreen_partner,
+                    is_kiss_scene=scene.is_kiss_scene,
+                    section=entry.section,
+                    prompt=scene.pose_prompt,
+                    is_faceless_partner=(
+                        "faceless" in scene.full_prompt.lower()
+                        if scene.is_interactive and not scene.is_offscreen_partner
+                        else False
+                    ),
+                )
+
+            if passed and strict_censor_qc:
+                from generator.censor import (
+                    _is_otokonoko_context,
+                    detect_genitals,
+                    is_censor_target,
+                )
+
+                is_otk = _is_otokonoko_context(
+                    roster=roster_name,
+                    pose_code=code,
+                    section=entry.section,
+                    gender=gender,
+                )
+                requires_exposure = (
+                    is_censor_target(
+                        code,
+                        section=entry.section,
+                        is_nude_scene=scene.is_nude_scene,
+                        is_otokonoko=is_otk,
+                        roster=roster_name,
+                    )
+                    and not scene.is_aftermath
+                    and not scene.is_solo_scene
+                )
+                if requires_exposure:
+                    hits = detect_genitals(img_pil, pose_code=code, is_otokonoko=is_otk)
+                    if not hits:
+                        passed = False
+                        fail_reason = "성인 노출 필수 씬 타겟 미탐지(strict_censor_qc)"
+
             if not passed:
                 if attempt < max_retries:
                     logger.warning(
@@ -270,16 +310,31 @@ def _apply_post_censor(
     entry: PoseEntry,
     is_nude_scene: bool,
     censor_style: str,
+    gender: str = "female",
+    roster_name: str | None = None,
 ) -> None:
-    """성인/탈의 씬 검열 대상인 경우 _origin 원본 백업 후 자동 검열을 적용한다."""
+    """성인/탈의 씬 검열 대상인 경우 _origin 원본 백업 후 자동 검열을 적용한다 (ADR-103 컨텍스트 전파)."""
     from generator.censor import (
         _atomic_replace_with_retry,
+        _is_otokonoko_context,
         censor_file,
         get_origin_backup_path,
         is_censor_target,
     )
 
-    if not is_censor_target(code, section=entry.section, is_nude_scene=is_nude_scene):
+    is_otk = _is_otokonoko_context(
+        roster=roster_name,
+        pose_code=code,
+        section=entry.section,
+        gender=gender,
+    )
+    if not is_censor_target(
+        code,
+        section=entry.section,
+        is_nude_scene=is_nude_scene,
+        is_otokonoko=is_otk,
+        roster=roster_name,
+    ):
         return
 
     origin_path = get_origin_backup_path(save_path)
@@ -295,6 +350,9 @@ def _apply_post_censor(
             style=censor_style,
             pose_code=code,
             enable_anchor_fallback=False,
+            is_nude=is_nude_scene,
+            is_otokonoko=is_otk,
+            roster=roster_name,
         )
         if c_res and c_res.exists():
             _atomic_replace_with_retry(tmp_censored, save_path)
@@ -349,7 +407,7 @@ def run_batch(
     clip_skip: int | None = None, naming: str = "code", overwrite: bool = False,
     active_bg: str | None = None, nude_positive: str | None = None, gender: str = "female",
     outfits: dict[str, str] | None = None, dry_run: bool = False, mock: bool = False,
-    auto_qc: bool = False, max_retries: int = 3, censor: bool = False,
+    auto_qc: bool = False, strict_censor_qc: bool = False, max_retries: int = 3, censor: bool = False,
     censor_style: str = "white_silhouette", clamp_weights: bool = False,
     seed: int | None = None, deterministic_pose_seed: bool = False,
     roster: RosterPaths | None = None,
@@ -368,7 +426,7 @@ def run_batch(
         naming, overwrite, nude_positive = options.naming, options.overwrite, options.nude_positive
         gender, outfits = options.gender or gender, options.outfits
         dry_run, mock = options.dry_run, (options.mock and not options.dry_run)
-        auto_qc, max_retries = options.auto_qc, options.max_retries
+        auto_qc, strict_censor_qc, max_retries = options.auto_qc, options.strict_censor_qc, options.max_retries
         censor, censor_style, clamp_weights = options.censor, options.censor_style, options.clamp_weights
         seed = options.seed if options.seed is not None else seed
         deterministic_pose_seed = options.deterministic_pose_seed or deterministic_pose_seed
@@ -440,12 +498,14 @@ def run_batch(
                 freeu_b1=freeu_b1, freeu_b2=freeu_b2, freeu_s1=freeu_s1, freeu_s2=freeu_s2,
                 enable_adetailer=enable_adetailer,
             )
+            roster_name = roster.roster_name if roster else None
             png_bytes = (
                 make_dummy_png(prefix, code, width, entry, reference)
                 if mock
                 else _generate_and_validate_image(
                     payload=payload, scene=scene, entry=entry, code=code, tag=tag,
-                    clip_skip=clip_skip, auto_qc=auto_qc, max_retries=max_retries, result=result,
+                    clip_skip=clip_skip, auto_qc=auto_qc, strict_censor_qc=strict_censor_qc,
+                    max_retries=max_retries, result=result, gender=gender, roster_name=roster_name,
                 )
             )
 
@@ -458,8 +518,8 @@ def run_batch(
             if censor:
                 _apply_post_censor(
                     png_bytes=png_bytes, save_path=save_path, prefix=prefix,
-                    filename=filename, code=code, entry=entry,
-                    is_nude_scene=scene.is_nude_scene, censor_style=censor_style,
+                    filename=filename, code=code, entry=entry, is_nude_scene=scene.is_nude_scene,
+                    censor_style=censor_style, gender=gender, roster_name=roster_name,
                 )
         except requests.exceptions.ConnectionError:
             logger.error("실패: WebUI 연결 불가 (--api 옵션 실행 여부 확인)")
@@ -772,6 +832,7 @@ def run_all_chars(
     cfg_scale: float | None = None,
     no_ref: bool = False,
     auto_qc: bool = False,
+    strict_censor_qc: bool = False,
     max_retries: int = 3,
     censor: bool = False,
     censor_style: str = "white_silhouette",
@@ -812,6 +873,7 @@ def run_all_chars(
             cfg_scale=cfg_scale,
             no_ref=no_ref,
             auto_qc=auto_qc,
+            strict_censor_qc=strict_censor_qc,
             max_retries=max_retries,
             censor=censor,
             censor_style=censor_style,
