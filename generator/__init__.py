@@ -91,6 +91,7 @@ from generator.scene_composer import (
 )
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "AssetManager": ("generator.asset_manager", "AssetManager"),
     "_atomic_replace_with_retry": ("generator.censor", "_atomic_replace_with_retry"),
     "_is_otokonoko_context": ("generator.censor", "_is_otokonoko_context"),
     "apply_debug_bbox": ("generator.censor", "apply_debug_bbox"),
@@ -213,6 +214,7 @@ __all__ = [
     "run_batch",
     "run_interrogate",
     # censor
+    "AssetManager",
     "_is_otokonoko_context",
     "censor_file",
     "censor_image",

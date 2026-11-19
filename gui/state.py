@@ -18,6 +18,7 @@ from generator.models import CharacterConfig, PoseDatabase, RosterPaths
 from generator.pose_db import load_pose_db, looks_like_code_expr
 from generator.reference import find_reference_candidates
 from generator.roster import RosterPathManager, load_character
+from gui.job_manager import GlobalJobManager, global_job_manager
 
 
 logger = logging.getLogger("generator.gui")
@@ -147,6 +148,7 @@ class GuiRuntimeState:
         self.active_run_id: int = 0
         self.current_active_prefix: str = ""
         self._mounted_prefixes: set[str] = set()
+        self.job_manager: GlobalJobManager = global_job_manager
 
     def ensure_static_mounted(self, prefix: str, save_dir: Path) -> None:
         if prefix not in self._mounted_prefixes:

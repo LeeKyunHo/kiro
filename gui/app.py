@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 import time
 
-from nicegui import run, ui
+from nicegui import app as nicegui_app, run, ui
 
 from generator.models import BatchResult, CharacterConfig, RunHooks
 from generator.pose_db import load_pose_db
@@ -18,6 +18,7 @@ from generator.precheck import run_precheck
 from generator.reporter import open_in_explorer
 from generator.runner import execute, run_all_chars
 from generator.webui_client import interrupt_forge
+from gui.api_routes import register_api_routes
 from gui.components import build_control_panel, build_header, build_monitor_panel
 from gui.runner_bridge import (
     build_base_options,
@@ -55,6 +56,7 @@ def build_gui(base_dir: Path, state: GuiRuntimeState | None = None) -> GuiRuntim
     settings = load_gui_settings(base_dir)
     if state is None:
         state = get_or_create_runtime_state(base_dir)
+    register_api_routes(nicegui_app, base_dir, job_manager=state.job_manager)
     state.db = load_pose_db(base_dir, state.roster.events_file)
     state.refresh_characters()
 
@@ -418,6 +420,8 @@ def main(base_dir: Path | None = None) -> None:
     args, _ = parser.parse_known_args()
 
     resolved_base_dir = base_dir or Path(__file__).resolve().parent.parent
+    shared_state = get_or_create_runtime_state(resolved_base_dir)
+    register_api_routes(nicegui_app, resolved_base_dir, job_manager=shared_state.job_manager)
 
     @ui.page("/")
     def index_page() -> None:
