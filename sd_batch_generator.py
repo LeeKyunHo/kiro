@@ -55,14 +55,17 @@ from generator.config import (
 )
 from generator.diagnostics.self_test import run_self_test
 from generator.models import (
+    AllCharsResult,
     BatchResult,
     CharacterConfig,
     ControlNetSpec,
+    GenerationOptions,
     PoseDatabase,
     PoseEntry,
     Profile,
     ReferenceImage,
     RosterPaths,
+    RunHooks,
     TestReport,
     summarize_durations,
 )
@@ -283,6 +286,10 @@ def build_parser(
         "--clip-skip", "--clip_skip", dest="clip_skip", type=int, default=None,
         help="CLIP Skip 레이어 수 직접 지정 (예: 2)",
     )
+    gen_opts.add_argument(
+        "--clamp-weights", dest="clamp_weights", action="store_true",
+        help="과도한 프롬프트 강조 가중치를 1.15 이하로 클램핑 (선택 옵션, 기본 비활성)",
+    )
 
     parser.add_argument(
         "--naming", default="code", choices=["code", "hybrid", "label"],
@@ -413,36 +420,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.all_chars:
         return run_all_chars(
             roster,
-            mode=args.mode,
-            codes_expr=args.codes,
-            dry_run=args.dry_run,
-            mock=args.mock,
-            cli_bg=args.bg,
-            bg_preset=args.bg_preset,
-            enable_freeu=args.enable_freeu,
-            freeu_b1=args.freeu_b1,
-            freeu_b2=args.freeu_b2,
-            freeu_s1=args.freeu_s1,
-            freeu_s2=args.freeu_s2,
-            enable_adetailer=args.enable_adetailer,
-            enable_lightning=args.enable_lightning,
-            lightning_steps=args.lightning_steps,
-            lightning_cfg=args.lightning_cfg,
-            lightning_lora_name=args.lightning_lora_name,
-            steps=args.steps,
-            sampler=args.sampler,
-            scheduler=args.scheduler,
-            cfg_scale=args.cfg_scale,
-            no_ref=args.no_ref,
-            naming=args.naming,
-            overwrite=args.overwrite,
-            auto_qc=args.auto_qc,
-            max_retries=args.max_retries,
-            censor=args.censor,
-            censor_style=args.censor_style,
-            active_ckpt=getattr(args, "active_ckpt", None),
-            ckpt_profile=getattr(args, "ckpt_profile", None),
-            clip_skip=getattr(args, "clip_skip", None),
+            options=GenerationOptions.from_namespace(args),
         )
 
     if args.char:
@@ -462,7 +440,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("다음 인자가 필요합니다: " + ", ".join(f"--{m}" for m in missing))
 
     try:
-        return execute(args, roster)
+        return execute(GenerationOptions.from_namespace(args), roster)
     except ConfigError as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         if e.hint:

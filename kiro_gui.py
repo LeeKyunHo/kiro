@@ -23,13 +23,26 @@ from generator.checkpoint import (
     normalize_webui_scheduler,
 )
 from generator.config import REF_WEIGHT_DEFAULT, REFERENCES_DIRNAME, get_api_url
-from generator.models import CharacterConfig, PoseDatabase, RosterPaths
-from generator.pose_db import load_pose_db, looks_like_code_expr, parse_codes_expr, resolve_targets
+from generator.models import (
+    BatchResult,
+    CharacterConfig,
+    GenerationOptions,
+    PoseDatabase,
+    RosterPaths,
+    RunHooks,
+)
+from generator.pose_db import (
+    expand_v2_mode,
+    load_pose_db,
+    looks_like_code_expr,
+    parse_codes_expr,
+    resolve_targets,
+)
 from generator.precheck import run_precheck
 from generator.reference import find_reference_candidates
 from generator.reporter import build_genit_block, code_width, open_in_explorer
 from generator.roster import RosterPathManager, _resolve_default_mode, apply_character_to_args, load_character
-from generator.runner import execute
+from generator.runner import execute, run_all_chars
 from generator.webui_client import interrupt_forge
 
 
@@ -581,70 +594,41 @@ def build_gui(base_dir: Path):
 
         def _expand_all_target_mode(target_mode: str, codes_arg: str | None, char_gender: str) -> str:
             if target_mode == "all" and not codes_arg:
-                is_otk = str(char_gender).lower() in ("otokonoko", "femboy")
-                return _resolve_default_mode("otokonoko" if is_otk else "female", state.db)
+                return expand_v2_mode("all", state.db, expand_all_by_gender=char_gender)
             return target_mode
 
-        def _build_runner_args(
-            char_name: str,
-            cfg: CharacterConfig,
-            progress_cb,
-        ) -> argparse.Namespace:
-            """GUI 실행용 argparse.Namespace 조립 및 캐릭터 설정/옵션 일괄 반영."""
-            mode_val, codes_val = _resolve_char_mode_and_codes(expr, cfg.gender)
+        def _build_base_options(mode_val: str, codes_val: str | None) -> GenerationOptions:
+            """GUI 공통 실행 설정을 GenerationOptions 로 조립한다."""
             active_ckpt = state.ckpt_profiles.get(ckpt_select.value) if ckpt_select.value else None
-            args = argparse.Namespace(
-                roster=state.current_roster_name,
-                char=char_name,
-                prefix=None,
-                char_prompt=None,
-                profile=None,
-                custom_neg="",
-                positive=None,
-                negative=None,
+            return GenerationOptions(
                 mode=mode_val,
                 codes=codes_val,
-                bg=None,
                 bg_preset="default",
-                ref_image=None,
                 ref_weight=REF_WEIGHT_DEFAULT,
                 no_ref=not use_ref,
-                cn_module=None,
-                cn_model=None,
                 dry_run=False,
-                mock=mock_check.value,
-                enable_freeu=False,
-                freeu_b1=1.1,
-                freeu_b2=1.2,
-                freeu_s1=0.9,
-                freeu_s2=0.2,
-                enable_adetailer=False,
-                enable_lightning=False,
-                lightning_steps=2,
-                lightning_cfg=1.0,
-                lightning_lora_name="sdxl_lightning_2step_lora",
+                mock=bool(mock_check.value),
                 steps=user_steps,
                 sampler=user_sampler,
                 scheduler=user_scheduler,
                 cfg_scale=user_cfg,
-                naming=naming_select.value,
-                overwrite=overwrite_check.value,
-                nude_positive=None,
-                gender=None,
-                outfits=None,
+                naming=str(naming_select.value),
+                overwrite=bool(overwrite_check.value),
                 auto_qc=current_cfg["auto_qc"],
                 max_retries=current_cfg["max_retries"],
                 censor=current_cfg["censor"],
                 censor_style=current_cfg["censor_style"],
                 ckpt_profile=ckpt_select.value,
                 active_ckpt=active_ckpt,
-                progress_callback=progress_cb,
-                is_cancelled=is_run_cancelled,
             )
-            apply_character_to_args(cfg, args, state.db)
-            return args
 
-        # ── 전체 캐릭터 순차 생성 (ALL) 분기 ──
+        def _build_char_options(cfg: CharacterConfig) -> GenerationOptions:
+            mode_val, codes_val = _resolve_char_mode_and_codes(expr, cfg.gender)
+            opts = _build_base_options(mode_val, codes_val)
+            apply_character_to_args(cfg, opts, state.db)
+            return opts
+
+        # ── 전체 캐릭터 순차 생성 (ALL) 분기 (공용 run_all_chars 일원화) ──
         if state.is_all_chars():
             chars_to_run = list(state.characters)
             if not chars_to_run:
@@ -655,65 +639,72 @@ def build_gui(base_dir: Path):
                     stop_btn.classes(add="hidden")
                 return
 
-            total_chars = len(chars_to_run)
             zenit_all_blocks: list[str] = []
-            failed_chars: list[str] = []
-            all_qa_warnings: list[tuple[str, int, str, str]] = []
+            base_mode, base_codes = _resolve_char_mode_and_codes(expr, "female")
+            all_base_opts = _build_base_options(base_mode, base_codes)
 
-            for char_idx, char_name in enumerate(chars_to_run, 1):
-                if is_run_cancelled():
-                    break
-
-                try:
-                    cfg = load_character(state.roster.characters_dir, char_name)
-                except Exception as e:
-                    print(f"[ERROR] {char_name} 로드 실패: {e}")
-                    failed_chars.append(char_name)
-                    continue
-
+            def on_char_start_cb(_idx: int, _total: int, _name: str, cfg: CharacterConfig) -> None:
                 state.current_active_prefix = cfg.prefix
                 save_dir = state.roster.assets_dir / cfg.prefix
                 save_dir.mkdir(parents=True, exist_ok=True)
                 state.ensure_static_mounted(cfg.prefix, save_dir)
 
-                def all_progress_cb(code: int, label: str, save_path: Path, current: int, total: int, _c_idx=char_idx, _c_name=char_name, _pfx=cfg.prefix):
-                    if is_run_cancelled():
-                        return
-                    progress_val = current / total if total > 0 else 0.0
-                    progress_bar.set_value(progress_val)
-                    progress_label.set_text(
-                        f"[{_c_idx}/{total_chars} {_c_name}] [{code:03d}] {label} ({current}/{total} 완료, {int(progress_val*100)}%) | {user_steps}스텝, CFG {user_cfg}"
-                    )
-                    if save_path.exists():
-                        preview_image.set_source(f"/assets/{_pfx}/{save_path.name}?t={int(time.time()*1000)}")
-                        preview_image.classes(remove="hidden")
-                        zoom_btn.classes(remove="hidden")
-                        preview_placeholder.classes(add="hidden")
-
-                args = _build_runner_args(char_name, cfg, all_progress_cb)
-                try:
-                    exit_code = await run.io_bound(lambda _a=args: execute(_a, state.roster))
-                except Exception as e:
-                    print(f"[ERROR] {char_name} 생성 중 오류: {e}")
-                    exit_code = 1
+            def char_progress_cb(
+                c_idx: int,
+                c_total: int,
+                c_name: str,
+                cfg: CharacterConfig,
+                code: int,
+                label: str,
+                save_path: Path,
+                current: int,
+                total: int,
+            ) -> None:
                 if is_run_cancelled():
-                    break
+                    return
+                progress_val = current / total if total > 0 else 0.0
+                progress_bar.set_value(progress_val)
+                progress_label.set_text(
+                    f"[{c_idx}/{c_total} {c_name}] [{code:03d}] {label} ({current}/{total} 완료, {int(progress_val*100)}%) | {user_steps}스텝, CFG {user_cfg}"
+                )
+                if save_path.exists():
+                    preview_image.set_source(f"/assets/{cfg.prefix}/{save_path.name}?t={int(time.time()*1000)}")
+                    preview_image.classes(remove="hidden")
+                    zoom_btn.classes(remove="hidden")
+                    preview_placeholder.classes(add="hidden")
 
-                if exit_code != 0 and char_name not in failed_chars:
-                    failed_chars.append(char_name)
-
-                last_res = getattr(args, "last_result", None)
-                if last_res and getattr(last_res, "qa_warnings", None):
-                    for q_code, q_lbl, q_rsn in last_res.qa_warnings:
-                        all_qa_warnings.append((char_name, q_code, q_lbl, q_rsn))
-
-                target_mode = _expand_all_target_mode(args.mode, args.codes, cfg.gender)
-                targets = resolve_targets(state.db, target_mode, args.codes)
+            def on_char_complete_cb(
+                _idx: int,
+                _total: int,
+                c_name: str,
+                cfg: CharacterConfig,
+                _batch_res: BatchResult | None,
+                exit_code: int,
+            ) -> None:
+                if is_run_cancelled():
+                    return
+                char_opts = _build_char_options(cfg)
+                target_mode = _expand_all_target_mode(char_opts.mode, char_opts.codes, cfg.gender or "female")
+                targets = resolve_targets(state.db, target_mode, char_opts.codes)
                 w = code_width(state.db.all_codes)
                 block = build_genit_block(cfg.prefix, targets, state.db, w, naming=naming_select.value)
                 status_suffix = " ⚠️(일부 실패)" if exit_code != 0 else ""
-                zenit_all_blocks.append(f"### 🎭 캐릭터: {char_name} ({cfg.prefix}){status_suffix}\n{block}")
+                zenit_all_blocks.append(f"### 🎭 캐릭터: {c_name} ({cfg.prefix}){status_suffix}\n{block}")
                 zenit_output.set_value("\n\n".join(zenit_all_blocks))
+
+            all_hooks = RunHooks(
+                is_cancelled=is_run_cancelled,
+                on_char_start=on_char_start_cb,
+                char_progress_callback=char_progress_cb,
+                on_char_complete=on_char_complete_cb,
+            )
+
+            try:
+                await run.io_bound(
+                    lambda: run_all_chars(state.roster, options=all_base_opts, hooks=all_hooks)
+                )
+            except Exception as e:
+                print(f"[ERROR] 전체 캐릭터 생성 중 오류: {e}")
 
             if state.active_run_id != my_run_id:
                 return
@@ -721,6 +712,11 @@ def build_gui(base_dir: Path):
             state.is_running = False
             start_btn.classes(remove="hidden")
             stop_btn.classes(add="hidden")
+
+            all_summary = all_hooks.last_all_result
+            total_chars = all_summary.total if all_summary else len(chars_to_run)
+            failed_chars = list(all_summary.failed) if all_summary else []
+            all_qa_warnings = list(all_summary.qa_issues) if all_summary else []
 
             if is_run_cancelled():
                 progress_label.set_text("⏹ 전체 생성이 사용자에 의해 중단되었습니다.")
@@ -764,13 +760,17 @@ def build_gui(base_dir: Path):
         save_dir.mkdir(parents=True, exist_ok=True)
         state.ensure_static_mounted(state.char_cfg.prefix, save_dir)
 
-        args = _build_runner_args(
-            state.selected_char_name,
-            state.char_cfg,
-            lambda c, l, p, cur, tot: (None if is_run_cancelled() else on_progress_update(c, l, p, cur, tot)),
+        single_opts = _build_char_options(state.char_cfg)
+        single_hooks = RunHooks(
+            progress_callback=lambda c, l, p, cur, tot: (
+                None if is_run_cancelled() else on_progress_update(c, l, p, cur, tot)
+            ),
+            is_cancelled=is_run_cancelled,
         )
         try:
-            exit_code = await run.io_bound(lambda _a=args: execute(_a, state.roster))
+            exit_code = await run.io_bound(
+                lambda _o=single_opts, _h=single_hooks: execute(_o, state.roster, hooks=_h)
+            )
         except Exception as e:
             print(f"[ERROR] 생성 실행 중 예외 발생: {e}")
             exit_code = 1
@@ -784,14 +784,14 @@ def build_gui(base_dir: Path):
 
         if exit_code == 0 and not is_run_cancelled():
             progress_bar.set_value(1.0)
-            last_res = getattr(args, "last_result", None)
+            last_res = single_hooks.last_result
             qa_warns = getattr(last_res, "qa_warnings", []) if last_res else []
             qa_suffix = f" | ⚠️ Auto-QC 경고 {len(qa_warns)}건" if qa_warns else ""
             progress_label.set_text(
                 f"✅ [{state.char_cfg.prefix}] 에셋 생성이 성공적으로 완료되었습니다! ({user_steps}스텝, CFG {user_cfg}){qa_suffix}"
             )
-            target_mode = _expand_all_target_mode(args.mode, args.codes, state.char_cfg.gender)
-            targets = resolve_targets(state.db, target_mode, args.codes)
+            target_mode = _expand_all_target_mode(single_opts.mode, single_opts.codes, state.char_cfg.gender)
+            targets = resolve_targets(state.db, target_mode, single_opts.codes)
             w = code_width(state.db.all_codes)
             markdown_block = build_genit_block(
                 state.char_cfg.prefix, targets, state.db, w, naming=naming_select.value

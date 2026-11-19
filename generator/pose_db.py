@@ -6,6 +6,7 @@ pose_database.json 및 events.json 파싱, 프로필/모드/코드 타겟 해석
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -21,6 +22,68 @@ from generator.config import (
     ConfigError,
 )
 from generator.models import PoseDatabase, PoseEntry, Profile
+
+logger = logging.getLogger(__name__)
+
+V2_FEMALE_SECTIONS: tuple[str, ...] = (
+    "emotions",
+    "poses",
+    "events",
+    "romance",
+    "h_scenes",
+    "special_h",
+)
+V2_OTOKONOKO_SECTIONS: tuple[str, ...] = (
+    "emotions",
+    "poses",
+    "events",
+    "romance",
+    "scenes_otokonoko",
+    "special_otokonoko",
+)
+V2_BUILTIN_SECTIONS: frozenset[str] = frozenset(
+    V2_FEMALE_SECTIONS + V2_OTOKONOKO_SECTIONS
+)
+
+_DEFAULT_MODE_MAP: dict[str, str] = {
+    "female": ",".join(V2_FEMALE_SECTIONS),
+    "girl": ",".join(V2_FEMALE_SECTIONS),
+    "woman": ",".join(V2_FEMALE_SECTIONS),
+    "sdxl": ",".join(V2_FEMALE_SECTIONS),
+    "otokonoko": ",".join(V2_OTOKONOKO_SECTIONS),
+    "femboy": ",".join(V2_OTOKONOKO_SECTIONS),
+    "all": "all",
+}
+
+
+def expand_v2_mode(
+    mode_or_gender: str,
+    db: PoseDatabase | None = None,
+    *,
+    expand_all_by_gender: str | None = None,
+) -> str:
+    """
+    V2 섹션 확장 단일 진실 공급원(SSOT):
+    - default_mode('female', 'otokonoko' 등) 또는 target_mode('all')를
+      DB에 존재하는 V2 기본 섹션 + 로스터 커스텀 섹션(event_* 등) 목록으로 변환한다.
+    - 폐기된 레거시 'genit_actions' 참조를 포함하지 않는다.
+    """
+    raw_key = (mode_or_gender or "all").strip().lower()
+    if raw_key == "all" and expand_all_by_gender is not None:
+        g_key = expand_all_by_gender.strip().lower()
+        raw_key = "otokonoko" if g_key in ("otokonoko", "femboy") else "female"
+
+    resolved = _DEFAULT_MODE_MAP.get(raw_key)
+    if resolved is None:
+        logger.warning(f"[WARN] 알 수 없는 default_mode '{mode_or_gender}' - 'all' 로 폴백")
+        return "all"
+
+    if db and resolved != "all":
+        base_secs = [s for s in resolved.split(",") if s in db.sections]
+        custom_sections = [sec for sec in db.sections if sec not in V2_BUILTIN_SECTIONS]
+        resolved = ",".join(base_secs + custom_sections)
+
+    return resolved
 
 
 def _iter_sections(raw: dict[str, Any]) -> Iterable[tuple[str, Any]]:
@@ -167,9 +230,9 @@ def load_pose_db(base_dir: Path, events_file: Path | None = None) -> PoseDatabas
                         raw[sec].update(body)
                         merged_sections.append(sec)
                 if merged_sections:
-                    print(f"[EVENTS] 로스터 전용 포즈 병합: {ef.name} ({', '.join(merged_sections)})")
+                    logger.info(f"[EVENTS] 로스터 전용 포즈 병합: {ef.name} ({', '.join(merged_sections)})")
         except Exception as e:
-            print(f"[WARN] 로스터 전용 포즈 파일({ef}) 읽기 실패: {e}")
+            logger.warning(f"[WARN] 로스터 전용 포즈 파일({ef}) 읽기 실패: {e}")
 
     db = parse_pose_db(raw)
 
@@ -198,8 +261,8 @@ def print_warnings(db: PoseDatabase) -> None:
     if not db.warnings:
         return
     for message in db.warnings:
-        print(f"[WARN] {message}")
-    print()
+        logger.warning(f"[WARN] {message}")
+    logger.info("")
 
 
 def resolve_profile(
@@ -252,7 +315,7 @@ def _pick_code_expr(mode: str, codes_expr: str | None) -> str | None:
     """--codes 와 --mode 중 코드 표현식으로 쓸 값을 고른다."""
     if codes_expr:
         if mode and mode != "all" and looks_like_code_expr(mode):
-            print(f"[WARN] --codes 가 우선합니다. --mode '{mode}' 무시됨")
+            logger.warning(f"[WARN] --codes 가 우선합니다. --mode '{mode}' 무시됨")
         return codes_expr
     if mode and looks_like_code_expr(mode):
         return mode
@@ -275,7 +338,7 @@ def resolve_targets(
             ) from None
 
         if missing := [code for code in requested if code not in db.entries]:
-            print(f"[WARN] DB에 없는 코드 무시: {missing}")
+            logger.warning(f"[WARN] DB에 없는 코드 무시: {missing}")
         return [code for code in requested if code in db.entries]
 
     if mode == "all":

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 
 @dataclass(frozen=True, slots=True)
@@ -254,3 +254,162 @@ class TestReport:
     @property
     def exit_code(self) -> int:
         return 1 if self.failed else 0
+
+
+@dataclass(slots=True)
+class GenerationOptions:
+    """단일 및 전체 캐릭터 배치 생성을 위한 타입 안전 실행 설정."""
+
+    prefix: str = ""
+    char_prompt: str = ""
+    profile: str | None = None
+    custom_neg: str = ""
+    positive: str | None = None
+    negative: str | None = None
+    mode: str = "all"
+    codes: str | None = None
+    bg: str | None = None
+    bg_preset: str = "default"
+    ref_image: str | None = None
+    ref_weight: float = 0.7
+    no_ref: bool = False
+    cn_module: str | None = None
+    cn_model: str | None = None
+    dry_run: bool = False
+    mock: bool = False
+    enable_freeu: bool = False
+    freeu_b1: float = 1.1
+    freeu_b2: float = 1.2
+    freeu_s1: float = 0.9
+    freeu_s2: float = 0.2
+    enable_adetailer: bool = False
+    enable_lightning: bool = False
+    lightning_steps: int = 2
+    lightning_cfg: float = 1.0
+    lightning_lora_name: str = "sdxl_lightning_2step_lora"
+    steps: int | None = None
+    sampler: str | None = None
+    scheduler: str | None = None
+    cfg_scale: float | None = None
+    width: int | None = None
+    height: int | None = None
+    clip_skip: int | None = None
+    naming: str = "code"
+    overwrite: bool = False
+    nude_positive: str | None = None
+    gender: str | None = None
+    outfits: dict[str, str] | None = None
+    auto_qc: bool = False
+    max_retries: int = 3
+    censor: bool = False
+    censor_style: str = "white_silhouette"
+    clamp_weights: bool = False
+    ckpt_profile: str | None = None
+    active_ckpt: Any = None
+    char_gen_overrides: dict[str, Any] | None = None
+
+    @classmethod
+    def from_namespace(cls, args: Any) -> GenerationOptions:
+        """argparse.Namespace 또는 유사 객체를 GenerationOptions 로 변환한다."""
+        if isinstance(args, cls):
+            return args
+        auto_qc_val = bool(
+            getattr(args, "auto_qc", False) or getattr(args, "auto_retry_qa", False)
+        )
+        return cls(
+            prefix=str(getattr(args, "prefix", "") or ""),
+            char_prompt=str(getattr(args, "char_prompt", "") or ""),
+            profile=getattr(args, "profile", None),
+            custom_neg=str(getattr(args, "custom_neg", "") or ""),
+            positive=getattr(args, "positive", None),
+            negative=getattr(args, "negative", None),
+            mode=str(getattr(args, "mode", "all") or "all"),
+            codes=getattr(args, "codes", None),
+            bg=getattr(args, "bg", None),
+            bg_preset=str(getattr(args, "bg_preset", "default") or "default"),
+            ref_image=getattr(args, "ref_image", None),
+            ref_weight=float(
+                getattr(args, "ref_weight", 0.7)
+                if getattr(args, "ref_weight", None) is not None
+                else 0.7
+            ),
+            no_ref=bool(getattr(args, "no_ref", False)),
+            cn_module=getattr(args, "cn_module", None),
+            cn_model=getattr(args, "cn_model", None),
+            dry_run=bool(getattr(args, "dry_run", False)),
+            mock=bool(getattr(args, "mock", False)),
+            enable_freeu=bool(getattr(args, "enable_freeu", False)),
+            freeu_b1=float(getattr(args, "freeu_b1", 1.1)),
+            freeu_b2=float(getattr(args, "freeu_b2", 1.2)),
+            freeu_s1=float(getattr(args, "freeu_s1", 0.9)),
+            freeu_s2=float(getattr(args, "freeu_s2", 0.2)),
+            enable_adetailer=bool(getattr(args, "enable_adetailer", False)),
+            enable_lightning=bool(getattr(args, "enable_lightning", False)),
+            lightning_steps=int(getattr(args, "lightning_steps", 2)),
+            lightning_cfg=float(getattr(args, "lightning_cfg", 1.0)),
+            lightning_lora_name=str(
+                getattr(args, "lightning_lora_name", "sdxl_lightning_2step_lora")
+                or "sdxl_lightning_2step_lora"
+            ),
+            steps=getattr(args, "steps", None),
+            sampler=getattr(args, "sampler", None),
+            scheduler=getattr(args, "scheduler", None),
+            cfg_scale=getattr(args, "cfg_scale", None),
+            width=getattr(args, "width", None),
+            height=getattr(args, "height", None),
+            clip_skip=getattr(args, "clip_skip", None),
+            naming=str(getattr(args, "naming", "code") or "code"),
+            overwrite=bool(getattr(args, "overwrite", False)),
+            nude_positive=getattr(args, "nude_positive", None),
+            gender=getattr(args, "gender", None),
+            outfits=getattr(args, "outfits", None),
+            auto_qc=auto_qc_val,
+            max_retries=int(getattr(args, "max_retries", 3)),
+            censor=bool(getattr(args, "censor", False)),
+            censor_style=str(
+                getattr(args, "censor_style", "white_silhouette") or "white_silhouette"
+            ),
+            clamp_weights=bool(getattr(args, "clamp_weights", False)),
+            ckpt_profile=getattr(args, "ckpt_profile", None),
+            active_ckpt=getattr(args, "active_ckpt", None),
+            char_gen_overrides=getattr(args, "char_gen_overrides", None),
+        )
+
+
+@dataclass(slots=True)
+class AllCharsResult:
+    """run_all_chars 전체 캐릭터 실행 집계."""
+
+    total: int = 0
+    succeeded: list[str] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+    qa_issues: list[tuple[str, int, str, str]] = field(default_factory=list)
+    aborted: bool = False
+
+
+@dataclass(slots=True)
+class RunHooks:
+    """실행 진행률 콜백, 취소 체크, 캐릭터별 완료 이벤트 및 결과 수집 훅."""
+
+    progress_callback: Callable[[int, str, Path, int, int], None] | None = None
+    is_cancelled: Callable[[], bool] | None = None
+    on_char_start: Callable[[int, int, str, CharacterConfig], None] | None = None
+    char_progress_callback: (
+        Callable[[int, int, str, CharacterConfig, int, str, Path, int, int], None]
+        | None
+    ) = None
+    on_char_complete: (
+        Callable[[int, int, str, CharacterConfig, BatchResult | None, int], None]
+        | None
+    ) = None
+    last_result: BatchResult | None = None
+    last_all_result: AllCharsResult | None = None
+
+    @classmethod
+    def from_namespace(cls, args: Any) -> RunHooks:
+        if isinstance(args, cls):
+            return args
+        return cls(
+            progress_callback=getattr(args, "progress_callback", None),
+            is_cancelled=getattr(args, "is_cancelled", None),
+        )

@@ -7,11 +7,14 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 from generator.config import (
     CN_MODELS_URL,
@@ -120,8 +123,10 @@ def resolve_reference_image(
 
     if len(candidates) > 1:
         ignored = [p.name for p in candidates[1:]]
-        print(f"[WARN] 참조 이미지가 여러 개입니다. '{candidates[0].name}' 사용, "
-              f"무시됨: {ignored}")
+        logger.warning(
+            f"[WARN] 참조 이미지가 여러 개입니다. '{candidates[0].name}' 사용, "
+            f"무시됨: {ignored}"
+        )
 
     return load_reference(candidates[0])
 
@@ -185,15 +190,15 @@ def resolve_controlnet_spec(
             session, get_api_url("/controlnet/model_list", host=host), "model_list"
         )
     except Exception:
-        print("[WARN] ControlNet 목록 조회 실패 - 참조 이미지 없이 생성합니다")
-        print("       ControlNet 확장이 설치되어 있는지 확인하세요.")
+        logger.warning("[WARN] ControlNet 목록 조회 실패 - 참조 이미지 없이 생성합니다")
+        logger.warning("       ControlNet 확장이 설치되어 있는지 확인하세요.")
         return None
 
     module = match_model_name(modules, IP_ADAPTER_MODULE_PATTERNS)
     model = match_model_name(models, IP_ADAPTER_MODEL_PATTERNS)
 
     if not module or not model:
-        print(f"[WARN] IP-Adapter 매칭 실패: module={module}, model={model}")
+        logger.warning(f"[WARN] IP-Adapter 매칭 실패: module={module}, model={model}")
         return None
 
     return ControlNetSpec(module, model, "auto")

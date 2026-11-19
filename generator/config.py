@@ -5,6 +5,7 @@ generator.config
 
 from __future__ import annotations
 
+import logging
 import re
 import sys
 from typing import Any
@@ -133,10 +134,47 @@ class ConfigError(Exception):
         self.hint = hint
 
 
+class _DynamicStdoutHandler(logging.StreamHandler):
+    """항상 현재 sys.stdout(contextlib.redirect_stdout 포함)으로 출력하는 스트림 핸들러."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.stream = sys.stdout
+        super().emit(record)
+
+
+def configure_logging(
+    level: int = logging.INFO,
+    extra_handler: logging.Handler | None = None,
+) -> logging.Logger:
+    """generator 패키지 공용 로거를 설정한다 (중복 핸들러 등록 방지)."""
+    pkg_logger = logging.getLogger("generator")
+    pkg_logger.setLevel(level)
+    pkg_logger.propagate = False
+
+    has_console = any(
+        getattr(h, "_kiro_console_handler", False) for h in pkg_logger.handlers
+    )
+    if not has_console:
+        console = _DynamicStdoutHandler()
+        console.setLevel(level)
+        console.setFormatter(logging.Formatter("%(message)s"))
+        setattr(console, "_kiro_console_handler", True)
+        pkg_logger.addHandler(console)
+
+    if extra_handler is not None and extra_handler not in pkg_logger.handlers:
+        pkg_logger.addHandler(extra_handler)
+
+    return pkg_logger
+
+
 def configure_stdio() -> None:
-    """표준 출력을 UTF-8 + unbuffered 로 고정한다."""
+    """표준 출력을 UTF-8 + unbuffered 로 고정하고 공용 로거를 초기화한다."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
         except (AttributeError, OSError):
             pass
+    configure_logging()
+
+
+configure_logging()

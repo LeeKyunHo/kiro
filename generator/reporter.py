@@ -5,6 +5,7 @@ generator.reporter
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Sequence
@@ -16,6 +17,8 @@ from generator.config import (
     URL_PLACEHOLDER,
 )
 from generator.models import BatchResult, PoseDatabase
+
+logger = logging.getLogger(__name__)
 
 
 def code_width(codes: Sequence[int]) -> int:
@@ -140,7 +143,7 @@ def open_in_explorer(path: Path) -> None:
     try:
         os.startfile(path)
     except OSError as e:
-        print(f"[WARN] 탐색기를 열지 못했습니다: {e}")
+        logger.warning(f"[WARN] 탐색기를 열지 못했습니다: {e}")
 
 
 def print_summary(
@@ -150,22 +153,22 @@ def print_summary(
     vram: tuple[float, float] | None = None,
 ) -> None:
     """실행 요약 리포트."""
-    print(
+    logger.info(
         f"\n[작업 완료]{badge} 성공 {len(result.success)} / "
         f"건너뜀 {len(result.skipped)} / 실패 {len(result.failed)}"
     )
     if result.planned:
-        print(f"           계획 {len(result.planned)}건 (파일 미생성)")
+        logger.info(f"           계획 {len(result.planned)}건 (파일 미생성)")
     if result.failed:
-        print(f"           실패 코드: {result.failed_codes}")
+        logger.info(f"           실패 코드: {result.failed_codes}")
     if result.aborted:
-        print("           WebUI 연결이 끊겨 중단되었습니다.")
+        logger.info("           WebUI 연결이 끊겨 중단되었습니다.")
 
     if timing := result.timing:
-        print(f"[측정] {timing.format()}")
+        logger.info(f"[측정] {timing.format()}")
     if vram:
         peak, total = vram
         ratio = peak / total * 100 if total else 0
-        print(f"[VRAM] 피크 {peak:.2f} / {total:.2f} GiB ({ratio:.0f}%)")
+        logger.info(f"[VRAM] 피크 {peak:.2f} / {total:.2f} GiB ({ratio:.0f}%)")
 
-    print(f"           폴더: {save_dir}")
+    logger.info(f"           폴더: {save_dir}")

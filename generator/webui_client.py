@@ -9,6 +9,7 @@ import base64
 import colorsys
 import copy
 import io
+import logging
 import os
 import sys
 import time
@@ -19,6 +20,8 @@ from typing import Any, Sequence
 
 import requests
 from PIL import Image, ImageDraw, ImageFont
+
+logger = logging.getLogger(__name__)
 
 from generator.config import (
     CFG_SCALE,
@@ -63,15 +66,15 @@ def resolve_sampler(host: str | None = None) -> str:
         response.raise_for_status()
         available = {item["name"] for item in response.json()}
     except Exception as e:
-        print(f"[SAMPLER] 목록 조회 실패 ({e}) - 기본값 사용")
+        logger.warning(f"[SAMPLER] 목록 조회 실패 ({e}) - 기본값 사용")
         return SAMPLER_CANDIDATES[0]
 
     for candidate in SAMPLER_CANDIDATES:
         if candidate in available:
-            print(f"[SAMPLER] '{candidate}' 감지됨")
+            logger.info(f"[SAMPLER] '{candidate}' 감지됨")
             return candidate
 
-    print(f"[SAMPLER] 후보 미발견 - '{SAMPLER_CANDIDATES[0]}' 로 전달")
+    logger.info(f"[SAMPLER] 후보 미발견 - '{SAMPLER_CANDIDATES[0]}' 로 전달")
     return SAMPLER_CANDIDATES[0]
 
 
@@ -82,7 +85,7 @@ def interrupt_forge(host: str | None = None) -> bool:
         res = get_session().post(url, timeout=3.0)
         return res.status_code == 200
     except Exception as e:
-        print(f"[WARN] Forge 중단 신호 전송 실패: {e}")
+        logger.warning(f"[WARN] Forge 중단 신호 전송 실패: {e}")
         return False
 
 
@@ -298,8 +301,8 @@ def generate_image(
             if attempt >= attempts - 1:
                 raise
             wait_sec = 0.5 * (attempt + 1)
-            print(
-                f"\n[WARN] WebUI 통신 일시 오류 ({e.__class__.__name__}), "
+            logger.warning(
+                f"[WARN] WebUI 통신 일시 오류 ({e.__class__.__name__}), "
                 f"{wait_sec:.1f}초 후 재시도 ({attempt + 1}/{max_retries})..."
             )
             time.sleep(wait_sec)

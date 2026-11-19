@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -22,43 +23,18 @@ from generator.config import (
     ConfigError,
 )
 from generator.models import CharacterConfig, PoseDatabase, RosterPaths
+from generator.pose_db import _DEFAULT_MODE_MAP, expand_v2_mode
 from generator.prompt import join_tags, validate_prefix
 
-# default_mode 값 → --mode 표현식 기본 매핑 (V2 섹션 체계)
-_DEFAULT_MODE_MAP: dict[str, str] = {
-    "female": "emotions,poses,events,romance,h_scenes,special_h",
-    "girl": "emotions,poses,events,romance,h_scenes,special_h",
-    "woman": "emotions,poses,events,romance,h_scenes,special_h",
-    "otokonoko": "emotions,poses,events,romance,scenes_otokonoko,special_otokonoko",
-    "femboy": "emotions,poses,events,romance,scenes_otokonoko,special_otokonoko",
-    "sdxl": "emotions,poses,events,romance,h_scenes,special_h",
-    "all": "all",
-}
+logger = logging.getLogger(__name__)
 
 
 def _resolve_default_mode(default_mode: str, db: PoseDatabase | None = None) -> str:
     """
-    default_mode 문자열을 --mode 표현식으로 변환한다.
+    default_mode 문자열을 --mode 표현식으로 변환한다 (pose_db.expand_v2_mode SSOT 위임).
     db 에 로스터 전용 커스텀 섹션(event_*, spy_* 등)이 등록되어 있으면 기본 실행 목록 뒤에 자동으로 덧붙인다.
     """
-    mode_key = default_mode.lower() if default_mode else "all"
-    resolved = _DEFAULT_MODE_MAP.get(mode_key)
-    if resolved is None:
-        print(f"[WARN] 알 수 없는 default_mode '{default_mode}' - 'all' 로 폴백")
-        return "all"
-
-    # 로스터 전용 커스텀 섹션 자동 병합 및 존재하는 섹션만 필터링
-    if db and resolved != "all":
-        base_secs = [s for s in resolved.split(",") if s in db.sections]
-        builtin_sections = {
-            "emotions", "poses", "events", "romance",
-            "h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko",
-            "genit_actions"
-        }
-        custom_sections = [sec for sec in db.sections if sec not in builtin_sections]
-        resolved = ",".join(base_secs + custom_sections)
-
-    return resolved
+    return expand_v2_mode(default_mode, db)
 
 
 class RosterPathManager:
@@ -189,38 +165,38 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
 def list_characters(chars_dir: Path) -> int:
     """캐릭터 디렉터리의 목록을 출력한다."""
     if not chars_dir.is_dir():
-        print(f"[INFO] {CHARACTERS_DIRNAME}/ 폴더가 없습니다. 캐릭터를 추가하세요.")
+        logger.info(f"[INFO] {CHARACTERS_DIRNAME}/ 폴더가 없습니다. 캐릭터를 추가하세요.")
         return 0
 
     files = sorted(chars_dir.glob("*.json"))
     if not files:
-        print(f"[INFO] {CHARACTERS_DIRNAME}/ 에 json 파일이 없습니다.")
+        logger.info(f"[INFO] {CHARACTERS_DIRNAME}/ 에 json 파일이 없습니다.")
         return 0
 
-    print(f"\n{'캐릭터':16}  {'프로필':20}  {'prefix'}")
-    print("-" * 56)
+    logger.info(f"\n{'캐릭터':16}  {'프로필':20}  {'prefix'}")
+    logger.info("-" * 56)
     errors: list[str] = []
     for path in files:
         try:
             cfg = load_character(chars_dir, path.stem)
             profile_display = cfg.profile or f"(기본값: {DEFAULT_PROFILE})"
             prefix_display = cfg.prefix if cfg.prefix != path.stem else "(파일명과 동일)"
-            print(f"  {path.stem:<14}  {profile_display:<20}  {prefix_display}")
+            logger.info(f"  {path.stem:<14}  {profile_display:<20}  {prefix_display}")
         except ConfigError as e:
             errors.append(f"  [ERROR] {path.name}: {e}")
 
     if errors:
-        print()
+        logger.info("")
         for msg in errors:
-            print(msg)
+            logger.error(msg)
         return 1
 
-    print()
+    logger.info("")
     return 0
 
 
 def apply_character_to_args(
-    cfg: CharacterConfig, args: argparse.Namespace, db: PoseDatabase | None = None
+    cfg: CharacterConfig, args: Any, db: PoseDatabase | None = None
 ) -> None:
     """CharacterConfig 값을 args 에 채운다. 커맨드라인 명시값이 있으면 건드리지 않는다."""
     if not getattr(args, "prefix", None):

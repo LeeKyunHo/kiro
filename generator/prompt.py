@@ -6,9 +6,12 @@ generator.prompt
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from generator.config import (
     _BRACKET_TABLE,
@@ -158,14 +161,14 @@ def resolve_background(
                 if isinstance(bg_val, str) and bg_val.strip():
                     return bg_val.strip()
                 if preset != "default" and "default" in data:
-                    print(
+                    logger.warning(
                         f"[WARN] 배경 프리셋 '{preset}' 이(가) 없어 'default' 프리셋으로 폴백합니다."
                     )
                     default_val = data.get("default")
                     if isinstance(default_val, str) and default_val.strip():
                         return default_val.strip()
         except Exception as e:
-            print(f"[WARN] 배경 설정 파일 로드 실패 ({bg_file}): {e}", file=sys.stderr)
+            logger.warning(f"[WARN] 배경 설정 파일 로드 실패 ({bg_file}): {e}")
 
     return None
 

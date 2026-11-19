@@ -6,21 +6,28 @@ generator 패키지 루트.
 import importlib
 from typing import Any
 
-from generator.config import ConfigError, configure_stdio
+from generator.config import ConfigError, configure_logging, configure_stdio
 from generator.models import (
+    AllCharsResult,
     BatchResult,
     CharacterConfig,
     ControlNetSpec,
+    GenerationOptions,
     PoseDatabase,
     PoseEntry,
     Profile,
     ReferenceImage,
     RosterPaths,
+    RunHooks,
     TestReport,
     TimingStats,
     summarize_durations,
 )
 from generator.pose_db import (
+    V2_BUILTIN_SECTIONS,
+    V2_FEMALE_SECTIONS,
+    V2_OTOKONOKO_SECTIONS,
+    expand_v2_mode,
     load_pose_db,
     parse_pose_db,
     peek_choices,
@@ -56,7 +63,12 @@ from generator.reporter import (
     print_summary,
 )
 from generator.roster import RosterPathManager, apply_character_to_args, list_characters, load_character
-from generator.runner import execute, run_all_chars, run_batch
+from generator.runner import execute, run_all_chars, run_batch, run_interrogate
+from generator.scene_composer import (
+    SceneComposition,
+    compose_scene_prompt,
+    should_apply_background,
+)
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "censor_file": ("generator.censor", "censor_file"),
@@ -90,6 +102,7 @@ def __dir__() -> list[str]:
 __all__ = [
     # config
     "ConfigError",
+    "configure_logging",
     "configure_stdio",
     # models
     "RosterPaths",
@@ -101,9 +114,16 @@ __all__ = [
     "ControlNetSpec",
     "TimingStats",
     "BatchResult",
+    "AllCharsResult",
+    "GenerationOptions",
+    "RunHooks",
     "TestReport",
     "summarize_durations",
     # pose_db
+    "V2_FEMALE_SECTIONS",
+    "V2_OTOKONOKO_SECTIONS",
+    "V2_BUILTIN_SECTIONS",
+    "expand_v2_mode",
     "load_pose_db",
     "parse_pose_db",
     "peek_choices",
@@ -113,6 +133,7 @@ __all__ = [
     "resolve_targets",
     # prompt
     "assemble_prompt",
+    "clamp_weights",
     "find_tag_conflicts",
     "join_tags",
     "normalize_tag",
@@ -136,10 +157,15 @@ __all__ = [
     "apply_character_to_args",
     "list_characters",
     "load_character",
+    # scene_composer
+    "SceneComposition",
+    "compose_scene_prompt",
+    "should_apply_background",
     # runner
     "execute",
     "run_all_chars",
     "run_batch",
+    "run_interrogate",
     # censor
     "censor_file",
     "censor_image",
