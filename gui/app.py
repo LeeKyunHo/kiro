@@ -9,6 +9,7 @@ import asyncio
 import logging
 from pathlib import Path
 import time
+from typing import Any
 
 from nicegui import app as nicegui_app, run, ui
 
@@ -20,6 +21,8 @@ from generator.runner import execute, run_all_chars
 from generator.webui_client import interrupt_forge
 from gui.api_routes import register_api_routes
 from gui.components import build_control_panel, build_header, build_monitor_panel
+from gui.gallery import render_gallery_page
+from gui.mobile_viewer import register_mobile_viewer_route
 from gui.runner_bridge import (
     build_base_options,
     build_char_options,
@@ -57,13 +60,14 @@ def build_gui(base_dir: Path, state: GuiRuntimeState | None = None) -> GuiRuntim
     if state is None:
         state = get_or_create_runtime_state(base_dir)
     register_api_routes(nicegui_app, base_dir, job_manager=state.job_manager)
+    register_mobile_viewer_route(nicegui_app, base_dir)
     state.db = load_pose_db(base_dir, state.roster.events_file)
     state.refresh_characters()
 
     ui.dark_mode(True)
     ui.page_title("Kiro Studio - 배치 생성기")
 
-    build_header(check_forge_connection)
+    build_header(check_forge_connection, active_route="/", job_manager=state.job_manager)
 
     with ui.row().classes("w-full p-6 gap-6 items-start no-wrap"):
         ctrl = build_control_panel(
@@ -78,6 +82,7 @@ def build_gui(base_dir: Path, state: GuiRuntimeState | None = None) -> GuiRuntim
             on_copy_markdown=lambda: copy_markdown(),
             on_open_folder=lambda: open_folder(),
             on_clear_logs=lambda: log_handler.clear(),
+            job_manager=state.job_manager,
         )
 
     # 현재 탭이 열릴 때 이미 실행 중이면 버튼 상태 동기화
@@ -166,6 +171,10 @@ def build_gui(base_dir: Path, state: GuiRuntimeState | None = None) -> GuiRuntim
     async def start_generation() -> None:
         if not state.is_all_chars() and not state.char_cfg:
             ui.notify("생성할 대상 캐릭터가 선택되지 않았습니다.", color="rose")
+            return
+
+        if state.job_manager.get_status().get("is_running"):
+            ui.notify("FIFO 작업 대기열에서 리롤/배치가 실행 중입니다. 완료 또는 취소 후 다시 시도해 주세요.", color="amber")
             return
 
         acquired, my_run_id, _was_running = state.try_begin_run(allow_preempt=False)
@@ -401,6 +410,7 @@ def build_gui(base_dir: Path, state: GuiRuntimeState | None = None) -> GuiRuntim
 
     async def stop_generation() -> None:
         cancelled_id = state.request_cancel()
+        state.job_manager.request_cancel(cancel_all_queued=True)
         ctrl.start_btn.classes(remove="hidden")
         ctrl.stop_btn.classes(add="hidden")
         interrupt_forge()
@@ -413,6 +423,29 @@ def build_gui(base_dir: Path, state: GuiRuntimeState | None = None) -> GuiRuntim
     return state
 
 
+_PAGES_REGISTERED: bool = False
+
+
+def register_studio_pages(base_dir: Path, app_obj: Any = nicegui_app) -> None:
+    """Kiro Studio 의 REST API(/api/*), 모바일 검수(/inspect), 스튜디오(/), 갤러리(/gallery) 라우트를 1회 등록한다."""
+    global _PAGES_REGISTERED
+    shared_state = get_or_create_runtime_state(base_dir)
+    register_api_routes(app_obj, base_dir, job_manager=shared_state.job_manager)
+    register_mobile_viewer_route(app_obj, base_dir)
+    if _PAGES_REGISTERED:
+        return
+
+    @ui.page("/")
+    def index_page() -> None:
+        build_gui(base_dir)
+
+    @ui.page("/gallery")
+    def gallery_page() -> None:
+        render_gallery_page(base_dir, state=get_or_create_runtime_state(base_dir))
+
+    _PAGES_REGISTERED = True
+
+
 def main(base_dir: Path | None = None) -> None:
     parser = argparse.ArgumentParser(description="Kiro Batch Studio GUI")
     parser.add_argument("--port", type=int, default=8080, help="웹 서버 포트 (기본: 8080)")
@@ -420,11 +453,6 @@ def main(base_dir: Path | None = None) -> None:
     args, _ = parser.parse_known_args()
 
     resolved_base_dir = base_dir or Path(__file__).resolve().parent.parent
-    shared_state = get_or_create_runtime_state(resolved_base_dir)
-    register_api_routes(nicegui_app, resolved_base_dir, job_manager=shared_state.job_manager)
-
-    @ui.page("/")
-    def index_page() -> None:
-        build_gui(resolved_base_dir)
+    register_studio_pages(resolved_base_dir)
 
     ui.run(title="Kiro Studio", port=args.port, reload=False, dark=True)

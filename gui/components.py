@@ -72,17 +72,68 @@ class MonitorPanelWidgets:
     open_btn: Any
 
 
-def build_header(check_connection_fn: Callable[[], bool]) -> Any:
-    """상단 타이틀 및 비동기 Forge 헬스 체크 배지 헤더를 생성한다."""
+def build_header(
+    check_connection_fn: Callable[[], bool],
+    *,
+    active_route: str = "/",
+    job_manager: Any = None,
+) -> Any:
+    """상단 타이틀, 스튜디오/갤러리/모바일 검수 네비게이션, FIFO 큐 배지 및 Forge 헬스 체크 헤더를 생성한다."""
+    nav_items = (
+        ("/", "🎨 생성 스튜디오"),
+        ("/gallery", "🖼️ 갤러리"),
+        ("/inspect", "📱 모바일 검수"),
+    )
     with ui.header().classes(
-        "bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between"
+        "bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between flex-wrap gap-2"
     ):
         with ui.row().classes("items-center gap-3"):
             ui.icon("auto_awesome", size="2rem").classes("text-indigo-400")
             ui.label("Kiro Batch Studio").classes("text-xl font-bold text-white tracking-wide")
             ui.badge("Forge SDXL", color="indigo-600").classes("text-xs font-mono")
 
+            with ui.row().classes("items-center gap-1.5 ml-4"):
+                for href, label in nav_items:
+                    is_active = active_route == href
+                    link_cls = (
+                        "px-3 py-1 rounded-full text-xs font-bold no-underline transition "
+                        + (
+                            "bg-indigo-600 text-white shadow"
+                            if is_active
+                            else "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                        )
+                    )
+                    ui.link(label, href).classes(link_cls)
+
         with ui.row().classes("items-center gap-3"):
+            if job_manager is not None:
+                queue_badge = ui.badge("큐 유휴", color="slate").classes(
+                    "text-xs font-semibold px-2.5 py-1"
+                )
+
+                def refresh_queue_badge() -> None:
+                    try:
+                        st = job_manager.get_status()
+                        q_len = int(st.get("queue_length", 0))
+                        if st.get("is_running"):
+                            active = st.get("active_job") or {}
+                            lbl = str(active.get("label") or "실행 중")
+                            queue_badge.set_text(
+                                f"⚡ {lbl} (대기 {q_len}건)" if q_len > 0 else f"⚡ {lbl}"
+                            )
+                            queue_badge.props("color=indigo")
+                        elif q_len > 0:
+                            queue_badge.set_text(f"⏳ 대기 {q_len}건")
+                            queue_badge.props("color=amber")
+                        else:
+                            queue_badge.set_text("큐 유휴")
+                            queue_badge.props("color=slate")
+                    except Exception:
+                        pass
+
+                ui.timer(2.0, refresh_queue_badge)
+                ui.timer(0.1, refresh_queue_badge, once=True)
+
             forge_badge = ui.badge("Forge 연결 확인 중...", color="slate").classes(
                 "text-xs font-semibold px-2.5 py-1"
             )
@@ -388,6 +439,7 @@ def build_monitor_panel(
     on_copy_markdown: Callable[[], Any],
     on_open_folder: Callable[[], Any],
     on_clear_logs: Callable[[], Any],
+    job_manager: Any = None,
 ) -> MonitorPanelWidgets:
     """우측 실시간 모니터링, 프리뷰 뷰어, 실행 로그 및 ZenIt 마크다운 패널을 생성한다."""
     with ui.card().classes(
@@ -452,6 +504,39 @@ def build_monitor_panel(
                     ui.button("로그 비우기", on_click=lambda: on_clear_logs()).props(
                         "outline dense"
                     ).classes("text-xs")
+
+            if job_manager is not None:
+                with ui.expansion("📋 FIFO 작업 대기열 (리롤/배치 큐)", icon="queue").classes(
+                    "w-full mt-2 bg-slate-950/60 border border-slate-800 rounded text-xs text-slate-300"
+                ):
+                    q_status_lbl = ui.label("대기열 유휴").classes("text-xs font-mono text-slate-400")
+                    with ui.row().classes("w-full justify-end mt-1"):
+                        ui.button(
+                            "⏹ 대기열 전체 취소",
+                            on_click=lambda: job_manager.request_cancel(cancel_all_queued=True),
+                        ).props("outline dense color=rose").classes("text-xs")
+
+                    def _refresh_queue_panel() -> None:
+                        try:
+                            st = job_manager.get_status()
+                            active = st.get("active_job")
+                            queued = st.get("queued_jobs") or []
+                            if active:
+                                q_status_lbl.set_text(
+                                    f"실행 중: [{active['job_id']}] {active['label']} | 대기 {len(queued)}건"
+                                )
+                            elif queued:
+                                q_status_lbl.set_text(f"대기 중: {len(queued)}건")
+                            else:
+                                hist = st.get("history") or []
+                                q_status_lbl.set_text(
+                                    f"대기열 유휴 (최근 처리 이력 {len(hist)}건)"
+                                )
+                        except Exception:
+                            pass
+
+                    ui.timer(2.0, _refresh_queue_panel)
+                    ui.timer(0.1, _refresh_queue_panel, once=True)
 
         with ui.column().classes("w-full mt-4"):
             ui.label("젠잇(ZenIt) 마크다운 블록").classes("text-xs font-bold text-slate-300")
