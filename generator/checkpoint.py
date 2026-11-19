@@ -9,7 +9,136 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from generator.config import ConfigError
+from generator.config import CFG_SCALE, IMAGE_SIZE, STEPS, ConfigError
+
+
+_SAMPLER_ALIAS_MAP: dict[str, str] = {
+    "dpmpp_2m": "DPM++ 2M",
+    "dpmpp_2m_sde": "DPM++ 2M SDE",
+    "dpmpp_sde": "DPM++ SDE",
+    "dpmpp_3m_sde": "DPM++ 3M SDE",
+    "euler_ancestral": "Euler a",
+    "euler": "Euler",
+    "ddim": "DDIM",
+}
+_SCHEDULER_ALIAS_MAP: dict[str, str] = {
+    "karras": "Karras",
+    "normal": "Automatic",
+    "automatic": "Automatic",
+    "exponential": "Exponential",
+    "sgm_uniform": "SGM Uniform",
+    "simple": "Simple",
+    "uniform": "Uniform",
+}
+
+
+def normalize_webui_sampler(name: str) -> str:
+    """ComfyUI/프로필 샘플러 식별자를 WebUI API 표준 샘플러명으로 정규화한다."""
+    key = name.strip().lower()
+    return _SAMPLER_ALIAS_MAP.get(key, name.strip())
+
+
+def normalize_webui_scheduler(name: str) -> str:
+    """ComfyUI/프로필 스케줄러 식별자를 WebUI API 표준 스케줄러명으로 정규화한다."""
+    key = name.strip().lower()
+    return _SCHEDULER_ALIAS_MAP.get(key, name.strip())
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedGenerationParams:
+    """우선순위(Config < CheckpointProfile < CharacterConfig < CLI/GUI) 적용 결과."""
+
+    steps: int
+    cfg_scale: float
+    sampler: str
+    scheduler: str
+    width: int
+    height: int
+    clip_skip: int | None = None
+
+
+def resolve_generation_params(
+    *,
+    fallback_sampler: str,
+    ckpt_profile: CheckpointProfile | None = None,
+    char_overrides: dict[str, Any] | None = None,
+    explicit_steps: int | None = None,
+    explicit_cfg_scale: float | None = None,
+    explicit_sampler: str | None = None,
+    explicit_scheduler: str | None = None,
+    explicit_width: int | None = None,
+    explicit_height: int | None = None,
+    explicit_clip_skip: int | None = None,
+) -> ResolvedGenerationParams:
+    """수치 파라미터만 우선순위(Config < CheckpointProfile < CharacterConfig < CLI/GUI)로 병합한다.
+
+    quality_positive / quality_negative 는 과포화 방지를 위해 자동 병합하지 않는다.
+    """
+    steps: int = STEPS
+    cfg_scale: float = float(CFG_SCALE)
+    sampler: str = fallback_sampler
+    scheduler: str = "Automatic"
+    width: int = IMAGE_SIZE[0]
+    height: int = IMAGE_SIZE[1]
+    clip_skip: int | None = None
+
+    # Layer 2: CheckpointProfile (수치 파라미터만 적용)
+    if ckpt_profile is not None:
+        steps = int(ckpt_profile.steps)
+        cfg_scale = float(ckpt_profile.cfg)
+        if ckpt_profile.sampler:
+            sampler = normalize_webui_sampler(ckpt_profile.sampler)
+        if ckpt_profile.scheduler:
+            scheduler = normalize_webui_scheduler(ckpt_profile.scheduler)
+        width = int(ckpt_profile.width)
+        height = int(ckpt_profile.height)
+        clip_skip = int(ckpt_profile.clip_skip) if ckpt_profile.clip_skip else None
+
+    # Layer 3: CharacterConfig optional numeric overrides
+    if char_overrides:
+        if char_overrides.get("steps") is not None:
+            steps = int(char_overrides["steps"])
+        char_cfg = char_overrides.get("cfg_scale")
+        if char_cfg is None:
+            char_cfg = char_overrides.get("cfg")
+        if char_cfg is not None:
+            cfg_scale = float(char_cfg)
+        if char_overrides.get("sampler"):
+            sampler = normalize_webui_sampler(str(char_overrides["sampler"]))
+        if char_overrides.get("scheduler"):
+            scheduler = normalize_webui_scheduler(str(char_overrides["scheduler"]))
+        if char_overrides.get("width") is not None:
+            width = int(char_overrides["width"])
+        if char_overrides.get("height") is not None:
+            height = int(char_overrides["height"])
+        if char_overrides.get("clip_skip") is not None:
+            clip_skip = int(char_overrides["clip_skip"])
+
+    # Layer 4: CLI / GUI 명시 인자
+    if explicit_steps is not None:
+        steps = int(explicit_steps)
+    if explicit_cfg_scale is not None:
+        cfg_scale = float(explicit_cfg_scale)
+    if explicit_sampler:
+        sampler = normalize_webui_sampler(str(explicit_sampler))
+    if explicit_scheduler:
+        scheduler = normalize_webui_scheduler(str(explicit_scheduler))
+    if explicit_width is not None:
+        width = int(explicit_width)
+    if explicit_height is not None:
+        height = int(explicit_height)
+    if explicit_clip_skip is not None:
+        clip_skip = int(explicit_clip_skip)
+
+    return ResolvedGenerationParams(
+        steps=steps,
+        cfg_scale=cfg_scale,
+        sampler=sampler,
+        scheduler=scheduler,
+        width=width,
+        height=height,
+        clip_skip=clip_skip,
+    )
 
 
 @dataclass(frozen=True)

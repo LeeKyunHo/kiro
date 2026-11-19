@@ -25,66 +25,100 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-from flask import Flask, request, jsonify, send_file, render_template_string
+import urllib.parse
+
+# 프로젝트 루트를 sys.path 에 추가 (generator.censor SSOT 공용)
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from generator.censor import extract_pose_code, get_origin_backup_path, is_censor_target
+
+try:
+    from flask import Flask, request, jsonify, send_file, render_template_string
+    HAS_FLASK = True
+except ImportError:
+    Flask = None
+    request = None
+    jsonify = None
+    send_file = None
+    render_template_string = None
+    HAS_FLASK = False
+
 from PIL import Image, ImageDraw
 
-app = Flask(__name__)
+app = Flask(__name__) if HAS_FLASK else None
 
 # 전역 작업 디렉토리
 TARGET_DIR = ""
 BACKUP_ENABLED = True
 
-import urllib.parse
+
+def resolve_safe_target_path(target_dir: str | Path, raw_path: str | None) -> Path | None:
+    """요청 경로를 target_dir 하위 실경로로 검증한다. 범위 밖(Path Traversal)이면 None 반환."""
+    if not target_dir or not raw_path:
+        return None
+    try:
+        base = Path(target_dir).resolve()
+        candidate = Path(urllib.parse.unquote(raw_path)).resolve()
+    except (OSError, ValueError):
+        return None
+    if not candidate.is_relative_to(base):
+        return None
+    return candidate
+
 
 def get_image_list(target_dir, filter_h=True):
-    """지정 디렉토리에서 이미지 파일 목록 반환 (한글 및 대소문자 안전)"""
+    """지정 디렉토리에서 이미지 파일 목록 반환 (한글/대소문자 안전, V2 H-씬 SSOT 적용)"""
     if not os.path.exists(target_dir):
         return []
-    
+
     valid_exts = {".webp", ".png", ".jpg", ".jpeg"}
     all_files = []
-    
-    for root, _, filenames in os.walk(target_dir):
+
+    for root, dirs, filenames in os.walk(target_dir):
+        dirs[:] = [
+            d for d in sorted(dirs)
+            if "_origin" not in d and "backup" not in d.lower()
+        ]
         for fname in filenames:
             ext = os.path.splitext(fname)[1].lower()
-            if ext in valid_exts and not fname.endswith(".orig"):
+            stem = os.path.splitext(fname)[0]
+            if (
+                ext in valid_exts
+                and not fname.endswith(".orig")
+                and not fname.startswith(".tmp_")
+                and not stem.endswith("_censored")
+            ):
                 full_p = os.path.abspath(os.path.join(root, fname))
                 all_files.append(full_p)
-                
+
     unique_files = sorted(list(set(all_files)))
-    
+
     h_files = []
     other_files = []
-    
+
     for f in unique_files:
         filename = os.path.basename(f)
-        match = re.search(r"_(\d{2,4})\.", filename)
-        code = int(match.group(1)) if match else -1
-        # 40번 이상 (H-씬, 오토코노코 씬, 200번대 이벤트 씬 등 모든 검열 대상)
-        is_h = (code >= 40)
-        
+        pose_code = extract_pose_code(filename)
+        code = pose_code if pose_code is not None else -1
+        is_h = is_censor_target(pose_code)
+
         item = {
             "path": f,
             "filename": filename,
             "code": code,
-            "is_h": is_h
+            "is_h": is_h,
         }
-        
+
         if is_h:
             h_files.append(item)
         else:
             other_files.append(item)
-            
-    # filter_h가 켜져 있을 때:
-    # 1. 40번 이후 검열 대상 파일이 있으면 그것만 반환 (실전 모드)
-    # 2. 만약 테스트 이미지처럼 40번 이후 파일이 하나도 없으면 일반 파일 반환 (스마트 폴백)
+
     if filter_h:
-        if h_files:
-            return h_files
-        else:
-            return other_files
-            
-    # 전체 보기 시 40번 이후 먼저, 그 다음 일반 씬
+        return h_files if h_files else other_files
+
     return h_files + other_files
 
 HTML_TEMPLATE = """
@@ -703,98 +737,106 @@ HTML_TEMPLATE = """
 </html>
 """
 
-@app.route("/")
-def index():
-    return render_template_string(HTML_TEMPLATE)
+def _register_routes() -> None:
+    if app is None:
+        return
 
-@app.route("/api/images")
-def api_images():
-    filter_h = request.args.get("filter_h", "true").lower() == "true"
-    imgs = get_image_list(TARGET_DIR, filter_h=filter_h)
-    return jsonify(imgs)
+    @app.route("/")
+    def index():
+        return render_template_string(HTML_TEMPLATE)
 
-@app.route("/api/image")
-def api_image():
-    raw_path = request.args.get("path")
-    if not raw_path:
-        return "Image path required", 400
-    path = os.path.abspath(urllib.parse.unquote(raw_path))
-    if not os.path.exists(path):
-        return f"Image not found: {path}", 404
-    return send_file(path)
+    @app.route("/api/images")
+    def api_images():
+        filter_h = request.args.get("filter_h", "true").lower() == "true"
+        imgs = get_image_list(TARGET_DIR, filter_h=filter_h)
+        return jsonify(imgs)
 
-@app.route("/api/save", methods=["POST"])
-def api_save():
-    try:
-        data = request.json
-        raw_path = data.get("path")
-        file_path = os.path.abspath(urllib.parse.unquote(raw_path)) if raw_path else None
-        bars = data.get("bars", [])
-        
-        if not file_path or not os.path.exists(file_path):
-            return jsonify({"success": False, "error": "파일을 찾을 수 없습니다."}), 404
+    @app.route("/api/image")
+    def api_image():
+        raw_path = request.args.get("path")
+        if not raw_path:
+            return "Image path required", 400
+        safe_path = resolve_safe_target_path(TARGET_DIR, raw_path)
+        if safe_path is None:
+            return "Forbidden: path outside target directory", 403
+        if not safe_path.is_file():
+            return f"Image not found: {safe_path}", 404
+        return send_file(str(safe_path))
 
-        # 이미지 로드
-        img = Image.open(file_path).convert("RGB")
-        draw = ImageDraw.Draw(img)
+    @app.route("/api/save", methods=["POST"])
+    def api_save():
+        try:
+            data = request.json or {}
+            raw_path = data.get("path")
+            bars = data.get("bars", [])
 
-        # 100% 완전 불투명 솔리드 블랙 폴리곤 렌더링
-        for b in bars:
-            cx = float(b["cx"])
-            cy = float(b["cy"])
-            w = float(b["width"])
-            h = float(b["height"])
-            angle_deg = float(b.get("angle", 0))
-            rad = angle_deg * math.pi / 180.0
+            if not raw_path:
+                return jsonify({"success": False, "error": "파일 경로가 필요합니다."}), 400
+            safe_path = resolve_safe_target_path(TARGET_DIR, raw_path)
+            if safe_path is None:
+                return jsonify({"success": False, "error": "허용된 작업 폴더 외부 경로는 수정할 수 없습니다."}), 403
+            if not safe_path.is_file():
+                return jsonify({"success": False, "error": "파일을 찾을 수 없습니다."}), 404
 
-            # 로컬 4개 꼭짓점
-            corners = [
-                (-w / 2.0, -h / 2.0),
-                (w / 2.0, -h / 2.0),
-                (w / 2.0, h / 2.0),
-                (-w / 2.0, h / 2.0)
-            ]
+            file_path = str(safe_path)
 
-            # 회전 변환
-            world_corners = []
-            for lx, ly in corners:
-                rx = lx * math.cos(rad) - ly * math.sin(rad) + cx
-                ry = lx * math.sin(rad) + ly * math.cos(rad) + cy
-                world_corners.append((rx, ry))
+            # 이미지 로드
+            img = Image.open(file_path).convert("RGB")
+            draw = ImageDraw.Draw(img)
 
-            # 완전 차폐 솔리드 블랙 칠하기
-            draw.polygon(world_corners, fill=(0, 0, 0))
+            # 100% 완전 불투명 솔리드 블랙 폴리곤 렌더링
+            for b in bars:
+                cx = float(b["cx"])
+                cy = float(b["cy"])
+                w = float(b["width"])
+                h = float(b["height"])
+                angle_deg = float(b.get("angle", 0))
+                rad = angle_deg * math.pi / 180.0
 
-        # 백업 생성 (최초 1회: 상위 폴더의 assets_original 에 원본 파일명 그대로 보관)
-        if BACKUP_ENABLED and TARGET_DIR:
-            parent_dir = os.path.dirname(TARGET_DIR)
-            dir_name = os.path.basename(TARGET_DIR)
-            backup_root = os.path.join(parent_dir, f"{dir_name}_original")
-            
-            # 상대 경로 유지
-            rel_path = os.path.relpath(file_path, TARGET_DIR)
-            backup_path = os.path.join(backup_root, rel_path)
-            
-            os.makedirs(os.path.dirname(backup_path), exist_ok=True)
-            if not os.path.exists(backup_path):
-                import shutil
-                shutil.copy2(file_path, backup_path)
+                corners = [
+                    (-w / 2.0, -h / 2.0),
+                    (w / 2.0, -h / 2.0),
+                    (w / 2.0, h / 2.0),
+                    (-w / 2.0, h / 2.0),
+                ]
 
-        # 원본 포맷으로 최고화질(quality=95) 저장
-        if file_path.lower().endswith(".webp"):
-            img.save(file_path, format="WEBP", quality=95)
-        elif file_path.lower().endswith(".png"):
-            img.save(file_path, format="PNG")
-        else:
-            img.save(file_path, quality=95)
+                world_corners = []
+                for lx, ly in corners:
+                    rx = lx * math.cos(rad) - ly * math.sin(rad) + cx
+                    ry = lx * math.sin(rad) + ly * math.cos(rad) + cy
+                    world_corners.append((rx, ry))
 
-        return jsonify({"success": True})
+                draw.polygon(world_corners, fill=(0, 0, 0))
 
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+            # 백업 생성 (최초 1회: assets/{char}_origin/{filename} SSOT 경로)
+            if BACKUP_ENABLED:
+                backup_path = get_origin_backup_path(safe_path)
+                backup_path.parent.mkdir(parents=True, exist_ok=True)
+                if not backup_path.exists():
+                    import shutil
+                    shutil.copy2(file_path, str(backup_path))
+
+            # 원본 포맷으로 최고화질(quality=95) 저장
+            if file_path.lower().endswith(".webp"):
+                img.save(file_path, format="WEBP", quality=95)
+            elif file_path.lower().endswith(".png"):
+                img.save(file_path, format="PNG")
+            else:
+                img.save(file_path, quality=95)
+
+            return jsonify({"success": True})
+
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+
+_register_routes()
 
 def main():
     global TARGET_DIR, BACKUP_ENABLED
+    if not HAS_FLASK:
+        print("[오류] Flask가 설치되어 있지 않습니다. 'pip install flask' 후 다시 실행하세요.", file=sys.stderr)
+        sys.exit(1)
     parser = argparse.ArgumentParser(description="Kiro Censor Studio - 원클릭 블랭크 검열 전용 도구")
     parser.add_argument("-d", "--dir", type=str, required=True, help="에셋 폴더 경로 (예: projects/don/assets)")
     parser.add_argument("-p", "--port", type=int, default=5050, help="웹 서버 포트 (기본: 5050)")
@@ -809,7 +851,7 @@ def main():
         sys.exit(1)
 
     url = f"http://127.0.0.1:{args.port}"
-    backup_info = os.path.join(os.path.dirname(TARGET_DIR), f"{os.path.basename(TARGET_DIR)}_original") if BACKUP_ENABLED else "비활성화"
+    backup_info = "assets/{char}_origin/" if BACKUP_ENABLED else "비활성화"
     print("=" * 60)
     print("  Kiro Censor Studio (블랭크 검열 스튜디오)")
     print(f"  - 대상 경로: {TARGET_DIR}")

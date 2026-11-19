@@ -279,6 +279,10 @@ def build_parser(
         "--cfg-scale", "--cfg_scale", dest="cfg_scale", type=float, default=None,
         help="CFG Scale 직접 지정 (기본 6.0)",
     )
+    gen_opts.add_argument(
+        "--clip-skip", "--clip_skip", dest="clip_skip", type=int, default=None,
+        help="CLIP Skip 레이어 수 직접 지정 (예: 2)",
+    )
 
     parser.add_argument(
         "--naming", default="code", choices=["code", "hybrid", "label"],
@@ -436,6 +440,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             max_retries=args.max_retries,
             censor=args.censor,
             censor_style=args.censor_style,
+            active_ckpt=getattr(args, "active_ckpt", None),
+            ckpt_profile=getattr(args, "ckpt_profile", None),
+            clip_skip=getattr(args, "clip_skip", None),
         )
 
     if args.char:

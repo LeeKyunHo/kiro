@@ -108,10 +108,10 @@ def build_txt2img_payload(
     *, prompt: str, negative_prompt: str, sampler_name: str,
     width: int = IMAGE_SIZE[0], height: int = IMAGE_SIZE[1],
     steps: int | None = None, cfg_scale: float | None = None,
-    scheduler: str | None = None
+    scheduler: str | None = None, clip_skip: int | None = None,
 ) -> dict[str, Any]:
     """txt2img 페이로드를 조립한다 (순수 함수)."""
-    payload = {
+    payload: dict[str, Any] = {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
         "width": width,
@@ -123,10 +123,14 @@ def build_txt2img_payload(
         "scheduler": "Automatic",
         "sampler_name": sampler_name,
     }
-    
+
     if scheduler:
         payload["scheduler"] = scheduler
-    
+
+    if clip_skip is not None:
+        payload["override_settings"] = {"CLIP_stop_at_last_layers": int(clip_skip)}
+        payload["override_settings_restore_afterwards"] = True
+
     return payload
 
 

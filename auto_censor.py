@@ -24,6 +24,9 @@ from typing import Sequence
 
 from generator.censor import (
     censor_file,
+    extract_pose_code,
+    get_origin_backup_path,
+    is_censor_target,
     run_batch_censor,
 )
 
@@ -61,23 +64,16 @@ def run_batch_censor_with_backup(
 
     processed_count = 0
     for idx, file_path in enumerate(target_files, 1):
-        match = re.search(r"_(\d{2,3})(?:_|\.)", file_path.name)
-        pose_code = int(match.group(1)) if match else None
+        pose_code = extract_pose_code(file_path.name)
 
-        # V2 표준 체계: 080~139 (여성 h_scenes 48종 + special_h 3종), 150~200 (오토코노코 48종+전용)
-        is_h = False
-        if pose_code is not None:
-            is_h = (80 <= pose_code <= 139) or (150 <= pose_code <= 200)
-        if not is_h:
+        if not is_censor_target(pose_code):
             continue
 
         try:
             # 1. 무검열 원본 assets/{char}_origin/ 격리 백업
             if overwrite:
-                parent_dir = file_path.parent
-                origin_dir = parent_dir.parent / f"{parent_dir.name}_origin"
-                origin_dir.mkdir(parents=True, exist_ok=True)
-                origin_path = origin_dir / file_path.name
+                origin_path = get_origin_backup_path(file_path)
+                origin_path.parent.mkdir(parents=True, exist_ok=True)
                 if not origin_path.exists():
                     shutil.copy2(file_path, origin_path)
 

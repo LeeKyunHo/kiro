@@ -22,6 +22,7 @@ from generator.config import (
     REFERENCE_EXTENSIONS,
     REFERENCES_DIRNAME,
     ConfigError,
+    get_api_url,
 )
 from generator.models import ControlNetSpec, ReferenceImage
 
@@ -166,6 +167,7 @@ def resolve_controlnet_spec(
     manual_module: str | None = None,
     manual_model: str | None = None,
     session: Any | None = None,
+    host: str | None = None,
 ) -> ControlNetSpec | None:
     """ControlNet 전처리기와 모델을 해석한다. 실패하면 None 을 반환한다."""
     if manual_module and manual_model:
@@ -176,8 +178,12 @@ def resolve_controlnet_spec(
         session = requests.Session()
 
     try:
-        modules = _fetch_controlnet_list(session, CN_MODULES_URL, "module_list")
-        models = _fetch_controlnet_list(session, CN_MODELS_URL, "model_list")
+        modules = _fetch_controlnet_list(
+            session, get_api_url("/controlnet/module_list", host=host), "module_list"
+        )
+        models = _fetch_controlnet_list(
+            session, get_api_url("/controlnet/model_list", host=host), "model_list"
+        )
     except Exception:
         print("[WARN] ControlNet 목록 조회 실패 - 참조 이미지 없이 생성합니다")
         print("       ControlNet 확장이 설치되어 있는지 확인하세요.")

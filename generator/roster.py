@@ -165,6 +165,8 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
     gender = str(raw.get("gender") or "female").strip().lower()
     raw_outfits = raw.get("outfits")
     outfits = dict(raw_outfits) if isinstance(raw_outfits, dict) else {}
+    override_keys = ("steps", "cfg", "cfg_scale", "sampler", "scheduler", "width", "height", "clip_skip")
+    gen_overrides = {k: raw[k] for k in override_keys if k in raw and raw[k] is not None}
 
     return CharacterConfig(
         name=name,
@@ -180,6 +182,7 @@ def load_character(chars_dir: Path, name: str) -> CharacterConfig:
         nude_positive=nude_positive,
         gender=gender,
         outfits=outfits,
+        gen_overrides=gen_overrides,
     )
 
 
@@ -253,3 +256,5 @@ def apply_character_to_args(
         args.gender = cfg.gender
     if getattr(args, "outfits", None) is None:
         args.outfits = cfg.outfits
+    if cfg.gen_overrides and not getattr(args, "char_gen_overrides", None):
+        args.char_gen_overrides = dict(cfg.gen_overrides)

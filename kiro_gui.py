@@ -16,8 +16,13 @@ from typing import Any
 import requests
 from nicegui import app, run, ui
 
-from generator.checkpoint import load_checkpoint_profiles, match_checkpoint_profile
-from generator.config import API_HOST, API_URL, REF_WEIGHT_DEFAULT, REFERENCES_DIRNAME
+from generator.checkpoint import (
+    load_checkpoint_profiles,
+    match_checkpoint_profile,
+    normalize_webui_sampler,
+    normalize_webui_scheduler,
+)
+from generator.config import REF_WEIGHT_DEFAULT, REFERENCES_DIRNAME, get_api_url
 from generator.models import CharacterConfig, PoseDatabase, RosterPaths
 from generator.pose_db import load_pose_db, looks_like_code_expr, parse_codes_expr, resolve_targets
 from generator.precheck import run_precheck
@@ -49,7 +54,7 @@ def load_gui_settings(base_dir: Path) -> dict[str, Any]:
     merged = dict(DEFAULT_SETTINGS)
     if path.is_file():
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8-sig") as f:
                 data = json.load(f)
             merged.update(data)
         except Exception as e:
@@ -141,9 +146,45 @@ class KiroGuiState:
 _GLOBAL_STATE: KiroGuiState | None = None
 
 
+_ADULT_SCENE_ALIASES: frozenset[str] = frozenset({
+    "48-99",
+    "148-199",
+    "80-127,130-132",
+    "133-135,150-197",
+    "h_scenes",
+    "scenes_otokonoko",
+    "h_scenes,special_h",
+    "scenes_otokonoko,special_otokonoko",
+})
+
+
+def resolve_gui_mode_and_codes(
+    raw_expr: str,
+    char_gender: str,
+    available_sections: set[str] | None = None,
+) -> tuple[str, str | None]:
+    """GUI 범위 입력값을 V2 파이프라인 (mode, codes) 쌍으로 정규화한다."""
+    expr = (raw_expr or "").strip() or "all"
+    is_otk = str(char_gender).lower() in ("otokonoko", "femboy")
+    if expr in _ADULT_SCENE_ALIASES:
+        candidates = (
+            ["scenes_otokonoko", "special_otokonoko"]
+            if is_otk
+            else ["h_scenes", "special_h"]
+        )
+        if available_sections is not None:
+            filtered = [s for s in candidates if s in available_sections]
+            if filtered:
+                return (",".join(filtered), None)
+        return (",".join(candidates), None)
+    if expr == "all" or not looks_like_code_expr(expr):
+        return (expr, None)
+    return ("all", expr)
+
+
 def check_forge_connection() -> bool:
     try:
-        r = requests.get(f"{API_HOST}/sdapi/v1/sd-models", timeout=2.0)
+        r = requests.get(get_api_url("/sdapi/v1/sd-models"), timeout=2.0)
         return r.status_code == 200
     except Exception:
         return False
@@ -171,8 +212,8 @@ def build_gui(base_dir: Path):
         with ui.row().classes("items-center gap-3"):
             forge_badge = ui.badge("Forge 연결 확인 중...", color="slate").classes("text-xs font-semibold px-2.5 py-1")
 
-            def refresh_forge_badge():
-                online = check_forge_connection()
+            async def refresh_forge_badge():
+                online = await run.io_bound(check_forge_connection)
                 if online:
                     forge_badge.set_text("✅ Forge 연결 정상")
                     forge_badge.props("color=emerald")
@@ -181,7 +222,7 @@ def build_gui(base_dir: Path):
                     forge_badge.props("color=amber")
 
             ui.timer(3.0, refresh_forge_badge)
-            refresh_forge_badge()
+            ui.timer(0.1, refresh_forge_badge, once=True)
 
     # ── 본문 2단 레이아웃 ──
     with ui.row().classes("w-full p-6 gap-6 items-start no-wrap"):
@@ -262,7 +303,7 @@ def build_gui(base_dir: Path):
             # 3. 샘플러, 스케줄러(카라스 등), 스텝 수, CFG Scale 제어부
             ui.label("생성 파라미터 세부 제어").classes("text-sm font-semibold text-slate-300")
             with ui.row().classes("w-full gap-3 mt-1"):
-                sampler_options = ["DPM++ 2M", "DPM++ 2M SDE", "Euler a", "Euler", "DPM++ 3M SDE", "DDIM"]
+                sampler_options = ["DPM++ 2M", "DPM++ 2M SDE", "DPM++ SDE", "Euler a", "Euler", "DPM++ 3M SDE", "DDIM"]
                 sampler_select = ui.select(
                     label="샘플러 (Sampler)",
                     options=sampler_options,
@@ -291,17 +332,38 @@ def build_gui(base_dir: Path):
 
             # 4. 체크포인트 프로필
             ckpt_options = list(state.ckpt_profiles.keys())
-            default_ckpt = "unholyDesireMixSinister_v90.safetensors" if "unholyDesireMixSinister_v90.safetensors" in ckpt_options else ckpt_options[0]
+            default_ckpt = (
+                "unholyDesireMixSinister_v90.safetensors"
+                if "unholyDesireMixSinister_v90.safetensors" in ckpt_options
+                else (ckpt_options[0] if ckpt_options else None)
+            )
             ckpt_select = ui.select(
                 label="체크포인트 프로필",
                 options=ckpt_options,
                 value=default_ckpt,
             ).classes("w-full mt-1")
 
-            # 5. 생성 범위 선택 (퀵 버튼 + 직접 입력)
+            def on_ckpt_change():
+                prof = state.ckpt_profiles.get(ckpt_select.value)
+                if prof is None:
+                    return
+                steps_input.set_value(prof.steps)
+                cfg_input.set_value(prof.cfg)
+                norm_sampler = normalize_webui_sampler(prof.sampler)
+                if norm_sampler not in sampler_select.options:
+                    sampler_select.options = [*sampler_select.options, norm_sampler]
+                sampler_select.set_value(norm_sampler)
+                norm_sched = normalize_webui_scheduler(prof.scheduler)
+                if norm_sched not in scheduler_select.options:
+                    scheduler_select.options = [*scheduler_select.options, norm_sched]
+                scheduler_select.set_value(norm_sched)
+
+            ckpt_select.on_value_change(on_ckpt_change)
+
+            # 5. 생성 범위 선택 (퀵 버튼 + 직접 입력 - V2 표준 대역)
             ui.label("생성 범위 선택").classes("text-sm font-semibold text-slate-300 mt-3")
             codes_input = ui.input(
-                label="코드 범위 지정 (예: 0-19, 20-39, 40-47, 48-99, 148-199, all)",
+                label="코드 범위 지정 (예: 0-19, 20-39, 40-52, 60-63, h_scenes,special_h, all)",
                 value="0-19",
             ).classes("w-full")
 
@@ -313,25 +375,26 @@ def build_gui(base_dir: Path):
 
             with ui.row().classes("w-full gap-2 mt-1 flex-wrap"):
                 ui.button("감정 씬 (0-19)", on_click=lambda: codes_input.set_value("0-19")).props("outline dense").classes("text-xs")
-                ui.button("일상 씬 (20-39)", on_click=lambda: codes_input.set_value("20-39")).props("outline dense").classes("text-xs")
-                ui.button("행동 씬 (40-47)", on_click=lambda: codes_input.set_value("40-47")).props("outline dense").classes("text-xs")
+                ui.button("일상 포즈 (20-39)", on_click=lambda: codes_input.set_value("20-39")).props("outline dense").classes("text-xs")
+                ui.button("이벤트 씬 (40-52)", on_click=lambda: codes_input.set_value("40-52")).props("outline dense").classes("text-xs")
+                ui.button("로맨스 씬 (60-63)", on_click=lambda: codes_input.set_value("60-63")).props("outline dense").classes("text-xs")
                 h_scene_btn = ui.button(
-                    "성인 씬 (48-99)",
-                    on_click=lambda: codes_input.set_value("148-199" if _is_otokonoko_selected() else "48-99"),
+                    "성인 씬 (80-132)",
+                    on_click=lambda: codes_input.set_value("scenes_otokonoko,special_otokonoko" if _is_otokonoko_selected() else "h_scenes,special_h"),
                 ).props("outline dense").classes("text-xs")
                 ui.button("전체 (all)", on_click=lambda: codes_input.set_value("all")).props("outline dense color=indigo").classes("text-xs")
 
             def update_h_scene_btn():
                 if state.is_all_chars():
-                    h_scene_btn.set_text("성인 씬 (48-99/148-199)")
+                    h_scene_btn.set_text("성인 씬 (80-132/133-197)")
                 elif _is_otokonoko_selected():
-                    h_scene_btn.set_text("성인 씬 (148-199)")
-                    if codes_input.value.strip() == "48-99":
-                        codes_input.set_value("148-199")
+                    h_scene_btn.set_text("성인 씬 (133-197)")
+                    if codes_input.value.strip() in ("h_scenes,special_h", "48-99", "h_scenes"):
+                        codes_input.set_value("scenes_otokonoko,special_otokonoko")
                 else:
-                    h_scene_btn.set_text("성인 씬 (48-99)")
-                    if codes_input.value.strip() == "148-199":
-                        codes_input.set_value("48-99")
+                    h_scene_btn.set_text("성인 씬 (80-132)")
+                    if codes_input.value.strip() in ("scenes_otokonoko,special_otokonoko", "148-199", "scenes_otokonoko"):
+                        codes_input.set_value("h_scenes,special_h")
 
             char_select.on_value_change(lambda: update_h_scene_btn())
             update_h_scene_btn()
@@ -510,12 +573,11 @@ def build_gui(base_dir: Path):
         expr = codes_input.value.strip() or "all"
 
         def _resolve_char_mode_and_codes(raw_expr: str, char_gender: str) -> tuple[str, str | None]:
-            is_otk = str(char_gender).lower() in ("otokonoko", "femboy")
-            if raw_expr in ("48-99", "148-199", "h_scenes", "scenes_otokonoko"):
-                return ("scenes_otokonoko" if is_otk else "h_scenes", None)
-            if raw_expr == "all" or not looks_like_code_expr(raw_expr):
-                return (raw_expr, None)
-            return ("all", raw_expr)
+            return resolve_gui_mode_and_codes(
+                raw_expr,
+                char_gender,
+                available_sections=set(state.db.sections.keys()),
+            )
 
         def _expand_all_target_mode(target_mode: str, codes_arg: str | None, char_gender: str) -> str:
             if target_mode == "all" and not codes_arg:
@@ -530,6 +592,7 @@ def build_gui(base_dir: Path):
         ) -> argparse.Namespace:
             """GUI 실행용 argparse.Namespace 조립 및 캐릭터 설정/옵션 일괄 반영."""
             mode_val, codes_val = _resolve_char_mode_and_codes(expr, cfg.gender)
+            active_ckpt = state.ckpt_profiles.get(ckpt_select.value) if ckpt_select.value else None
             args = argparse.Namespace(
                 roster=state.current_roster_name,
                 char=char_name,
@@ -574,6 +637,7 @@ def build_gui(base_dir: Path):
                 censor=current_cfg["censor"],
                 censor_style=current_cfg["censor_style"],
                 ckpt_profile=ckpt_select.value,
+                active_ckpt=active_ckpt,
                 progress_callback=progress_cb,
                 is_cancelled=is_run_cancelled,
             )
@@ -594,6 +658,7 @@ def build_gui(base_dir: Path):
             total_chars = len(chars_to_run)
             zenit_all_blocks: list[str] = []
             failed_chars: list[str] = []
+            all_qa_warnings: list[tuple[str, int, str, str]] = []
 
             for char_idx, char_name in enumerate(chars_to_run, 1):
                 if is_run_cancelled():
@@ -634,11 +699,20 @@ def build_gui(base_dir: Path):
                 if is_run_cancelled():
                     break
 
+                if exit_code != 0 and char_name not in failed_chars:
+                    failed_chars.append(char_name)
+
+                last_res = getattr(args, "last_result", None)
+                if last_res and getattr(last_res, "qa_warnings", None):
+                    for q_code, q_lbl, q_rsn in last_res.qa_warnings:
+                        all_qa_warnings.append((char_name, q_code, q_lbl, q_rsn))
+
                 target_mode = _expand_all_target_mode(args.mode, args.codes, cfg.gender)
                 targets = resolve_targets(state.db, target_mode, args.codes)
                 w = code_width(state.db.all_codes)
                 block = build_genit_block(cfg.prefix, targets, state.db, w, naming=naming_select.value)
-                zenit_all_blocks.append(f"### 🎭 캐릭터: {char_name} ({cfg.prefix})\n{block}")
+                status_suffix = " ⚠️(일부 실패)" if exit_code != 0 else ""
+                zenit_all_blocks.append(f"### 🎭 캐릭터: {char_name} ({cfg.prefix}){status_suffix}\n{block}")
                 zenit_output.set_value("\n\n".join(zenit_all_blocks))
 
             if state.active_run_id != my_run_id:
@@ -652,9 +726,36 @@ def build_gui(base_dir: Path):
                 progress_label.set_text("⏹ 전체 생성이 사용자에 의해 중단되었습니다.")
                 ui.notify("생성 작업 중단됨", color="amber")
             else:
+                if all_qa_warnings:
+                    qa_lines = [f"### ⚠️ Auto-QC 품질 경고 요약 ({len(all_qa_warnings)}건)"]
+                    for q_char, q_code, q_lbl, q_rsn in all_qa_warnings:
+                        qa_lines.append(f"- [{q_char}] 포즈 {q_code:03d} ({q_lbl}): {q_rsn}")
+                    zenit_all_blocks.append("\n".join(qa_lines))
+                    zenit_output.set_value("\n\n".join(zenit_all_blocks))
+
                 progress_bar.set_value(1.0)
-                progress_label.set_text(f"✅ 전체 {total_chars}명 캐릭터 에셋 생성이 성공적으로 완료되었습니다!")
-                ui.notify("전체 캐릭터 생성 완료! 젠잇 마크다운 블록이 통합 준비되었습니다.", color="emerald")
+                succeeded_count = total_chars - len(failed_chars)
+                if failed_chars:
+                    fail_preview = ", ".join(failed_chars[:5]) + ("..." if len(failed_chars) > 5 else "")
+                    qa_note = f" | Auto-QC 경고 {len(all_qa_warnings)}건" if all_qa_warnings else ""
+                    progress_label.set_text(
+                        f"⚠️ 전체 생성 완료: {succeeded_count}/{total_chars}명 성공, {len(failed_chars)}명 실패 ({fail_preview}){qa_note}"
+                    )
+                    ui.notify(
+                        f"전체 생성 완료 (실패 {len(failed_chars)}명: {fail_preview}{qa_note})",
+                        color="amber",
+                    )
+                elif all_qa_warnings:
+                    progress_label.set_text(
+                        f"✅ 전체 {total_chars}명 완료 (⚠️ Auto-QC 경고 {len(all_qa_warnings)}건 - 마크다운 하단 참조)"
+                    )
+                    ui.notify(
+                        f"전체 생성 완료! Auto-QC 경고 {len(all_qa_warnings)}건이 감지되었습니다.",
+                        color="amber",
+                    )
+                else:
+                    progress_label.set_text(f"✅ 전체 {total_chars}명 캐릭터 에셋 생성이 성공적으로 완료되었습니다!")
+                    ui.notify("전체 캐릭터 생성 완료! 젠잇 마크다운 블록이 통합 준비되었습니다.", color="emerald")
             return
 
         # ── 단일 캐릭터 생성 분기 ──
@@ -683,18 +784,29 @@ def build_gui(base_dir: Path):
 
         if exit_code == 0 and not is_run_cancelled():
             progress_bar.set_value(1.0)
-            progress_label.set_text(f"✅ [{state.char_cfg.prefix}] 에셋 생성이 성공적으로 완료되었습니다! ({user_steps}스텝, CFG {user_cfg})")
+            last_res = getattr(args, "last_result", None)
+            qa_warns = getattr(last_res, "qa_warnings", []) if last_res else []
+            qa_suffix = f" | ⚠️ Auto-QC 경고 {len(qa_warns)}건" if qa_warns else ""
+            progress_label.set_text(
+                f"✅ [{state.char_cfg.prefix}] 에셋 생성이 성공적으로 완료되었습니다! ({user_steps}스텝, CFG {user_cfg}){qa_suffix}"
+            )
             target_mode = _expand_all_target_mode(args.mode, args.codes, state.char_cfg.gender)
             targets = resolve_targets(state.db, target_mode, args.codes)
             w = code_width(state.db.all_codes)
             markdown_block = build_genit_block(
                 state.char_cfg.prefix, targets, state.db, w, naming=naming_select.value
             )
+            if qa_warns:
+                warn_text = "\n".join(f"- [{c:03d} {lbl}] {rsn}" for c, lbl, rsn in qa_warns)
+                markdown_block = f"{markdown_block}\n### ⚠️ Auto-QC 품질 경고 ({len(qa_warns)}건)\n{warn_text}"
             zenit_output.set_value(markdown_block)
-            ui.notify("생성 완료! 젠잇 코드가 준비되었습니다.", color="emerald")
+            ui.notify(
+                f"생성 완료! (Auto-QC 경고 {len(qa_warns)}건)" if qa_warns else "생성 완료! 젠잇 코드가 준비되었습니다.",
+                color="amber" if qa_warns else "emerald",
+            )
         else:
-            progress_label.set_text("⏹ 생성이 중단되었거나 취소되었습니다.")
-            ui.notify("생성 중단됨", color="amber")
+            progress_label.set_text("⏹ 생성이 중단되었거나 일부 항목이 실패했습니다.")
+            ui.notify("생성 중단 또는 실패 발생", color="amber")
 
     async def stop_generation():
         state.cancel_requested = True

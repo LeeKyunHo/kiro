@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,6 +136,7 @@ class CharacterConfig:
     nude_positive: str | None = None  # 탈의/H-씬 전용 프롬프트 (sdxl_nude_positive 호환)
     gender: str = "female"  # 성별 (female, otokonoko 등)
     outfits: dict[str, str] = field(default_factory=dict)  # 테마 의상 매핑 (default, swimsuit, maid 등)
+    gen_overrides: dict[str, Any] = field(default_factory=dict)  # 캐릭터별 선택 생성 수치 오버라이드 (steps/cfg/sampler 등)
 
 
 @dataclass(frozen=True, slots=True)

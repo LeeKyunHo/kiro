@@ -151,7 +151,7 @@ def resolve_background(
 
     if bg_file.exists():
         try:
-            with open(bg_file, "r", encoding="utf-8") as f:
+            with open(bg_file, "r", encoding="utf-8-sig") as f:
                 data = json.load(f)
             if isinstance(data, dict):
                 bg_val = data.get(preset)

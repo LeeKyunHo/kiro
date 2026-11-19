@@ -372,11 +372,54 @@ NON_EXPOSURE_H_POSES = frozenset({
 
 _POSE_CODE_PATTERN = re.compile(r"_(\d{2,4})(?:_|\.)")
 
+H_SCENE_SECTIONS: frozenset[str] = frozenset({
+    "h_scenes",
+    "special_h",
+    "scenes_otokonoko",
+    "special_otokonoko",
+})
+
 
 def extract_pose_code(filename: str) -> Optional[int]:
     """에셋 파일명(code/hybrid 모두 지원)에서 포즈 코드 정수를 추출한다."""
     match = _POSE_CODE_PATTERN.search(filename)
     return int(match.group(1)) if match else None
+
+
+def is_censor_target(
+    pose_code: Optional[Union[str, int]] = None,
+    *,
+    section: Optional[str] = None,
+    is_nude_scene: bool = False,
+) -> bool:
+    """
+    성인 씬 검열 대상 여부를 판정하는 단일 진실 공급원(SSOT).
+    - NON_EXPOSURE_H_POSES(101, 102, 104, 105, 171, 172, 174, 175)는 무조건 제외.
+    - V2 H-씬 대역: 80..135, 150..200.
+    - runner.py 등에서는 section in H_SCENE_SECTIONS 또는 is_nude_scene=True 도 포함.
+    """
+    if pose_code is not None:
+        try:
+            code_int = int(str(pose_code).strip())
+        except (TypeError, ValueError):
+            code_int = None
+        if code_int is not None:
+            if str(code_int).zfill(3) in NON_EXPOSURE_H_POSES:
+                return False
+            if (80 <= code_int <= 135) or (150 <= code_int <= 200):
+                return True
+    if is_nude_scene:
+        return True
+    if section and section in H_SCENE_SECTIONS:
+        return True
+    return False
+
+
+def get_origin_backup_path(file_path: Union[Path, str]) -> Path:
+    """에셋 파일에 대응하는 표준 무검열 원본 백업 경로(assets/{char}_origin/{filename})를 반환한다."""
+    src = Path(file_path)
+    parent_dir = src.parent
+    return parent_dir.parent / f"{parent_dir.name}_origin" / src.name
 
 
 def get_pose_category(pose_code: Union[str, int]) -> Optional[str]:
@@ -664,7 +707,7 @@ def run_batch_censor(
     for idx, file_path in enumerate(target_files, 1):
         pose_code = extract_pose_code(file_path.name)
 
-        if pose_code is not None and get_pose_category(pose_code) is None:
+        if pose_code is not None and not is_censor_target(pose_code):
             continue
 
         try:

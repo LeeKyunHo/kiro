@@ -17,6 +17,12 @@ from typing import Any, Callable, Sequence
 
 import requests
 
+from generator.checkpoint import (
+    CheckpointProfile,
+    load_checkpoint_profiles,
+    match_checkpoint_profile,
+    resolve_generation_params,
+)
 from generator.config import (
     CHARACTERS_DIRNAME,
     IMAGE_SIZE,
@@ -167,6 +173,9 @@ def run_batch(
     sampler: str | None = None,
     scheduler: str | None = None,
     cfg_scale: float | None = None,
+    image_width: int | None = None,
+    image_height: int | None = None,
+    clip_skip: int | None = None,
     naming: str = "code",
     overwrite: bool = False,
     active_bg: str | None = None,
@@ -314,8 +323,8 @@ def run_batch(
                     if code == targets[0]:
                         print(f"[LORA] 전역 LoRA 적용: {LORA_STRING}")
             
-            actual_width = entry.width if entry.width else IMAGE_SIZE[0]
-            actual_height = entry.height if entry.height else IMAGE_SIZE[1]
+            actual_width = entry.width if entry.width else (image_width or IMAGE_SIZE[0])
+            actual_height = entry.height if entry.height else (image_height or IMAGE_SIZE[1])
             
             # 파트너가 존재하는 포즈/H-씬인 경우 남성 억제 네거티브 및 solo 태그 자동 완화, 2인 페어링 보강
             actual_negative = negative_prompt
@@ -486,6 +495,7 @@ def run_batch(
                 steps=actual_steps,
                 cfg_scale=actual_cfg,
                 scheduler=actual_scheduler,
+                clip_skip=clip_skip,
             )
 
             controlnet_units: list[dict] = []
@@ -529,6 +539,7 @@ def run_batch(
                                 steps=actual_steps,
                                 cfg_scale=actual_cfg,
                                 scheduler=actual_scheduler,
+                                clip_skip=clip_skip,
                             )
                             fallback_payload = inject_alwayson_scripts(
                                 fallback_payload, controlnet_units,
@@ -575,25 +586,25 @@ def run_batch(
             save_as_webp(png_bytes, save_path)
 
             # 성인 씬 검열 및 무검열 원본 assets/{prefix}_origin/ 백업
-            if censor and (is_nude_scene or entry.section in ("h_scenes", "special_h", "scenes_otokonoko", "special_otokonoko")):
-                origin_dir = save_dir.parent / f"{prefix}_origin"
-                origin_dir.mkdir(parents=True, exist_ok=True)
-                origin_path = origin_dir / filename
-                if not origin_path.exists():
-                    save_as_webp(png_bytes, origin_path)
-                try:
-                    from generator.censor import censor_file
-                    tmp_censored = save_dir / f".tmp_{filename}"
-                    c_res = censor_file(save_path, dst_path=tmp_censored, style=censor_style, pose_code=code, enable_anchor_fallback=False)
-                    if c_res and c_res.exists():
-                        if save_path.exists():
-                            save_path.unlink()
-                        tmp_censored.rename(save_path)
-                        print(f" [검열본 적용: assets/{prefix}/{filename} (원본: {prefix}_origin/)]", end="")
-                    elif tmp_censored.exists():
-                        tmp_censored.unlink()
-                except Exception as ce:
-                    print(f" [검열 처리 예외: {ce}]", end="")
+            if censor:
+                from generator.censor import censor_file, get_origin_backup_path, is_censor_target
+                if is_censor_target(code, section=entry.section, is_nude_scene=is_nude_scene):
+                    origin_path = get_origin_backup_path(save_path)
+                    origin_path.parent.mkdir(parents=True, exist_ok=True)
+                    if not origin_path.exists():
+                        save_as_webp(png_bytes, origin_path)
+                    try:
+                        tmp_censored = save_dir / f".tmp_{filename}"
+                        c_res = censor_file(save_path, dst_path=tmp_censored, style=censor_style, pose_code=code, enable_anchor_fallback=False)
+                        if c_res and c_res.exists():
+                            if save_path.exists():
+                                save_path.unlink()
+                            tmp_censored.rename(save_path)
+                            print(f" [검열본 적용: assets/{prefix}/{filename} (원본: {prefix}_origin/)]", end="")
+                        elif tmp_censored.exists():
+                            tmp_censored.unlink()
+                    except Exception as ce:
+                        print(f" [검열 처리 예외: {ce}]", end="")
         except requests.exceptions.ConnectionError:
             print("실패: WebUI 연결 불가 (--api 옵션 실행 여부 확인)")
             result.failed.append((code, "connection"))
@@ -809,20 +820,44 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
     bg_preset: str = getattr(args, "bg_preset", "default")
     active_bg = resolve_background(cli_bg, roster.background_file, bg_preset)
 
+    # ── 체크포인트 프로필 & 파라미터 우선순위 병합 ───────────
+    active_ckpt: CheckpointProfile | None = getattr(args, "active_ckpt", None)
+    if active_ckpt is None and getattr(args, "ckpt_profile", None):
+        ckpt_profiles = load_checkpoint_profiles(base_dir)
+        active_ckpt = match_checkpoint_profile(ckpt_profiles, str(args.ckpt_profile))
+        if active_ckpt:
+            print(f"[CKPT] 프로필 '{active_ckpt.name}' 자동 해석 적용")
+
+    resolved_params = resolve_generation_params(
+        fallback_sampler=sampler_name,
+        ckpt_profile=active_ckpt,
+        char_overrides=getattr(args, "char_gen_overrides", None),
+        explicit_steps=getattr(args, "steps", None),
+        explicit_cfg_scale=getattr(args, "cfg_scale", None),
+        explicit_sampler=getattr(args, "sampler", None),
+        explicit_scheduler=getattr(args, "scheduler", None),
+        explicit_width=getattr(args, "width", None),
+        explicit_height=getattr(args, "height", None),
+        explicit_clip_skip=getattr(args, "clip_skip", None),
+    )
+
     # ── 작업 요약 출력 ─────────────────────────────
-    active_steps = getattr(args, "steps", 30) or 30
-    active_sampler_str = getattr(args, "sampler", None) or sampler_name
-    active_sched_str = getattr(args, "scheduler", None) or "Automatic"
-    active_cfg_val = getattr(args, "cfg_scale", 6.0) or 6.0
+    active_steps = resolved_params.steps
+    active_sampler_str = resolved_params.sampler
+    active_sched_str = resolved_params.scheduler
+    active_cfg_val = resolved_params.cfg_scale
+    clip_skip_str = f" | Clip Skip: {resolved_params.clip_skip}" if resolved_params.clip_skip else ""
+    ckpt_str = f" | 체크포인트: {active_ckpt.name}" if active_ckpt else ""
     ref_status_str = "비활성화 (--no_ref)" if getattr(args, "no_ref", False) else f"활성화 (강도 {ref_weight})"
 
     print(
         f"\n[작업 시작]{badge} 캐릭터: {prefix} | 프로필: {profile_label} | "
-        f"모드: {args.mode} ({len(targets)}장) | 폭: {width}"
+        f"모드: {args.mode} ({len(targets)}장) | 폭: {width}{ckpt_str}"
     )
     print(
         f"[파라미터] 스텝: {active_steps} | 샘플러: {active_sampler_str} | "
-        f"스케줄러: {active_sched_str} | CFG: {active_cfg_val} | 레퍼런스: {ref_status_str}"
+        f"스케줄러: {active_sched_str} | CFG: {active_cfg_val} | 해상도: {resolved_params.width}x{resolved_params.height}"
+        f"{clip_skip_str} | 레퍼런스: {ref_status_str}"
     )
     print(f"[저장] {save_dir}")
     if active_bg:
@@ -853,10 +888,13 @@ def execute(args: argparse.Namespace, roster: RosterPaths) -> int:
         enable_lightning=args.enable_lightning,
         lightning_steps=args.lightning_steps,
         lightning_cfg=args.lightning_cfg,
-        steps=getattr(args, "steps", None),
-        sampler=getattr(args, "sampler", None),
-        scheduler=getattr(args, "scheduler", None),
-        cfg_scale=getattr(args, "cfg_scale", None),
+        steps=resolved_params.steps,
+        sampler=resolved_params.sampler,
+        scheduler=resolved_params.scheduler,
+        cfg_scale=resolved_params.cfg_scale,
+        image_width=resolved_params.width,
+        image_height=resolved_params.height,
+        clip_skip=resolved_params.clip_skip,
         naming=getattr(args, "naming", "code"),
         overwrite=getattr(args, "overwrite", False),
         active_bg=active_bg,
@@ -926,6 +964,9 @@ def run_all_chars(
     max_retries: int = 3,
     censor: bool = False,
     censor_style: str = "white_silhouette",
+    active_ckpt: CheckpointProfile | None = None,
+    ckpt_profile: str | None = None,
+    clip_skip: int | None = None,
 ) -> int:
     """로스터의 모든 캐릭터를 순서대로 생성한다."""
     chars_dir = roster.characters_dir
@@ -1001,6 +1042,10 @@ def run_all_chars(
             max_retries=max_retries,
             censor=censor,
             censor_style=censor_style,
+            active_ckpt=active_ckpt,
+            ckpt_profile=ckpt_profile,
+            clip_skip=clip_skip,
+            char_gen_overrides=dict(cfg.gen_overrides) if cfg.gen_overrides else None,
         )
         # 캐릭터 설정 적용 시 db를 함께 전달하여 이벤트 섹션 자동 병합 반영
         apply_character_to_args(cfg, args, db)
