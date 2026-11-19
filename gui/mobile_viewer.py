@@ -171,9 +171,11 @@ def generate_mobile_viewer_html(default_roster: str = "") -> str:
     <script>
     (function() {{
         const DEFAULT_ROSTER = {html.escape(repr(default_roster), quote=False) if default_roster else "''"};
+        const MOBILE_CHUNK_SIZE = 20;
         let currentMatrix = null;
         let lastTrash = null;
         let toastTimer = null;
+        let renderSeq = 0;
 
         function getAuthHeaders(extra) {{
             const headers = Object.assign({{}}, extra || {{}});
@@ -257,19 +259,111 @@ def generate_mobile_viewer_html(default_roster: str = "") -> str:
             const resp = await fetch('/api/gallery/assets?roster=' + encodeURIComponent(roster));
             currentMatrix = await resp.json();
             const cSel = document.getElementById('charSelect');
-            cSel.innerHTML = '<option value="all">전체 캐릭터</option>';
-            (currentMatrix.characters || []).forEach(ch => {{
+            const prevChar = cSel.value;
+            cSel.innerHTML = '';
+            const chars = currentMatrix.characters || [];
+            let defaultChar = 'all';
+            chars.forEach(ch => {{
                 const opt = document.createElement('option');
                 opt.value = ch.prefix;
-                opt.textContent = ch.name + ' (' + ch.total_assets + ')';
+                opt.textContent = ch.name + ' (' + ch.total_assets + '장)';
                 cSel.appendChild(opt);
+                if (defaultChar === 'all' && (ch.total_assets || 0) > 0) {{
+                    defaultChar = ch.prefix;
+                }}
             }});
+            if (defaultChar === 'all' && chars.length > 0 && chars[0].prefix) {{
+                defaultChar = chars[0].prefix;
+            }}
+            const allOpt = document.createElement('option');
+            allOpt.value = 'all';
+            allOpt.textContent = '전체 캐릭터 (' + (currentMatrix.total_assets || 0) + '장)';
+            cSel.appendChild(allOpt);
+            if (prevChar && Array.from(cSel.options).some(o => o.value === prevChar) && prevChar !== 'all') {{
+                cSel.value = prevChar;
+            }} else {{
+                cSel.value = defaultChar;
+            }}
             window.renderCards();
         }};
+
+        function buildAssetCard(item, idx) {{
+            const card = document.createElement('article');
+            card.className = 'asset-card';
+            card.dataset.rel = item.rel_path;
+            const imgId = 'mimg_' + idx;
+            const badgeId = 'mbadge_' + idx;
+            card.innerHTML = `
+                <div class="card-head">
+                    <span class="card-title">[${{item.prefix}}] #${{item.code_str || '?'}} ${{item.pose_label}}</span>
+                    <span id="${{badgeId}}" class="card-badge ${{item.has_origin ? 'origin' : ''}}">${{item.has_origin ? '검열본 (원본있음)' : '일반'}}</span>
+                </div>
+                <div class="card-img-wrap">
+                    <img id="${{imgId}}" class="card-img" loading="lazy" decoding="async" data-origin="0" src="${{imgApiUrl(item.rel_path, false, Math.round((item.mtime || 0)*1000))}}" alt="${{item.filename}}" />
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="act-btn origin" ${{item.has_origin ? '' : 'disabled'}} data-act="toggle">👁️ 원본</button>
+                    <button type="button" class="act-btn retouch" data-act="retouch">✏️ 리터치</button>
+                    <button type="button" class="act-btn recensor" data-act="recensor">🛡️ 재검열</button>
+                    <button type="button" class="act-btn origin" ${{item.has_origin ? '' : 'disabled'}} data-act="restore_origin">🔄 복원</button>
+                    <button type="button" class="act-btn reroll" data-act="reroll">🎲 리롤</button>
+                    <button type="button" class="act-btn delete" data-act="delete">🗑️ 삭제</button>
+                </div>
+            `;
+            card.querySelector('[data-act="toggle"]').onclick = () => {{
+                const imgEl = document.getElementById(imgId);
+                const bEl = document.getElementById(badgeId);
+                const nextOrig = imgEl.dataset.origin !== '1';
+                imgEl.dataset.origin = nextOrig ? '1' : '0';
+                imgEl.src = imgApiUrl(item.rel_path, nextOrig, Date.now());
+                bEl.textContent = nextOrig ? '무검열 원본 (_origin)' : '검열본 (원본있음)';
+            }};
+            card.querySelector('[data-act="retouch"]').onclick = () => {{
+                window.openKiroRetouchEditor(item.rel_path, item.prefix + ' #' + (item.code_str || '') + ' ' + item.pose_label, !!item.has_origin);
+            }};
+            card.querySelector('[data-act="recensor"]').onclick = async () => {{
+                try {{
+                    const style = document.getElementById('styleSelect').value;
+                    await apiPost('/api/recensor', {{ path: item.rel_path, style }});
+                    const imgEl = document.getElementById(imgId);
+                    imgEl.dataset.origin = '0';
+                    imgEl.src = imgApiUrl(item.rel_path, false, Date.now());
+                    window.showKiroMobileToast('✅ 재검열 완료 (' + style + ')', false);
+                }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
+            }};
+            card.querySelector('[data-act="restore_origin"]').onclick = async () => {{
+                try {{
+                    await apiPost('/api/restore_origin', {{ path: item.rel_path }});
+                    const imgEl = document.getElementById(imgId);
+                    imgEl.dataset.origin = '0';
+                    imgEl.src = imgApiUrl(item.rel_path, false, Date.now());
+                    window.showKiroMobileToast('✅ 무검열 원본 복원 완료', false);
+                }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
+            }};
+            card.querySelector('[data-act="reroll"]').onclick = async () => {{
+                try {{
+                    const style = document.getElementById('styleSelect').value;
+                    const r = await apiPost('/api/reroll', {{
+                        roster: item.roster, char: item.char_name, code: item.code_str, censor_style: style
+                    }});
+                    window.showKiroMobileToast('🎲 리롤 큐 등록됨 (' + (r.job ? r.job.job_id : '') + ')', false);
+                }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
+            }};
+            card.querySelector('[data-act="delete"]').onclick = async () => {{
+                try {{
+                    const r = await apiPost('/api/asset/delete', {{ path: item.rel_path }});
+                    lastTrash = {{ trash_id: r.trash_id, roster: r.roster, filename: r.filename }};
+                    card.remove();
+                    window.showKiroMobileToast('🗑️ 휴지통 이동됨: ' + r.filename, false, true);
+                }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
+            }};
+            return card;
+        }}
 
         window.renderCards = function() {{
             const feed = document.getElementById('assetFeed');
             if (!currentMatrix) return;
+            const mySeq = ++renderSeq;
             const selectedChar = document.getElementById('charSelect').value || 'all';
             const poseMap = {{}};
             (currentMatrix.poses || []).forEach(p => {{ poseMap[p.code_str] = p; }});
@@ -294,78 +388,21 @@ def generate_mobile_viewer_html(default_roster: str = "") -> str:
             }}
 
             feed.innerHTML = '';
-            items.forEach((item, idx) => {{
-                const card = document.createElement('article');
-                card.className = 'asset-card';
-                card.dataset.rel = item.rel_path;
-                const imgId = 'mimg_' + idx;
-                const badgeId = 'mbadge_' + idx;
-                card.innerHTML = `
-                    <div class="card-head">
-                        <span class="card-title">[${{item.prefix}}] #${{item.code_str || '?'}} ${{item.pose_label}}</span>
-                        <span id="${{badgeId}}" class="card-badge ${{item.has_origin ? 'origin' : ''}}">${{item.has_origin ? '검열본 (원본있음)' : '일반'}}</span>
-                    </div>
-                    <div class="card-img-wrap">
-                        <img id="${{imgId}}" class="card-img" loading="lazy" data-origin="0" src="${{imgApiUrl(item.rel_path, false, Math.round((item.mtime || 0)*1000))}}" alt="${{item.filename}}" />
-                    </div>
-                    <div class="card-actions">
-                        <button type="button" class="act-btn origin" ${{item.has_origin ? '' : 'disabled'}} data-act="toggle">👁️ 원본</button>
-                        <button type="button" class="act-btn retouch" data-act="retouch">✏️ 리터치</button>
-                        <button type="button" class="act-btn recensor" data-act="recensor">🛡️ 재검열</button>
-                        <button type="button" class="act-btn origin" ${{item.has_origin ? '' : 'disabled'}} data-act="restore_origin">🔄 복원</button>
-                        <button type="button" class="act-btn reroll" data-act="reroll">🎲 리롤</button>
-                        <button type="button" class="act-btn delete" data-act="delete">🗑️ 삭제</button>
-                    </div>
-                `;
-                card.querySelector('[data-act="toggle"]').onclick = () => {{
-                    const imgEl = document.getElementById(imgId);
-                    const bEl = document.getElementById(badgeId);
-                    const nextOrig = imgEl.dataset.origin !== '1';
-                    imgEl.dataset.origin = nextOrig ? '1' : '0';
-                    imgEl.src = imgApiUrl(item.rel_path, nextOrig, Date.now());
-                    bEl.textContent = nextOrig ? '무검열 원본 (_origin)' : '검열본 (원본있음)';
-                }};
-                card.querySelector('[data-act="retouch"]').onclick = () => {{
-                    window.openKiroRetouchEditor(item.rel_path, item.prefix + ' #' + (item.code_str || '') + ' ' + item.pose_label, !!item.has_origin);
-                }};
-                card.querySelector('[data-act="recensor"]').onclick = async () => {{
-                    try {{
-                        const style = document.getElementById('styleSelect').value;
-                        await apiPost('/api/recensor', {{ path: item.rel_path, style }});
-                        const imgEl = document.getElementById(imgId);
-                        imgEl.dataset.origin = '0';
-                        imgEl.src = imgApiUrl(item.rel_path, false, Date.now());
-                        window.showKiroMobileToast('✅ 재검열 완료 (' + style + ')', false);
-                    }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
-                }};
-                card.querySelector('[data-act="restore_origin"]').onclick = async () => {{
-                    try {{
-                        await apiPost('/api/restore_origin', {{ path: item.rel_path }});
-                        const imgEl = document.getElementById(imgId);
-                        imgEl.dataset.origin = '0';
-                        imgEl.src = imgApiUrl(item.rel_path, false, Date.now());
-                        window.showKiroMobileToast('✅ 무검열 원본 복원 완료', false);
-                    }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
-                }};
-                card.querySelector('[data-act="reroll"]').onclick = async () => {{
-                    try {{
-                        const style = document.getElementById('styleSelect').value;
-                        const r = await apiPost('/api/reroll', {{
-                            roster: item.roster, char: item.char_name, code: item.code_str, censor_style: style
-                        }});
-                        window.showKiroMobileToast('🎲 리롤 큐 등록됨 (' + (r.job ? r.job.job_id : '') + ')', false);
-                    }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
-                }};
-                card.querySelector('[data-act="delete"]').onclick = async () => {{
-                    try {{
-                        const r = await apiPost('/api/asset/delete', {{ path: item.rel_path }});
-                        lastTrash = {{ trash_id: r.trash_id, roster: r.roster, filename: r.filename }};
-                        card.remove();
-                        window.showKiroMobileToast('🗑️ 휴지통 이동됨: ' + r.filename, false, true);
-                    }} catch (e) {{ window.showKiroMobileToast('❌ ' + e.message, true); }}
-                }};
-                feed.appendChild(card);
-            }});
+            let cursor = 0;
+            function appendNextChunk() {{
+                if (mySeq !== renderSeq) return;
+                const frag = document.createDocumentFragment();
+                const end = Math.min(cursor + MOBILE_CHUNK_SIZE, items.length);
+                for (let idx = cursor; idx < end; idx++) {{
+                    frag.appendChild(buildAssetCard(items[idx], idx));
+                }}
+                feed.appendChild(frag);
+                cursor = end;
+                if (cursor < items.length) {{
+                    window.requestAnimationFrame(appendNextChunk);
+                }}
+            }}
+            appendNextChunk();
         }};
 
         window.undoLastDelete = async function() {{

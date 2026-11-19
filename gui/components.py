@@ -227,6 +227,7 @@ def build_control_panel(
             new_opts = [GuiRuntimeState.ALL_CHARS_OPTION] + state.characters
             char_select.options = new_opts
             char_select.value = state.selected_char_name
+            char_select.update()
             on_char_change()
 
         ref_switch.on_value_change(update_ref_display)

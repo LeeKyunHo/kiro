@@ -140,11 +140,12 @@ def create_api_router(
         except Exception as exc:
             raise _translate_fs_error(exc) from exc
 
-    # 2. 현재 이미지 또는 origin=1 무검열 원본 이미지 서빙 (Path Traversal 차단 + no-store)
+    # 2. 현재 이미지 또는 origin=1 무검열 원본 이미지 서빙 (Path Traversal 차단 + 버전별 스마트 캐시)
     @router.get("/image")
     async def api_get_image(
         path: str = Query(..., description="projects/ 기준 상대경로 또는 절대경로"),
         origin: int = Query(0, description="1 지정 시 _origin 무검열 원본 반환"),
+        t: int | None = Query(None, description="캐시 버스팅 타임스탬프 버전 (지정 시 브라우저 캐시 허용)"),
     ) -> FileResponse:
         try:
             target = assets.resolve_safe_path(path)
@@ -161,9 +162,14 @@ def create_api_router(
                 raise HTTPException(status_code=404, detail=f"이미지 파일을 찾을 수 없습니다: {path}")
             serve_path = target
 
+        cache_header = (
+            "private, max-age=3600"
+            if t is not None
+            else "no-store, no-cache, must-revalidate, max-age=0"
+        )
         return FileResponse(
             path=str(serve_path),
-            headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+            headers={"Cache-Control": cache_header},
         )
 
     # 3. 무검열 원본 1클릭 복원

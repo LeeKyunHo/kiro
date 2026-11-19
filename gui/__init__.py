@@ -7,9 +7,12 @@ from __future__ import annotations
 from gui.api_routes import create_api_router, register_api_routes
 from gui.app import build_gui, get_or_create_runtime_state, main, register_studio_pages
 from gui.gallery import (
+    GRID_CHUNK_SIZE,
+    MATRIX_ROW_CHUNK_SIZE,
     V2_SECTION_LABELS,
     build_image_api_url,
     filter_gallery_matrix_by_section,
+    pick_default_character,
     render_gallery_page,
 )
 from gui.job_manager import GlobalJobManager, JobExecutionContext, global_job_manager
@@ -46,6 +49,8 @@ from gui.state import (
 
 __all__ = [
     "DEFAULT_SETTINGS",
+    "GRID_CHUNK_SIZE",
+    "MATRIX_ROW_CHUNK_SIZE",
     "RETOUCH_EDITOR_CSS",
     "RETOUCH_EDITOR_HTML",
     "SETTINGS_FILENAME",
@@ -74,6 +79,7 @@ __all__ = [
     "global_job_manager",
     "load_gui_settings",
     "main",
+    "pick_default_character",
     "register_api_routes",
     "register_mobile_viewer_route",
     "register_studio_pages",

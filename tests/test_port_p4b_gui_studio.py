@@ -18,9 +18,12 @@ from generator.asset_manager import AssetManager
 from generator.pose_db import V2_BUILTIN_SECTIONS
 import gui
 from gui.gallery import (
+    GRID_CHUNK_SIZE,
+    MATRIX_ROW_CHUNK_SIZE,
     V2_SECTION_LABELS,
     build_image_api_url,
     filter_gallery_matrix_by_section,
+    pick_default_character,
 )
 from gui.mobile_viewer import generate_mobile_viewer_html, register_mobile_viewer_route
 from gui.retouch_editor import (
@@ -106,6 +109,21 @@ def test_gallery_v2_section_filter_and_matrix_binding(tmp_path: Path) -> None:
     url_orig = build_image_api_url("demo/assets/rei/rei_80_정상위.webp", origin=True, version=12345)
     assert url_cur.startswith("/api/image?path=") and "origin=1" not in url_cur and "t=12345" in url_cur
     assert "origin=1" in url_orig and "t=12345" in url_orig
+
+    # 첫 캐릭터 기본 선택 및 순차 청크 크기 검증
+    assert GRID_CHUNK_SIZE == 24
+    assert MATRIX_ROW_CHUNK_SIZE == 16
+    assert pick_default_character([]) == "all"
+    assert (
+        pick_default_character(
+            [
+                {"prefix": "empty_char", "total_assets": 0},
+                {"prefix": "active_char", "total_assets": 75},
+            ]
+        )
+        == "active_char"
+    )
+    assert pick_default_character([{"prefix": "zero_only", "total_assets": 0}]) == "zero_only"
 
 
 def test_mobile_viewer_inspect_route_and_kiro_gui_exports() -> None:
