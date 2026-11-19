@@ -477,6 +477,11 @@ def test_audit_asset_alignment_report_and_two_pass_safe_rename(tmp_path: Path) -
     assert (origin_assets / "rei_80_정상위.webp").read_bytes() == b"origin80"
     assert not (char_assets / "rei_80_구라벨정상위.webp").exists()
 
+    # 3) CLI --roster all 종합 요약 모드 정상 동작 확인
+    from scripts.audit_asset_alignment import main as audit_main
+
+    assert audit_main(["--roster", "all", "--base-dir", str(tmp_path)]) == 0
+
 
 def test_export_context_generates_three_tier_snapshot_standalone(tmp_path: Path) -> None:
     """scripts/export_context.py 가 plepa 의존 없이 Kiro 3-Tier 스냅샷을 생성하고 .gitignore 에 등록되어 있어야 한다."""

@@ -375,7 +375,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Kiro 에셋 폴더와 V2 포즈 DB 간 완비율·라벨 불일치·누락 코드 정합성 감사 도구"
     )
-    parser.add_argument("-r", "--roster", default="dark_generals", help="검사할 로스터명 또는 별칭 (기본: dark_generals)")
+    parser.add_argument(
+        "-r",
+        "--roster",
+        default="dark_generals",
+        help="검사할 로스터명, 별칭 또는 'all' 전체 로스터 (기본: dark_generals)",
+    )
     parser.add_argument("--char", default=None, help="특정 캐릭터 필터 (콤마 구분 가능)")
     parser.add_argument(
         "--apply-rename",
@@ -388,14 +393,69 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", dest="as_json", action="store_true", help="결과를 JSON으로 출력")
     args = parser.parse_args(argv)
 
+    root = Path(args.base_dir).resolve()
     char_filter = (
         {c.strip() for c in args.char.split(",") if c.strip()} if args.char else None
     )
+
+    if str(args.roster).strip().lower() == "all":
+        target_rosters = RosterPathManager(root).list_available_rosters()
+        if not target_rosters:
+            logger.error("유효한 로스터 폴더를 찾을 수 없습니다.")
+            return 1
+        all_reports: dict[str, list[dict[str, Any]]] = {}
+        for r_name in target_rosters:
+            all_reports[r_name] = audit_roster_alignment(
+                r_name,
+                apply_rename=args.apply_rename,
+                base_dir=root,
+                char_filter=char_filter,
+            )
+        if args.as_json:
+            print(json.dumps(all_reports, ensure_ascii=False, indent=2))
+        else:
+            print("=" * 80)
+            print(f"📊 [KIRO · ALL] 전체 {len(target_rosters)}개 로스터 에셋 정합성 종합 요약")
+            print("=" * 80)
+            grand_chars = 0
+            grand_present = 0
+            grand_expected = 0
+            grand_mismatches = 0
+            grand_orphans = 0
+            grand_origins = 0
+            for r_name, reps in all_reports.items():
+                c_cnt = len(reps)
+                p_cnt = sum(r["present_count"] for r in reps)
+                e_cnt = sum(r["expected_count"] for r in reps)
+                m_cnt = sum(len(r["mismatches"]) for r in reps)
+                o_cnt = sum(len(r["orphan_files"]) for r in reps)
+                orig_cnt = sum(r["origin_count"] for r in reps)
+                rate = round((p_cnt / e_cnt) * 100.0, 1) if e_cnt else 0.0
+                grand_chars += c_cnt
+                grand_present += p_cnt
+                grand_expected += e_cnt
+                grand_mismatches += m_cnt
+                grand_orphans += o_cnt
+                grand_origins += orig_cnt
+                print(
+                    f"  - {r_name:<15} | 캐릭터 {c_cnt:>2}명 | 완비 {p_cnt:>4}/{e_cnt:<4} ({rate:>5.1f}%) | "
+                    f"_origin {orig_cnt:>4} | 구라벨 {m_cnt:>3} | 고아 {o_cnt:>3}"
+                )
+            grand_rate = round((grand_present / grand_expected) * 100.0, 1) if grand_expected else 0.0
+            print("-" * 80)
+            print(
+                f"🏁 전체 합계: {len(target_rosters)}개 로스터 · {grand_chars}명 | "
+                f"완비 {grand_present}/{grand_expected} ({grand_rate}%) | "
+                f"_origin {grand_origins}장 | 구라벨 {grand_mismatches}건 | 고아 {grand_orphans}건"
+            )
+            print("=" * 80)
+        return 0
+
     try:
         reports = audit_roster_alignment(
             args.roster,
             apply_rename=args.apply_rename,
-            base_dir=Path(args.base_dir),
+            base_dir=root,
             char_filter=char_filter,
         )
     except FileNotFoundError as e:
