@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kiro-sd-batch-generator"
+version = "2.0.0"
+description = "SD WebUI API 기반 캐릭터 챗봇 이미지 에셋 배치 생성 파이프라인"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+gui = [
+    "nicegui>=2.0.0",
+]
+studio = [
+    "flask>=3.0.0",
+]
+ml = [
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0,<2.0.0",
+    "psutil>=5.9.0",
+    "dghs-imgutils>=0.15.0",
+    "ultralytics>=8.0.0",
+    "torch>=2.1.0",
+]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["generator*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

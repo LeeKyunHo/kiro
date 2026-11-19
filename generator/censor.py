@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import math
 from pathlib import Path
+import re
 import shutil
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
@@ -369,6 +370,14 @@ NON_EXPOSURE_H_POSES = frozenset({
     "101", "102", "104", "105", "171", "172", "174", "175"
 })
 
+_POSE_CODE_PATTERN = re.compile(r"_(\d{2,4})(?:_|\.)")
+
+
+def extract_pose_code(filename: str) -> Optional[int]:
+    """에셋 파일명(code/hybrid 모두 지원)에서 포즈 코드 정수를 추출한다."""
+    match = _POSE_CODE_PATTERN.search(filename)
+    return int(match.group(1)) if match else None
+
 
 def get_pose_category(pose_code: Union[str, int]) -> Optional[str]:
     """
@@ -642,13 +651,18 @@ def run_batch_censor(
         else:
             image_files.extend(base_dir.glob(ext))
 
-    target_files = [f for f in image_files if not f.stem.endswith("_censored")]
+    target_files = [
+        f for f in image_files
+        if not f.stem.endswith("_censored")
+        and not any("_origin" in part for part in f.parts)
+        and not any("backup" in part.lower() for part in f.parts)
+        and not f.name.startswith(".tmp_")
+    ]
     total = len(target_files)
     processed_count = 0
 
     for idx, file_path in enumerate(target_files, 1):
-        match = re.search(r"_(\d{3})\.", file_path.name)
-        pose_code = int(match.group(1)) if match else None
+        pose_code = extract_pose_code(file_path.name)
 
         if pose_code is not None and get_pose_category(pose_code) is None:
             continue

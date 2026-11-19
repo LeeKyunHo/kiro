@@ -3,6 +3,9 @@ generator 패키지 루트.
 모듈화된 SD 캐릭터 에셋 배치 생성 파이프라인.
 """
 
+import importlib
+from typing import Any
+
 from generator.config import ConfigError, configure_stdio
 from generator.models import (
     BatchResult,
@@ -54,16 +57,33 @@ from generator.reporter import (
 )
 from generator.roster import RosterPathManager, apply_character_to_args, list_characters, load_character
 from generator.runner import execute, run_all_chars, run_batch
-from generator.censor import (
-    censor_file,
-    censor_image,
-    detect_genitals,
-    get_pose_anchor_box,
-    get_pose_category,
-    run_batch_censor,
-    POSE_SAFE_ANCHORS,
-)
-from generator.qa_validator import validate_generated_image
+
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "censor_file": ("generator.censor", "censor_file"),
+    "censor_image": ("generator.censor", "censor_image"),
+    "detect_genitals": ("generator.censor", "detect_genitals"),
+    "extract_pose_code": ("generator.censor", "extract_pose_code"),
+    "get_pose_anchor_box": ("generator.censor", "get_pose_anchor_box"),
+    "get_pose_category": ("generator.censor", "get_pose_category"),
+    "run_batch_censor": ("generator.censor", "run_batch_censor"),
+    "POSE_SAFE_ANCHORS": ("generator.censor", "POSE_SAFE_ANCHORS"),
+    "validate_generated_image": ("generator.qa_validator", "validate_generated_image"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name, attr_name = target
+    module = importlib.import_module(module_name)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))
 
 __all__ = [
     # config
@@ -122,6 +142,7 @@ __all__ = [
     "censor_file",
     "censor_image",
     "detect_genitals",
+    "extract_pose_code",
     "get_pose_anchor_box",
     "get_pose_category",
     "run_batch_censor",

@@ -11,41 +11,79 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 1. CPU 스레드 자동 제한 (전체 스레드 수 - 2) & 2. 프로세스 우선순위 하향 (Below Normal)
-# 딥러닝 감지기 추론 중 CPU 100% 점유로 인한 윈도우 UI/마우스/브라우저 버벅임을 원천 방지합니다.
-# ──────────────────────────────────────────────────────────────────────────────
-usable_threads = max(2, (os.cpu_count() or 4) - 2)
-os.environ["OMP_NUM_THREADS"] = str(usable_threads)
-os.environ["MKL_NUM_THREADS"] = str(usable_threads)
-
-try:
-    import torch
-    torch.set_num_threads(usable_threads)
-except Exception:
-    pass
-
-try:
-    import psutil
-    p = psutil.Process(os.getpid())
-    p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
-except Exception:
-    pass
-
 from PIL import Image
 
-try:
-    from imgutils.detect import (
-        detect_faces,
-        detect_hands,
-        detect_heads,
-        detect_person,
-    )
-    HAS_IMGUTILS = True
-except ImportError:
-    HAS_IMGUTILS = False
-
 logger = logging.getLogger(__name__)
+
+_RUNTIME_INITIALIZED: bool = False
+HAS_IMGUTILS: Optional[bool] = None
+
+detect_person: Any = None
+detect_heads: Any = None
+detect_hands: Any = None
+detect_faces: Any = None
+
+
+def _ensure_qa_runtime() -> bool:
+    """
+    Auto-QC 최초 실행 시 1회만 CPU 스레드 제한, 프로세스 우선순위 하향,
+    imgutils 감지기 로드를 수행한다 (모듈 임포트 시 부수효과 원천 방지).
+    """
+    global _RUNTIME_INITIALIZED, HAS_IMGUTILS
+    global detect_person, detect_heads, detect_hands, detect_faces
+
+    # 단위 테스트 등에서 감지기가 이미 외부 주입된 경우 ML 런타임 로드 생략
+    if (
+        HAS_IMGUTILS is True
+        and detect_person is not None
+        and detect_heads is not None
+        and detect_hands is not None
+        and detect_faces is not None
+    ):
+        return True
+
+    if _RUNTIME_INITIALIZED:
+        return bool(HAS_IMGUTILS)
+
+    usable_threads = max(2, (os.cpu_count() or 4) - 2)
+    os.environ.setdefault("OMP_NUM_THREADS", str(usable_threads))
+    os.environ.setdefault("MKL_NUM_THREADS", str(usable_threads))
+
+    try:
+        import torch
+        torch.set_num_threads(usable_threads)
+    except Exception as e:
+        logger.debug(f"[Auto-QC] PyTorch 스레드 제한 생략: {e}")
+
+    try:
+        import psutil
+        if hasattr(psutil, "BELOW_NORMAL_PRIORITY_CLASS"):
+            p = psutil.Process(os.getpid())
+            p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
+    except Exception as e:
+        logger.debug(f"[Auto-QC] 프로세스 우선순위 조정 생략: {e}")
+
+    try:
+        from imgutils.detect import (
+            detect_faces as _detect_faces,
+            detect_hands as _detect_hands,
+            detect_heads as _detect_heads,
+            detect_person as _detect_person,
+        )
+        if detect_person is None:
+            detect_person = _detect_person
+        if detect_heads is None:
+            detect_heads = _detect_heads
+        if detect_hands is None:
+            detect_hands = _detect_hands
+        if detect_faces is None:
+            detect_faces = _detect_faces
+        HAS_IMGUTILS = True
+    except ImportError:
+        HAS_IMGUTILS = False
+
+    _RUNTIME_INITIALIZED = True
+    return bool(HAS_IMGUTILS)
 
 
 def validate_generated_image(
@@ -84,7 +122,7 @@ def validate_generated_image(
         "faces": 0,
     }
 
-    if not HAS_IMGUTILS:
+    if not _ensure_qa_runtime():
         # 감지기가 없으면 안전 통과
         return True, "", metrics
 
